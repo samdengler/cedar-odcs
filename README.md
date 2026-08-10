@@ -18,7 +18,7 @@ Design decisions and the full iteration plan are in the design document.
 
 Each iteration lives in its own directory with its policies, entities, test corpus, and a design document. `index.html` at the root indexes the iterations and links to each design document.
 
-- `bola-mvp/`: iteration 1. A standalone BOLA slice with no AWS dependency.
+- `bola-mvp/`: iteration 1. A standalone broken object level authorization (BOLA) slice with no AWS dependency.
   - `design.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
   - `policies.cedar`: two policies; everything else is default deny.
   - `entities.json`: the facts (users, a role, orders with owners).
@@ -42,7 +42,7 @@ uv run --project bola-mvp pytest -v
 
 ## Iterations
 
-1. BOLA (done): object level checks, default deny.
+1. Broken object level authorization (BOLA), done: object level checks, default deny.
 2. Field filtering (API3): per-field decisions, strip denied fields from responses.
 3. Function level (API5): actions permitted only to roles.
 4. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
