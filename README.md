@@ -1,0 +1,44 @@
+# cedar-osdc
+
+Data governance for agent tool calls, enforced with [Cedar](https://docs.cedarpolicy.com/) policies derived from [Open Data Contract Standard](https://bitol-io.github.io/open-data-contract-standard/) documents.
+
+## Problem
+
+Agents on AgentCore Runtime call work APIs through MCP tools registered in AgentCore Gateway. The tools authenticate with service credentials, so the upstream APIs return whatever is asked for; the API layer itself has weak governance. Enforcement therefore lives in the agent stack, in Gateway interceptors on both the request and response legs of a tool call.
+
+The threats covered, in OWASP API Security Top 10 terms: API1 broken object level authorization (BOLA), API3 broken object property level authorization, and API5 broken function level authorization (BFLA).
+
+## Approach
+
+The project grows in small iterations, each one test-driven: test cases are added to a JSON corpus first, then the policies that make them pass. Cedar policies and test cases are engine-independent data, so the Python code used for learning and the eventual Rust enforcement build (a Lambda Runtime API proxy extension) run the same policies against the same corpus.
+
+Design decisions and the full iteration plan are in the design document.
+
+## Contents
+
+- `design-iteration-1-bola.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
+- `bola-mvp/`: iteration 1. A standalone BOLA slice with no AWS dependency.
+  - `policies.cedar`: two policies; everything else is default deny.
+  - `entities.json`: the facts (users, a role, orders with owners).
+  - `tests/bola.json`: six test cases in the [cedar-integration-tests](https://github.com/cedar-policy/cedar-integration-tests) corpus format.
+  - `test_corpus.py`: pytest runner that feeds every corpus case to the engine.
+  - `authorizer.py`: the enforcement-shaped wrapper, the same shape a Gateway interceptor will have.
+
+## Running
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```sh
+cd bola-mvp
+uv run pytest -v
+```
+
+## Iterations
+
+1. BOLA (done): object level checks, default deny.
+2. Field filtering (API3): per-field decisions, strip denied fields from responses.
+3. Function level (API5): actions permitted only to roles.
+4. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
+5. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
+6. Row filtering for list endpoints.
+7. Enforcement placement: move the checks into the response interceptor.
