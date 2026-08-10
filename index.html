@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>cedar-osdc: design notes by iteration</title>
+<style>
+:root {
+  --navy: #003366;
+  --navy-deep: #00274D;
+  --red-bright: #E3132C;
+  --ink: #26313c;
+  --muted: #5b6a7a;
+  --light: #E9EEF5;
+  --rule: #d8e0ea;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+       color: var(--ink); background: #f6f8fb; line-height: 1.65; }
+.page { max-width: 860px; margin: 0 auto; background: #fff; box-shadow: 0 1px 8px rgba(0,38,77,.08); }
+header.doc { background: linear-gradient(135deg, var(--navy-deep), var(--navy)); color: #fff;
+             padding: 42px 48px 34px; border-bottom: 5px solid var(--red-bright); }
+header.doc .kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+                     color: #9fb6d1; margin-bottom: 10px; }
+header.doc h1 { margin: 0 0 12px; font-size: 32px; line-height: 1.18; font-weight: 700; }
+header.doc p { margin: 0; color: #c9d6e6; font-size: 15.5px; max-width: 46em; }
+main { padding: 34px 48px 56px; }
+p { margin: 11px 0; }
+a { color: var(--navy); }
+code { background: var(--light); color: var(--navy-deep); padding: 1px 5px; border-radius: 4px;
+       font-size: .88em; font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+ol.iterations { margin: 20px 0 0; padding: 0; list-style: none; counter-reset: iter; }
+ol.iterations li { counter-increment: iter; display: grid; grid-template-columns: 44px 1fr auto;
+                   gap: 14px; align-items: baseline; padding: 14px 6px; border-bottom: 1px solid var(--rule); }
+ol.iterations li::before { content: counter(iter); font-size: 20px; font-weight: 700; color: var(--navy);
+                           text-align: center; }
+ol.iterations .name { font-weight: 600; color: var(--navy-deep); }
+ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
+.status { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+          padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.status.done { background: var(--light); color: var(--navy-deep); }
+.status.planned { background: #f2f5f9; color: #8494a5; }
+</style>
+</head>
+<body>
+<div class="page">
+<header class="doc">
+  <div class="kicker">Design notes</div>
+  <h1>cedar-osdc</h1>
+  <p>Data governance for agent tool calls, enforced with Cedar policies derived from
+     Open Data Contract Standard documents. One design document per iteration; each
+     iteration lives in its own directory with its policies, entities, and test corpus.</p>
+</header>
+<main>
+  <p>Start with the <a href="bola-mvp/design.html">iteration 1 design narrative</a>. It covers
+     the problem, where Cedar sits in the stack, Cedar concepts, and a walkthrough of the
+     code in <code>bola-mvp/</code>.</p>
+  <ol class="iterations">
+    <li>
+      <span class="name"><a href="bola-mvp/design.html">BOLA</a>
+        <span class="desc">Object level checks, default deny. Code in <code>bola-mvp/</code>.</span></span>
+      <span class="status done">Done</span>
+    </li>
+    <li>
+      <span class="name">Field filtering (API3)
+        <span class="desc">Per-field decisions, strip denied fields from responses.</span></span>
+      <span class="status planned">Planned</span>
+    </li>
+    <li>
+      <span class="name">Function level (API5)
+        <span class="desc">Actions permitted only to roles.</span></span>
+      <span class="status planned">Planned</span>
+    </li>
+    <li>
+      <span class="name">On behalf of access modes
+        <span class="desc">Customer direct, employee direct, employee acting for a customer.</span></span>
+      <span class="status planned">Planned</span>
+    </li>
+    <li>
+      <span class="name">ODCS as source of truth
+        <span class="desc">Generate the Cedar schema and field classifications from a data contract.</span></span>
+      <span class="status planned">Planned</span>
+    </li>
+    <li>
+      <span class="name">Row filtering
+        <span class="desc">List endpoints return only rows the caller may see.</span></span>
+      <span class="status planned">Planned</span>
+    </li>
+    <li>
+      <span class="name">Enforcement placement
+        <span class="desc">Move the checks into the Gateway response interceptor.</span></span>
+      <span class="status planned">Planned</span>
+    </li>
+  </ol>
+</main>
+</div>
+</body>
+</html>

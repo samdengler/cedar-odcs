@@ -1,0 +1,15 @@
+# Test harness for the whole repo: lets `uv run pytest -v` at the root
+# collect every iteration's corpus runner. Each iteration directory has
+# its own pyproject.toml and remains runnable on its own.
+[project]
+name = "cedar-osdc"
+version = "0.1.0"
+description = "Data governance for agent tool calls with Cedar policies"
+requires-python = ">=3.10"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "cedarpy>=4.0",
+    "pytest>=8.0",
+]

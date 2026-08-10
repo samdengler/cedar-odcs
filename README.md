@@ -16,8 +16,10 @@ Design decisions and the full iteration plan are in the design document.
 
 ## Contents
 
-- `design-iteration-1-bola.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
+Each iteration lives in its own directory with its policies, entities, test corpus, and a design document. `index.html` at the root indexes the iterations and links to each design document.
+
 - `bola-mvp/`: iteration 1. A standalone BOLA slice with no AWS dependency.
+  - `design.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
   - `policies.cedar`: two policies; everything else is default deny.
   - `entities.json`: the facts (users, a role, orders with owners).
   - `tests/bola.json`: six test cases in the [cedar-integration-tests](https://github.com/cedar-policy/cedar-integration-tests) corpus format.
@@ -26,11 +28,16 @@ Design decisions and the full iteration plan are in the design document.
 
 ## Running
 
-Requires [uv](https://docs.astral.sh/uv/).
+Requires [uv](https://docs.astral.sh/uv/). From the repository root, this runs every iteration's test corpus:
 
 ```sh
-cd bola-mvp
 uv run pytest -v
+```
+
+Each iteration is also a standalone uv project, so the same command works inside a single iteration directory, or from the root with `--project`:
+
+```sh
+uv run --project bola-mvp pytest -v
 ```
 
 ## Iterations
