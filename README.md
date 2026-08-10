@@ -24,7 +24,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `entities.json`: the facts (users, a role, orders with owners).
   - `tests/bola.json`: six test cases in the [cedar-integration-tests](https://github.com/cedar-policy/cedar-integration-tests) corpus format.
   - `test_corpus.py`: pytest runner that feeds every corpus case to the engine.
-  - `authorizer.py`: the enforcement-shaped wrapper, the same shape a Gateway interceptor will have.
+  - `authorizer.py`: the enforcement wrapper; it does the same job a Gateway interceptor will do.
 - `field-filtering/`: iteration 2. Field filtering (API3) on top of iteration 1.
   - `design.html`: the design narrative. The second round of per-field questions, classification as entity tags, and the response-stripping wrapper.
   - `policies.cedar`: iteration 1's two policies carried forward, plus two field policies that look fields up in the classification map.

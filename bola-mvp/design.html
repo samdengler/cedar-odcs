@@ -205,13 +205,13 @@ h2:hover .anchor { opacity: 1; }
 <figcaption>Target placement. The interceptor runs on the request leg and again on the response leg (dashed), where it filters what the agent gets back. The current MVP replaces the interceptor with a plain Python function so the Cedar part can be learned in isolation.</figcaption>
 </figure>
 
-<p>Nothing about the MVP depends on this placement being final. The Python wrapper has the same shape an interceptor would have: it receives a principal, an action, and a resource, and returns allow or deny.</p>
+<p>Nothing about the MVP depends on this placement being final. The Python wrapper takes the same inputs an interceptor would and returns the same answer: a principal, an action, and a resource in; allow or deny out.</p>
 
 <h2 id="cedar-concepts">4. Cedar concepts used in this iteration</h2>
 
 <p>The code sample rests on five concepts.</p>
 
-<p><strong>Request.</strong> Every question to Cedar has the same shape, called PARC: a <em>principal</em> (who), an <em>action</em> (doing what), a <em>resource</em> (to what), and a <em>context</em> (extra facts about this call, empty in this iteration). Example: may <code>User::"alice"</code> perform <code>Action::"ReadOrder"</code> on <code>Order::"order-1001"</code>?</p>
+<p><strong>Request.</strong> Every question to Cedar has the same four parts, called PARC: a <em>principal</em> (who), an <em>action</em> (doing what), a <em>resource</em> (to what), and a <em>context</em> (extra facts about this call, empty in this iteration). Example: may <code>User::"alice"</code> perform <code>Action::"ReadOrder"</code> on <code>Order::"order-1001"</code>?</p>
 
 <p><strong>Policy.</strong> A rule that permits (or forbids) some set of requests. The core BOLA policy in this iteration is three lines:</p>
 
@@ -234,7 +234,7 @@ when { resource.owner == principal };</code></pre>
 
 <p><code>entities.json</code> holds the facts: three users (alice, bob, and carol the support agent), one role, and two orders with owners. Carol's membership in the support role is expressed by listing the role among her <code>parents</code>, Cedar's group mechanism.</p>
 
-<p><code>authorizer.py</code> loads both files and exposes one function, <code>is_allowed(principal, action, resource)</code>, wrapping the cedarpy bindings<a class="ref" href="#r5">[5]</a>. It has the same shape a Gateway interceptor will have: load rules, answer questions.</p>
+<p><code>authorizer.py</code> loads both files and exposes one function, <code>is_allowed(principal, action, resource)</code>, wrapping the cedarpy bindings<a class="ref" href="#r5">[5]</a>. It does the same job a Gateway interceptor will do: load rules, answer questions.</p>
 
 <p><code>tests/bola.json</code> is the interesting file. The test cases are data: each entry is one authorization question phrased as either a legitimate request or an attack (alice reads her own order, alice swaps the id to bob's order, carol reads anything, an unknown principal or a guessed order id), with the expected decision, the policies expected to determine it, and any expected evaluation errors. The file follows the format of the Cedar project's own integration-test corpus<a class="ref" href="#r10">[10]</a>, which the Rust and Java engines already run in CI.</p>
 
@@ -268,7 +268,7 @@ uv run pytest -v</code></pre>
 
 <p>The first review resolved the original three open questions.</p>
 
-<p><strong>Response schemas come from tool authors at registration.</strong> Registering an MCP tool requires a schema for the response, with a classification on each field. That artifact is a data contract, and ODCS already has the per-field shape for it<a class="ref" href="#r3">[3]</a>, so tool registration and contract publication can be the same act. The Cedar schema and the field sensitivity map are compiled from the contract. Invariant to enforce: fields present in a response but absent from the contract are stripped, so schema drift fails closed instead of leaking data.</p>
+<p><strong>Response schemas come from tool authors at registration.</strong> Registering an MCP tool requires a schema for the response, with a classification on each field. That artifact is a data contract, and ODCS already defines per-field classification for it<a class="ref" href="#r3">[3]</a>, so tool registration and contract publication can be the same act. The Cedar schema and the field sensitivity map are compiled from the contract. Invariant to enforce: fields present in a response but absent from the contract are stripped, so schema drift fails closed instead of leaking data.</p>
 
 <p><strong>Requests carry an actor and an acting-for party.</strong> The system implements on behalf of (OBO) access. Three modes exist: a customer interacting directly, an employee interacting directly, and an employee acting for a customer. The principal stays the actual actor; the context carries whom they act for. Employee-only permits require direct mode, and ownership permits evaluate against the acting-for party, so an employee acting for a customer holds roughly the intersection of the employee's and the customer's access. This follows existing standards rather than inventing a model: OAuth 2.0 Token Exchange<a class="ref" href="#r8">[8]</a> carries the actor in an <code>act</code> claim while the subject remains the acted-for party, and the Cedar context is a direct projection of those claims. The intersection semantics match the widely deployed Microsoft Entra on-behalf-of flow<a class="ref" href="#r9">[9]</a>.</p>
 
@@ -293,7 +293,7 @@ uv run pytest -v</code></pre>
 <tr><td>BOLA</td><td>Broken object level authorization, OWASP API1. Reading an object that belongs to someone else by swapping an id.</td></tr>
 <tr><td>PDP</td><td>Policy decision point. The engine that evaluates rules and returns Allow or Deny. Cedar plays this role.</td></tr>
 <tr><td>PEP</td><td>Policy enforcement point. The code in the request path that calls the PDP and enforces its answer. The Gateway interceptor plays this role.</td></tr>
-<tr><td>PARC</td><td>Principal, action, resource, context. The shape of every Cedar request.</td></tr>
+<tr><td>PARC</td><td>Principal, action, resource, context. The four parts of every Cedar request.</td></tr>
 <tr><td>ODCS</td><td>Open Data Contract Standard. A YAML format describing a dataset's schema, quality, and terms of use.</td></tr>
 <tr><td>OBO</td><td>On behalf of. A request made by one party acting for another, such as an employee acting for a customer.</td></tr>
 <tr><td>Entity</td><td>A Cedar fact about a user, role, or object, including its attributes and group memberships.</td></tr>

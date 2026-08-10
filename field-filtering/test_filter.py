@@ -1,7 +1,7 @@
 """The response leg end to end: one upstream payload, filtered per caller.
 
 The corpus (tests/field-filtering.json) pins the per-field decisions.
-These tests pin the enforcement shape on top of them: given a full
+These tests pin the enforcement behavior on top of them: given a full
 upstream response, each caller gets exactly the fields their
 classification classes allow, and everything removed is reported.
 """

@@ -167,7 +167,7 @@ h2:hover .anchor { opacity: 1; }
 <h2 id="status">2. What is built and what is not</h2>
 
 <div class="callout"><p><strong>Built:</strong> the <code>field-filtering</code> folder in this project. Iteration 1's two policies plus two field policies, field classification facts, a <code>filter_response</code> wrapper that strips denied fields from a payload, and 22 pytest tests, all passing, with iteration 1's six cases carried unchanged.</p>
-<p><strong>Not built:</strong> function level checks (API5), any parsing of ODCS documents, mask caching, and any integration with AgentCore Gateway or Runtime. Nested and list-shaped payloads are also out; this iteration filters a flat object.</p></div>
+<p><strong>Not built:</strong> function level checks (API5), any parsing of ODCS documents, mask caching, and any integration with AgentCore Gateway or Runtime. Nested payloads and lists are also out; this iteration filters a flat object.</p></div>
 
 <h2 id="second-round">3. The second round of questions</h2>
 
@@ -252,7 +252,7 @@ permit(
 <tr><td><code>fraudScore</code></td><td></td><td></td></tr>
 </table>
 
-<p>Two consequences fall out of this shape.</p>
+<p>Two consequences fall out of this design.</p>
 
 <p><strong>Undeclared fields fail closed.</strong> If the upstream response grows a field the contract never declared, say <code>debugTrace</code>, the lookup fails the <code>hasTag</code> guard, no permit matches, and default deny strips the field. The invariant from iteration 1's review, that schema drift strips rather than leaks, needs no code of its own.</p>
 
@@ -268,7 +268,7 @@ permit(
 
 <p><code>entities.json</code> carries iteration 1's users, role, and orders, and adds one <code>Contract</code> entity whose tag map is the hand-written stand-in for a contract's classification column. This file is the one ODCS will eventually generate, and the tag map is a near transcription of a contract's property list.</p>
 
-<p><code>field_filter.py</code> replaces <code>authorizer.py</code> as the enforcement-shaped wrapper. <code>is_allowed</code> is the same function with a context parameter added. <code>filter_response(principal, resource, body)</code> is the response leg: one question per field, returning the kept body and the list of stripped field names.</p>
+<p><code>field_filter.py</code> replaces <code>authorizer.py</code> as the enforcement wrapper. <code>is_allowed</code> is the same function with a context parameter added. <code>filter_response(principal, resource, body)</code> is the response leg: one question per field, returning the kept body and the list of stripped field names.</p>
 
 <pre><code>for name, value in body.items():
     if is_allowed(principal, 'Action::"ReadOrderField"', resource, {"field": name}).allowed:
@@ -311,7 +311,7 @@ permit(
 <h2 id="open-questions">9. Open questions</h2>
 
 <ol>
-<li>Nested and list-shaped payloads. This iteration filters one flat object. Real order payloads nest (<code>items[].sku</code>), which needs a naming convention for tag keys and a walk of the payload tree. Deciding it belongs with ODCS, since contracts already name nested properties, and with row filtering for the list case.</li>
+<li>Nested payloads and lists. This iteration filters one flat object. Real order payloads nest (<code>items[].sku</code>), which needs a naming convention for tag keys and a walk of the payload tree. Deciding it belongs with ODCS, since contracts already name nested properties, and with row filtering for the list case.</li>
 <li>Whether <code>ReadOrderField</code> stays a per-resource-type action or becomes a single <code>ReadField</code> action once a second resource type exists.</li>
 <li>Carried from iteration 1: how stripped-field removals are surfaced to tool authors, and measured response-path overhead once mask caching exists to measure against.</li>
 </ol>
