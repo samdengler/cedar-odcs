@@ -1,0 +1,13 @@
+[project]
+name = "field-filtering"
+version = "0.1.0"
+description = "Cedar field filtering (API3) slice, iteration 2"
+requires-python = ">=3.10"
+dependencies = [
+    "cedarpy>=4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

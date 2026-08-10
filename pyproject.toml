@@ -13,3 +13,9 @@ dev = [
     "cedarpy>=4.0",
     "pytest>=8.0",
 ]
+
+# Every iteration names its corpus runner test_corpus.py. The default
+# import mode cannot hold two modules with the same basename; importlib
+# mode keys modules by path instead.
+[tool.pytest.ini_options]
+addopts = "--import-mode=importlib"

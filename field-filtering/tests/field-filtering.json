@@ -1,0 +1,127 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "owner reads status of own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/status" } } },
+      "decision": "Allow",
+      "reason": ["policy2"],
+      "errors": []
+    },
+    {
+      "description": "owner reads shippingAddress of own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/shippingAddress" } } },
+      "decision": "Allow",
+      "reason": ["policy2"],
+      "errors": []
+    },
+    {
+      "description": "owner reads cardLast4 of own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/cardLast4" } } },
+      "decision": "Allow",
+      "reason": ["policy2"],
+      "errors": []
+    },
+    {
+      "description": "owner may not read internalNotes of own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/internalNotes" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "fraudScore is in no class, so nobody reads it: owner denied",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/fraudScore" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "API1 still holds at field level: customer reads a field of someone else's order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/status" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "support agent reads internalNotes of alice's order",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/internalNotes" } } },
+      "decision": "Allow",
+      "reason": ["policy3"],
+      "errors": []
+    },
+    {
+      "description": "support agent reads status of alice's order",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/status" } } },
+      "decision": "Allow",
+      "reason": ["policy3"],
+      "errors": []
+    },
+    {
+      "description": "support agent may not read shippingAddress: customer PII is not operational",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/shippingAddress" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "support agent may not read cardLast4",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/cardLast4" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "undeclared field fails closed: Order/debugTrace is in no class, owner denied",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/debugTrace" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "guessed order id: the has guard fails closed with no evaluation error",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-9999" },
+      "context": { "field": { "__entity": { "type": "Field", "id": "Order/status" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}
