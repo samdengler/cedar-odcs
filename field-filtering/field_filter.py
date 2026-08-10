@@ -70,7 +70,7 @@ def filter_response(principal: str, resource: str, body: dict) -> FilteredRespon
 
     The field name goes into the request context as a plain string;
     the policies look it up in the contract's tag map to check its
-    classification classes.
+    classification level.
     """
     kept, stripped = {}, []
     for name, value in body.items():

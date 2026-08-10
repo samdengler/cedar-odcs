@@ -3,9 +3,11 @@
 //
 // The field policies never name fields. The classification map lives
 // in entities.json as entity tags on Contract::"Order": each tag key
-// is a field name, each tag value is the set of classes the field
-// belongs to. A field with no classes is readable by nobody, and a
-// field missing from the map fails the hasTag guard, so undeclared
+// is a field name, each tag value is the field's classification
+// level, one of public, internal, confidential, restricted. The
+// contract classifies; policies grant levels to readers. No policy
+// grants restricted yet, so those fields are readable by nobody, and
+// a field missing from the map fails the hasTag guard, so undeclared
 // fields fail closed.
 //
 // New policies are appended, never inserted: cedarpy reports
@@ -30,9 +32,9 @@ permit(
   resource
 );
 
-// P3 (policy2): A customer may read customer-visible fields of an
-// order they own. The has and hasTag guards make unknown orders and
-// undeclared fields fail cleanly instead of erroring.
+// P3 (policy2): A customer may read public and confidential fields of
+// an order they own. The has and hasTag guards make unknown orders
+// and undeclared fields fail cleanly instead of erroring.
 @id("customer-fields-on-own-order")
 permit(
   principal,
@@ -43,12 +45,12 @@ permit(
   resource.owner == principal &&
   context has field &&
   Contract::"Order".hasTag(context.field) &&
-  Contract::"Order".getTag(context.field).contains("customer-visible")
+  ["public", "confidential"].contains(Contract::"Order".getTag(context.field))
 };
 
-// P4 (policy3): A support agent may read operational fields of any
-// order.
-@id("support-operational-fields")
+// P4 (policy3): A support agent may read public and internal fields
+// of any order.
+@id("support-fields-on-any-order")
 permit(
   principal in Role::"support",
   action == Action::"ReadOrderField",
@@ -56,5 +58,5 @@ permit(
 ) when {
   context has field &&
   Contract::"Order".hasTag(context.field) &&
-  Contract::"Order".getTag(context.field).contains("operational")
+  ["public", "internal"].contains(Contract::"Order".getTag(context.field))
 };

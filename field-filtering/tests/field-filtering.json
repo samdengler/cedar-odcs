@@ -44,7 +44,7 @@
       "errors": []
     },
     {
-      "description": "fraudScore has no classes, so nobody reads it: owner denied",
+      "description": "fraudScore is restricted and no role holds restricted: owner denied",
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "ReadOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
@@ -84,7 +84,7 @@
       "errors": []
     },
     {
-      "description": "support agent may not read shippingAddress: customer PII is not operational",
+      "description": "support agent may not read shippingAddress: confidential is not granted to support",
       "principal": { "type": "User", "id": "carol" },
       "action": { "type": "Action", "id": "ReadOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },

@@ -222,7 +222,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="classification">4. Classification lives in the facts</h2>
 
-<p>The field policies never name a field. They look the field up in a classification map and ask whether it carries the class the policy grants:</p>
+<p>The field policies never name a field. They look the field up in a classification map and ask whether its level is one the policy grants:</p>
 
 <pre><code class="lang-cedar">@id("customer-fields-on-own-order")
 permit(
@@ -234,37 +234,35 @@ permit(
   resource.owner == principal &amp;&amp;
   context has field &amp;&amp;
   Contract::"Order".hasTag(context.field) &amp;&amp;
-  Contract::"Order".getTag(context.field).contains("customer-visible")
+  ["public", "confidential"].contains(Contract::"Order".getTag(context.field))
 };</code></pre>
 
 <p>The map itself is data, recorded in <code>entities.json</code> with the rest of the facts as <em>entity tags</em> on one <code>Contract</code> entity. Tags, added in Cedar 4.2<a class="ref" href="#r3">[3]</a>, are a key-value map an entity carries alongside its attributes. Attribute names must be fixed when a schema is written; tag keys are looked up dynamically with <code>hasTag</code> and <code>getTag</code>, which is what field names need. The policies are written once, and the set of fields stays data:</p>
 
 <pre><code class="lang-json">{ "uid": { "type": "Contract", "id": "Order" },
   "tags": {
-    "id":              ["customer-visible", "operational"],
-    "status":          ["customer-visible", "operational"],
-    "total":           ["customer-visible", "operational"],
-    "shippingAddress": ["customer-visible"],
-    "cardLast4":       ["customer-visible"],
-    "internalNotes":   ["operational"],
-    "fraudScore":      []
+    "id":              "public",
+    "status":          "public",
+    "total":           "public",
+    "shippingAddress": "confidential",
+    "cardLast4":       "confidential",
+    "internalNotes":   "internal",
+    "fraudScore":      "restricted"
   } }</code></pre>
 
-<p>The wrapper passes the field name into the request context as a plain string. The same map as a table:</p>
+<p>Each field carries exactly one of four classification levels: <code>public</code>, <code>internal</code>, <code>confidential</code>, <code>restricted</code>. The contract classifies; the policies grant levels to readers. The wrapper passes the field name into the request context as a plain string. The grants in this iteration:</p>
 
 <table>
-<tr><th>Field</th><th>customer-visible</th><th>operational</th></tr>
-<tr><td><code>id</code>, <code>status</code>, <code>total</code></td><td>yes</td><td>yes</td></tr>
-<tr><td><code>shippingAddress</code>, <code>cardLast4</code></td><td>yes</td><td></td></tr>
-<tr><td><code>internalNotes</code></td><td></td><td>yes</td></tr>
-<tr><td><code>fraudScore</code></td><td></td><td></td></tr>
+<tr><th>Reader</th><th>public</th><th>internal</th><th>confidential</th><th>restricted</th></tr>
+<tr><td>owner, on an order they own</td><td>yes</td><td></td><td>yes</td><td></td></tr>
+<tr><td>support, on any order</td><td>yes</td><td>yes</td><td></td><td></td></tr>
 </table>
 
 <p>Two consequences fall out of this design.</p>
 
 <p><strong>Undeclared fields fail closed.</strong> If the upstream response grows a field the contract never declared, say <code>debugTrace</code>, the lookup fails the <code>hasTag</code> guard, no permit matches, and default deny strips the field. The invariant from iteration 1's review, that schema drift strips rather than leaks, needs no code of its own.</p>
 
-<p><strong>A declared field can still be readable by nobody.</strong> <code>fraudScore</code> is in the map but carries no classes, so every caller loses it. When a fraud role exists, one entry in the map grants it, with no policy change.</p>
+<p><strong>A declared field can still be readable by nobody.</strong> <code>fraudScore</code> is restricted, and no policy grants restricted, so every caller loses it. When a fraud role exists, one permit granting it the restricted level turns the field on, with no change to the map.</p>
 
 <p>The <code>has</code> guards are also new. Iteration 1's ownership policy evaluates <code>resource.owner</code> directly, and the corpus pins the resulting evaluation error when the order does not exist. The field policy guards with <code>resource has owner</code>, so a guessed order id fails to a clean Deny with no error. Both behaviors stay tested: the old policy is carried unchanged, errors and all, and the new corpus pins the guarded behavior.</p>
 
@@ -272,7 +270,7 @@ permit(
 
 <p>Everything from iteration 1 is recognizable; each file grew in one direction.</p>
 
-<p><code>policies.cedar</code> carries P1 and P2 verbatim and appends P3 (customer-visible fields on an owned order) and P4 (operational fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</p>
+<p><code>policies.cedar</code> carries P1 and P2 verbatim and appends P3 (public and confidential fields on an owned order) and P4 (public and internal fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</p>
 
 <p><code>entities.json</code> carries iteration 1's users, role, and orders, and adds one <code>Contract</code> entity whose tag map is the hand-written stand-in for a contract's classification column. This file is the one ODCS will eventually generate, and the tag map is a near transcription of a contract's property list.</p>
 
@@ -308,9 +306,9 @@ permit(
 
 <h2 id="decisions">8. Decisions made in this iteration</h2>
 
-<p><strong>Classification is a tag map on a contract entity, and the field travels as a plain string.</strong> Two alternatives were considered. Listing field names inside the policy text (<code>["id", "status", "total"].contains(context.field)</code>) puts data facts in policy code and turns every contract change into a policy change. One <code>Field</code> entity per field, grouped into <code>FieldClass</code> entities via <code>parents</code>, keeps classification in the facts and was the first working version of this iteration; it costs an entity per field, an id naming convention (<code>Field::"Order/cardLast4"</code>), and an entity-reference escape in the request context. Entity tags keep classification in the facts and drop those costs: one entity per contract, and the context carries the field name as a string. What tags give up is hierarchy, since class names are strings in a set rather than entities that could nest under <code>in</code>; nothing planned needs that. Either way, adding a field to a class is an entities change, reviewable as data.</p>
+<p><strong>Classification is a tag map on a contract entity, and the field travels as a plain string.</strong> Two alternatives were considered. Listing field names inside the policy text (<code>["id", "status", "total"].contains(context.field)</code>) puts data facts in policy code and turns every contract change into a policy change. One <code>Field</code> entity per field, grouped into <code>FieldClass</code> entities via <code>parents</code>, keeps classification in the facts and was the first working version of this iteration; it costs an entity per field, an id naming convention (<code>Field::"Order/cardLast4"</code>), and an entity-reference escape in the request context. Entity tags keep classification in the facts and drop those costs: one entity per contract, and the context carries the field name as a string. What tags give up is hierarchy, since levels are strings rather than entities that could nest under <code>in</code>; nothing planned needs that.</p>
 
-<p><strong>Classes are named for audiences.</strong> <code>customer-visible</code> and <code>operational</code> say who may read, and a field may sit in several classes. Sensitivity tiers like public or confidential, if the contract uses them, map onto classes when ODCS arrives in iteration 5.</p>
+<p><strong>Classification uses four levels: public, internal, confidential, restricted.</strong> Each field carries exactly one, so the tag value is a single string. The division of responsibility follows: reclassifying a field is an entities change, reviewable as data; granting a reader a level is a policy change. An earlier version named classes for audiences (<code>customer-visible</code>, <code>operational</code>) and let one field carry several; a single sensitivity level per field says less per entry but matches how ODCS contracts classify properties, which is what the map becomes in iteration 5.</p>
 
 <p><strong>Strip and report, never reject.</strong> <code>filter_response</code> returns the filtered body plus the stripped names, matching the review decision that the interceptor never refuses a whole response. Logging the removals is the caller's job; surfacing them to tool authors stays open.</p>
 
@@ -330,8 +328,8 @@ permit(
 <tr><th>Term</th><th>Meaning</th></tr>
 <tr><td>API3</td><td>Broken object property level authorization, OWASP API3. Receiving fields inside an allowed object that this caller should not see.</td></tr>
 <tr><td>Entity tags</td><td>A key-value map a Cedar entity carries alongside its attributes, looked up with <code>hasTag</code> and <code>getTag</code>. Unlike attribute names, tag keys are dynamic.</td></tr>
-<tr><td>Contract entity</td><td>The entity holding one data contract's classification map as tags: field name to set of classes, such as <code>Contract::"Order"</code>.</td></tr>
-<tr><td>Class</td><td>A classification label naming an audience that may read a field, such as <code>customer-visible</code>. A field may carry several.</td></tr>
+<tr><td>Contract entity</td><td>The entity holding one data contract's classification map as tags: field name to classification level, such as <code>Contract::"Order"</code>.</td></tr>
+<tr><td>Classification level</td><td>One of <code>public</code>, <code>internal</code>, <code>confidential</code>, <code>restricted</code>. Each field carries exactly one; policies grant levels to readers.</td></tr>
 <tr><td>Context</td><td>The C in PARC: extra facts about one request. First used in this iteration, to carry the name of the field being asked about.</td></tr>
 <tr><td>Fail closed</td><td>A field the facts do not declare matches no permit and is stripped, so drift removes data instead of leaking it.</td></tr>
 <tr><td>Mask</td><td>The set of fields a given caller keeps. Computable per caller and contract version, which is what makes caching possible later.</td></tr>

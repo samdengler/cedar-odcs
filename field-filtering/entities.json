@@ -38,13 +38,13 @@
     "attrs": {},
     "parents": [],
     "tags": {
-      "id": [ "customer-visible", "operational" ],
-      "status": [ "customer-visible", "operational" ],
-      "total": [ "customer-visible", "operational" ],
-      "shippingAddress": [ "customer-visible" ],
-      "cardLast4": [ "customer-visible" ],
-      "internalNotes": [ "operational" ],
-      "fraudScore": []
+      "id": "public",
+      "status": "public",
+      "total": "public",
+      "shippingAddress": "confidential",
+      "cardLast4": "confidential",
+      "internalNotes": "internal",
+      "fraudScore": "restricted"
     }
   }
 ]

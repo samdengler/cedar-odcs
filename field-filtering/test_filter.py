@@ -2,8 +2,8 @@
 
 The corpus (tests/field-filtering.json) pins the per-field decisions.
 These tests pin the enforcement behavior on top of them: given a full
-upstream response, each caller gets exactly the fields their
-classification classes allow, and everything removed is reported.
+upstream response, each caller gets exactly the fields their granted
+classification levels allow, and everything removed is reported.
 """
 
 from field_filter import filter_response
@@ -30,7 +30,7 @@ def test_owner_gets_customer_visible_fields():
     assert sorted(result.stripped) == ["debugTrace", "fraudScore", "internalNotes"]
 
 
-def test_support_gets_operational_fields():
+def test_support_gets_public_and_internal_fields():
     result = filter_response('User::"carol"', ORDER, UPSTREAM_RESPONSE)
     assert set(result.body) == {"id", "status", "total", "internalNotes"}
     assert sorted(result.stripped) == [
