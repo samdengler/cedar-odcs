@@ -65,6 +65,10 @@ code { background: var(--light); color: var(--navy-deep); padding: 1px 5px; bord
 pre { background: #f2f5f9; border: 1px solid var(--rule); border-radius: 8px; padding: 13px 15px;
       overflow-x: auto; font-size: 12.5px; line-height: 1.55; }
 pre code { background: none; color: var(--ink); padding: 0; }
+code.lang-json .j-key { color: var(--navy); font-weight: 600; }
+code.lang-json .j-str { color: #2f6f44; }
+code.lang-json .j-num { color: #8a5a00; }
+code.lang-json .j-kw  { color: var(--red); }
 ul, ol { margin: 11px 0; padding-left: 24px; }
 li { margin: 7px 0; }
 ol > li { padding-left: 4px; }
@@ -173,7 +177,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>The request leg keeps iteration 1's object-level check: may this principal <code>ReadOrder</code> this order. The response leg is new. For each field in the payload the wrapper asks one more question, with a new action and, for the first time, a non-empty context. Here is one such question as it appears in the test corpus, together with the expected decision:</p>
 
-<pre><code>{
+<pre><code class="lang-json">{
   "principal": { "type": "User", "id": "carol" },
   "action":    { "type": "Action", "id": "ReadOrderField" },
   "resource":  { "type": "Order", "id": "order-1001" },
@@ -231,7 +235,7 @@ permit(
 
 <p>The map itself is data, recorded in <code>entities.json</code> with the rest of the facts as <em>entity tags</em> on one <code>Contract</code> entity. Tags, added in Cedar 4.2<a class="ref" href="#r3">[3]</a>, are a key-value map an entity carries alongside its attributes. Attribute names must be fixed when a schema is written; tag keys are looked up dynamically with <code>hasTag</code> and <code>getTag</code>, which is what field names need. The policies are written once, and the set of fields stays data:</p>
 
-<pre><code>{ "uid": { "type": "Contract", "id": "Order" },
+<pre><code class="lang-json">{ "uid": { "type": "Contract", "id": "Order" },
   "tags": {
     "id":              ["customer-visible", "operational"],
     "status":          ["customer-visible", "operational"],
@@ -815,6 +819,22 @@ permit(
   });
 })();
 
+</script>
+<script>
+/* JSON syntax colors for pre code.lang-json blocks */
+(function () {
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  document.querySelectorAll('pre code.lang-json').forEach(function (block) {
+    block.innerHTML = esc(block.textContent).replace(
+      /("(?:[^"\\]|\\.)*")(\s*:)|("(?:[^"\\]|\\.)*")|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+      function (m, key, colon, str, kw, num) {
+        if (key) return '<span class="j-key">' + key + '</span>' + colon;
+        if (str) return '<span class="j-str">' + str + '</span>';
+        if (kw) return '<span class="j-kw">' + kw + '</span>';
+        return '<span class="j-num">' + num + '</span>';
+      });
+  });
+})();
 </script>
 </body>
 </html>
