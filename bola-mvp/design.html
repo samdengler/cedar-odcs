@@ -65,6 +65,14 @@ code { background: var(--light); color: var(--navy-deep); padding: 1px 5px; bord
 pre { background: #f2f5f9; border: 1px solid var(--rule); border-radius: 8px; padding: 13px 15px;
       overflow-x: auto; font-size: 12.5px; line-height: 1.55; }
 pre code { background: none; color: var(--ink); padding: 0; }
+pre .hl-key  { color: var(--navy); font-weight: 600; }
+pre .hl-str  { color: #2f6f44; }
+pre .hl-num  { color: #8a5a00; }
+pre .hl-kw   { color: var(--red); }
+pre .hl-com  { color: #8494a5; font-style: italic; }
+pre .hl-type { color: var(--navy); font-weight: 600; }
+pre .hl-ann  { color: #7b2d8b; }
+pre .hl-fn   { color: #1f6f6f; }
 ul, ol { margin: 11px 0; padding-left: 24px; }
 li { margin: 7px 0; }
 ol > li { padding-left: 4px; }
@@ -215,7 +223,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p><strong>Policy.</strong> A rule that permits (or forbids) some set of requests. The core BOLA policy in this iteration is three lines:</p>
 
-<pre><code>permit(principal, action == Action::"ReadOrder", resource)
+<pre><code class="lang-cedar">permit(principal, action == Action::"ReadOrder", resource)
 when { resource.owner == principal };</code></pre>
 
 <p><strong>Entities.</strong> The facts the policies refer to: which users exist, which orders exist, who owns each order, who is in which role. The MVP keeps them in <code>entities.json</code>. This is the piece that will later come from data contracts and real systems.</p>
@@ -789,6 +797,53 @@ uv run pytest -v</code></pre>
   });
 })();
 
+</script>
+<script>
+/* Inline syntax colors for pre code.lang-* blocks (json, cedar, python).
+ * Token classes for Cedar follow the scopes in the vscode-cedar
+ * TextMate grammar (syntaxes/cedar.tmLanguage.json). */
+(function () {
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function span(cls, text) { return '<span class="' + cls + '">' + text + '</span>'; }
+  var langs = {
+    json: {
+      re: /("(?:[^"\\]|\\.)*")(\s*:)|("(?:[^"\\]|\\.)*")|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+      tok: function (m, key, colon, str, kw, num) {
+        if (key) return span('hl-key', key) + colon;
+        if (str) return span('hl-str', str);
+        if (kw) return span('hl-kw', kw);
+        return span('hl-num', num);
+      }
+    },
+    cedar: {
+      re: /(\/\/[^\n]*)|("(?:[^"\\]|\\.)*")|(@\w+)|([A-Z]\w*)(?=::)|\b(permit|forbid|when|unless|principal|action|resource|context|has|in|is|like|if|then|else|true|false)\b|\b(hasTag|getTag|contains|containsAll|containsAny|isEmpty)\b(?=\()|(\d+)/g,
+      tok: function (m, com, str, ann, type, kw, fn, num) {
+        if (com) return span('hl-com', com);
+        if (str) return span('hl-str', str);
+        if (ann) return span('hl-ann', ann);
+        if (type) return span('hl-type', type);
+        if (kw) return span('hl-kw', kw);
+        if (fn) return span('hl-fn', fn);
+        return span('hl-num', num);
+      }
+    },
+    python: {
+      re: /(#[^\n]*)|([fFrRbB]?"(?:[^"\\]|\\.)*"|[fFrRbB]?'(?:[^'\\]|\\.)*')|\b(for|in|if|elif|else|def|return|not|and|or|None|True|False|import|from|class|while|with|as|try|except|finally|lambda|pass|break|continue|yield)\b|(\d+(?:\.\d+)?)/g,
+      tok: function (m, com, str, kw, num) {
+        if (com) return span('hl-com', com);
+        if (str) return span('hl-str', str);
+        if (kw) return span('hl-kw', kw);
+        return span('hl-num', num);
+      }
+    }
+  };
+  document.querySelectorAll('pre code[class*="lang-"]').forEach(function (block) {
+    var m = block.className.match(/lang-(\w+)/);
+    var lang = m && langs[m[1]];
+    if (!lang) return;
+    block.innerHTML = esc(block.textContent).replace(lang.re, lang.tok);
+  });
+})();
 </script>
 </body>
 </html>
