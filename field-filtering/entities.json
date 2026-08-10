@@ -34,63 +34,17 @@
     "parents": []
   },
   {
-    "uid": { "type": "FieldClass", "id": "customer-visible" },
+    "uid": { "type": "Contract", "id": "Order" },
     "attrs": {},
-    "parents": []
-  },
-  {
-    "uid": { "type": "FieldClass", "id": "operational" },
-    "attrs": {},
-    "parents": []
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/id" },
-    "attrs": {},
-    "parents": [
-      { "type": "FieldClass", "id": "customer-visible" },
-      { "type": "FieldClass", "id": "operational" }
-    ]
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/status" },
-    "attrs": {},
-    "parents": [
-      { "type": "FieldClass", "id": "customer-visible" },
-      { "type": "FieldClass", "id": "operational" }
-    ]
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/total" },
-    "attrs": {},
-    "parents": [
-      { "type": "FieldClass", "id": "customer-visible" },
-      { "type": "FieldClass", "id": "operational" }
-    ]
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/shippingAddress" },
-    "attrs": {},
-    "parents": [
-      { "type": "FieldClass", "id": "customer-visible" }
-    ]
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/cardLast4" },
-    "attrs": {},
-    "parents": [
-      { "type": "FieldClass", "id": "customer-visible" }
-    ]
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/internalNotes" },
-    "attrs": {},
-    "parents": [
-      { "type": "FieldClass", "id": "operational" }
-    ]
-  },
-  {
-    "uid": { "type": "Field", "id": "Order/fraudScore" },
-    "attrs": {},
-    "parents": []
+    "parents": [],
+    "tags": {
+      "id": [ "customer-visible", "operational" ],
+      "status": [ "customer-visible", "operational" ],
+      "total": [ "customer-visible", "operational" ],
+      "shippingAddress": [ "customer-visible" ],
+      "cardLast4": [ "customer-visible" ],
+      "internalNotes": [ "operational" ],
+      "fraudScore": []
+    }
   }
 ]

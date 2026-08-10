@@ -1,11 +1,12 @@
 // Field filtering (API3): iteration 1's two object-level policies,
 // carried forward unchanged, plus two field-level policies.
 //
-// The field policies never name fields. They ask whether the field in
-// the request context belongs to a classification class, and the
-// class memberships live in entities.json with the rest of the facts.
-// A field in no class is readable by nobody: default deny does the
-// rest, so undeclared fields fail closed.
+// The field policies never name fields. The classification map lives
+// in entities.json as entity tags on Contract::"Order": each tag key
+// is a field name, each tag value is the set of classes the field
+// belongs to. A field with no classes is readable by nobody, and a
+// field missing from the map fails the hasTag guard, so undeclared
+// fields fail closed.
 //
 // New policies are appended, never inserted: cedarpy reports
 // determining policies by position (policy0, policy1, ...), and the
@@ -30,8 +31,8 @@ permit(
 );
 
 // P3 (policy2): A customer may read customer-visible fields of an
-// order they own. The `has` guards make unknown orders and requests
-// without a field fail cleanly instead of erroring.
+// order they own. The has and hasTag guards make unknown orders and
+// undeclared fields fail cleanly instead of erroring.
 @id("customer-fields-on-own-order")
 permit(
   principal,
@@ -41,7 +42,8 @@ permit(
   resource has owner &&
   resource.owner == principal &&
   context has field &&
-  context.field in FieldClass::"customer-visible"
+  Contract::"Order".hasTag(context.field) &&
+  Contract::"Order".getTag(context.field).contains("customer-visible")
 };
 
 // P4 (policy3): A support agent may read operational fields of any
@@ -53,5 +55,6 @@ permit(
   resource
 ) when {
   context has field &&
-  context.field in FieldClass::"operational"
+  Contract::"Order".hasTag(context.field) &&
+  Contract::"Order".getTag(context.field).contains("operational")
 };

@@ -18,17 +18,17 @@ Design decisions and the full iteration plan are in the design document.
 
 Each iteration lives in its own directory with its policies, entities, test corpus, and a design document. `index.html` at the root indexes the iterations and links to each design document.
 
-- `bola-mvp/`: iteration 1. A standalone broken object level authorization (BOLA) slice with no AWS dependency.
+- `bola-mvp/`: iteration 1. Broken object level authorization (BOLA), standalone with no AWS dependency.
   - `design.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
   - `policies.cedar`: two policies; everything else is default deny.
   - `entities.json`: the facts (users, a role, orders with owners).
   - `tests/bola.json`: six test cases in the [cedar-integration-tests](https://github.com/cedar-policy/cedar-integration-tests) corpus format.
   - `test_corpus.py`: pytest runner that feeds every corpus case to the engine.
   - `authorizer.py`: the enforcement-shaped wrapper, the same shape a Gateway interceptor will have.
-- `field-filtering/`: iteration 2. Field filtering (API3) on top of the BOLA slice.
-  - `design.html`: the design narrative. The second round of per-field questions, classification as entity facts, and the response-stripping wrapper.
-  - `policies.cedar`: iteration 1's two policies carried forward, plus two field policies that check classification class membership.
-  - `entities.json`: iteration 1's facts, plus `Field` entities grouped into `FieldClass` classes.
+- `field-filtering/`: iteration 2. Field filtering (API3) on top of iteration 1.
+  - `design.html`: the design narrative. The second round of per-field questions, classification as entity tags, and the response-stripping wrapper.
+  - `policies.cedar`: iteration 1's two policies carried forward, plus two field policies that look fields up in the classification map.
+  - `entities.json`: iteration 1's facts, plus the classification map as entity tags on a `Contract` entity.
   - `tests/bola.json`: iteration 1's corpus, byte for byte, as a regression gate.
   - `tests/field-filtering.json`: twelve per-field cases, including the fail-closed ones.
   - `test_corpus.py`: the same runner as iteration 1.

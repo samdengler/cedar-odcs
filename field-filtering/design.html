@@ -126,10 +126,10 @@ h2:hover .anchor { opacity: 1; }
   <a href="#status">2. What is built and what is not</a>
   <a href="#second-round">3. The second round of questions</a>
   <a href="#classification">4. Classification lives in the facts</a>
-  <a href="#the-slice">5. The slice, file by file</a>
+  <a href="#the-iteration">5. The iteration, file by file</a>
   <a href="#tdd">6. Growing by tests</a>
   <a href="#running">7. Running it</a>
-  <a href="#decisions">8. Decisions made in this slice</a>
+  <a href="#decisions">8. Decisions made in this iteration</a>
   <a href="#open-questions">9. Open questions</a>
   <a href="#glossary" class="tail">Glossary</a>
   <a href="#references" class="tail">References</a>
@@ -138,7 +138,7 @@ h2:hover .anchor { opacity: 1; }
 <header class="doc">
   <div class="kicker">Design &middot; Cedar OSDC &middot; August 2026</div>
   <h1>Cedar authorization for MCP tools, iteration 2: broken object property level authorization (API3)</h1>
-  <p>The BOLA slice answered one question per tool call: may this principal read this object. This slice asks a second round, one question per field in the response, and strips every field that comes back Deny.</p>
+  <p>Iteration 1 answered one question per tool call: may this principal read this object. Iteration 2 asks a second round, one question per field in the response, and strips every field that comes back Deny.</p>
 </header>
 <main>
 
@@ -149,10 +149,10 @@ h2:hover .anchor { opacity: 1; }
     <li><span class="num">2.</span><a href="#status">What is built and what is not</a></li>
     <li><span class="num">3.</span><a href="#second-round">The second round of questions</a></li>
     <li><span class="num">4.</span><a href="#classification">Classification lives in the facts</a></li>
-    <li><span class="num">5.</span><a href="#the-slice">The slice, file by file</a></li>
+    <li><span class="num">5.</span><a href="#the-iteration">The iteration, file by file</a></li>
     <li><span class="num">6.</span><a href="#tdd">Growing by tests</a></li>
     <li><span class="num">7.</span><a href="#running">Running it</a></li>
-    <li><span class="num">8.</span><a href="#decisions">Decisions made in this slice</a></li>
+    <li><span class="num">8.</span><a href="#decisions">Decisions made in this iteration</a></li>
     <li><span class="num">9.</span><a href="#open-questions">Open questions</a></li>
   </ol>
   <p class="back"><a href="../index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
@@ -162,19 +162,24 @@ h2:hover .anchor { opacity: 1; }
 
 <p>Iteration 1 made objects unreachable without a stated relationship: alice cannot fetch bob's order by swapping an id, and an unknown principal gets nothing. But an object a caller is allowed to read still carries fields that caller should not see. Alice may read her own order, and the upstream response includes the support team's <code>internalNotes</code> and a <code>fraudScore</code>. Carol on the support desk may read any order, and the response includes the customer's <code>shippingAddress</code> and <code>cardLast4</code>. The upstream API returns every field to any authenticated caller; in OWASP terms this is API3, broken object property level authorization<a class="ref" href="#r1">[1]</a>.</p>
 
-<p>Field-level enforcement has to happen on the response leg. The fields do not exist until the upstream API has answered, so the request leg has nothing to filter. This slice stays standalone Python, like iteration 1, and builds directly on iteration 1's files.</p>
+<p>Field-level enforcement has to happen on the response leg. The fields do not exist until the upstream API has answered, so the request leg has nothing to filter. This iteration stays standalone Python, like iteration 1, and builds directly on iteration 1's files.</p>
 
 <h2 id="status">2. What is built and what is not</h2>
 
 <div class="callout"><p><strong>Built:</strong> the <code>field-filtering</code> folder in this project. Iteration 1's two policies plus two field policies, field classification facts, a <code>filter_response</code> wrapper that strips denied fields from a payload, and 22 pytest tests, all passing, with iteration 1's six cases carried unchanged.</p>
-<p><strong>Not built:</strong> function level checks (API5), any parsing of ODCS documents, mask caching, and any integration with AgentCore Gateway or Runtime. Nested and list-shaped payloads are also out; this slice filters a flat object.</p></div>
+<p><strong>Not built:</strong> function level checks (API5), any parsing of ODCS documents, mask caching, and any integration with AgentCore Gateway or Runtime. Nested and list-shaped payloads are also out; this iteration filters a flat object.</p></div>
 
 <h2 id="second-round">3. The second round of questions</h2>
 
-<p>The request leg keeps iteration 1's object-level check: may this principal <code>ReadOrder</code> this order. The response leg is new. For each field in the payload the wrapper asks one more question, with a new action and, for the first time, a non-empty context:</p>
+<p>The request leg keeps iteration 1's object-level check: may this principal <code>ReadOrder</code> this order. The response leg is new. For each field in the payload the wrapper asks one more question, with a new action and, for the first time, a non-empty context. Here is one such question as it appears in the test corpus, together with the expected decision:</p>
 
-<pre><code>may User::"carol" do Action::"ReadOrderField" on Order::"order-1001"
-  with context { field: Field::"Order/cardLast4" }?        -&gt; Deny</code></pre>
+<pre><code>{
+  "principal": { "type": "User", "id": "carol" },
+  "action":    { "type": "Action", "id": "ReadOrderField" },
+  "resource":  { "type": "Order", "id": "order-1001" },
+  "context":   { "field": "cardLast4" },
+  "decision":  "Deny"
+}</code></pre>
 
 <p>Fields that come back Deny are removed from the payload; the rest passes through untouched. Per the direction settled in iteration 1's review, the wrapper never rejects a response outright: it strips, and it reports what it stripped so the enforcement point can log the removals.</p>
 
@@ -202,14 +207,14 @@ h2:hover .anchor { opacity: 1; }
 }
 </script>
 </div>
-<figcaption>The response leg. The object-level check from iteration 1 runs first; the per-field round runs on the fetched payload. In this slice the interceptor is <code>filter_response</code> in <code>field_filter.py</code>.</figcaption>
+<figcaption>The response leg. The object-level check from iteration 1 runs first; the per-field round runs on the fetched payload. In this iteration the interceptor is <code>filter_response</code> in <code>field_filter.py</code>.</figcaption>
 </figure>
 
-<p>The naive loop evaluates Cedar once per field per response. Iteration 1's review already settled how that cost is bounded: field permits depend on role and classification rather than row values, so the field mask for a caller can be computed once and cached. This slice keeps the loop because it is the readable version of the idea; the caching belongs to the enforcement-placement iteration.</p>
+<p>The naive loop evaluates Cedar once per field per response. Iteration 1's review already settled how that cost is bounded: field permits depend on role and classification rather than row values, so the field mask for a caller can be computed once and cached. This iteration keeps the loop because it is the readable version of the idea; the caching belongs to the enforcement-placement iteration.</p>
 
 <h2 id="classification">4. Classification lives in the facts</h2>
 
-<p>The field policies never name a field. They ask whether the field in the context belongs to a classification class:</p>
+<p>The field policies never name a field. They look the field up in a classification map and ask whether it carries the class the policy grants:</p>
 
 <pre><code>@id("customer-fields-on-own-order")
 permit(
@@ -220,15 +225,24 @@ permit(
   resource has owner &amp;&amp;
   resource.owner == principal &amp;&amp;
   context has field &amp;&amp;
-  context.field in FieldClass::"customer-visible"
+  Contract::"Order".hasTag(context.field) &amp;&amp;
+  Contract::"Order".getTag(context.field).contains("customer-visible")
 };</code></pre>
 
-<p>Which fields belong to which classes is data, recorded in <code>entities.json</code> with the rest of the facts. Each contract field is an entity, and class membership uses <code>parents</code>, the same group mechanism that puts carol in <code>Role::"support"</code>:</p>
+<p>The map itself is data, recorded in <code>entities.json</code> with the rest of the facts as <em>entity tags</em> on one <code>Contract</code> entity. Tags, added in Cedar 4.2<a class="ref" href="#r3">[3]</a>, are a key-value map an entity carries alongside its attributes. Attribute names must be fixed when a schema is written; tag keys are looked up dynamically with <code>hasTag</code> and <code>getTag</code>, which is what field names need. The policies are written once, and the set of fields stays data:</p>
 
-<pre><code>{ "uid": { "type": "Field", "id": "Order/cardLast4" },
-  "parents": [ { "type": "FieldClass", "id": "customer-visible" } ] }</code></pre>
+<pre><code>{ "uid": { "type": "Contract", "id": "Order" },
+  "tags": {
+    "id":              ["customer-visible", "operational"],
+    "status":          ["customer-visible", "operational"],
+    "total":           ["customer-visible", "operational"],
+    "shippingAddress": ["customer-visible"],
+    "cardLast4":       ["customer-visible"],
+    "internalNotes":   ["operational"],
+    "fraudScore":      []
+  } }</code></pre>
 
-<p>The wrapper passes the field into the request as an entity reference in the context, using Cedar's JSON entity escape<a class="ref" href="#r3">[3]</a>. The full field map for the order contract in this slice:</p>
+<p>The wrapper passes the field name into the request context as a plain string. The same map as a table:</p>
 
 <table>
 <tr><th>Field</th><th>customer-visible</th><th>operational</th></tr>
@@ -240,25 +254,24 @@ permit(
 
 <p>Two consequences fall out of this shape.</p>
 
-<p><strong>Undeclared fields fail closed.</strong> If the upstream response grows a field the contract never declared, say <code>debugTrace</code>, the wrapper asks about <code>Field::"Order/debugTrace"</code>, an entity Cedar has never heard of. An unknown entity belongs to no class, no permit matches, and default deny strips the field. The invariant from iteration 1's review, that schema drift strips rather than leaks, needs no code of its own.</p>
+<p><strong>Undeclared fields fail closed.</strong> If the upstream response grows a field the contract never declared, say <code>debugTrace</code>, the lookup fails the <code>hasTag</code> guard, no permit matches, and default deny strips the field. The invariant from iteration 1's review, that schema drift strips rather than leaks, needs no code of its own.</p>
 
-<p><strong>A declared field can still be readable by nobody.</strong> <code>fraudScore</code> is in the contract but in no class, so every caller loses it. When a fraud role exists, one membership line in the facts grants it, with no policy change.</p>
+<p><strong>A declared field can still be readable by nobody.</strong> <code>fraudScore</code> is in the map but carries no classes, so every caller loses it. When a fraud role exists, one entry in the map grants it, with no policy change.</p>
 
 <p>The <code>has</code> guards are also new. Iteration 1's ownership policy evaluates <code>resource.owner</code> directly, and the corpus pins the resulting evaluation error when the order does not exist. The field policy guards with <code>resource has owner</code>, so a guessed order id fails to a clean Deny with no error. Both behaviors stay tested: the old policy is carried unchanged, errors and all, and the new corpus pins the guarded behavior.</p>
 
-<h2 id="the-slice">5. The slice, file by file</h2>
+<h2 id="the-iteration">5. The iteration, file by file</h2>
 
 <p>Everything from iteration 1 is recognizable; each file grew in one direction.</p>
 
 <p><code>policies.cedar</code> carries P1 and P2 verbatim and appends P3 (customer-visible fields on an owned order) and P4 (operational fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</p>
 
-<p><code>entities.json</code> carries iteration 1's users, role, and orders, and adds two <code>FieldClass</code> entities and seven <code>Field</code> entities. This file is the one ODCS will eventually generate; the classes and memberships added here are exactly the hand-written stand-in for a contract's classification column.</p>
+<p><code>entities.json</code> carries iteration 1's users, role, and orders, and adds one <code>Contract</code> entity whose tag map is the hand-written stand-in for a contract's classification column. This file is the one ODCS will eventually generate, and the tag map is a near transcription of a contract's property list.</p>
 
 <p><code>field_filter.py</code> replaces <code>authorizer.py</code> as the enforcement-shaped wrapper. <code>is_allowed</code> is the same function with a context parameter added. <code>filter_response(principal, resource, body)</code> is the response leg: one question per field, returning the kept body and the list of stripped field names.</p>
 
 <pre><code>for name, value in body.items():
-    context = {"field": {"__entity": {"type": "Field", "id": f"Order/{name}"}}}
-    if is_allowed(principal, 'Action::"ReadOrderField"', resource, context).allowed:
+    if is_allowed(principal, 'Action::"ReadOrderField"', resource, {"field": name}).allowed:
         kept[name] = value
     else:
         stripped.append(name)</code></pre>
@@ -281,13 +294,13 @@ permit(
 
 <pre><code>uv run pytest -v</code></pre>
 
-<p>The slice also runs standalone:</p>
+<p>The iteration also runs standalone:</p>
 
 <pre><code>uv run --project field-filtering pytest -v</code></pre>
 
-<h2 id="decisions">8. Decisions made in this slice</h2>
+<h2 id="decisions">8. Decisions made in this iteration</h2>
 
-<p><strong>The field travels as an entity reference, and classification travels as group membership.</strong> The alternative was listing field names inside the policy text (<code>["id", "status", "total"].contains(context.field)</code>). That works, but it puts data facts in policy code, and it makes iteration 5's job harder: an ODCS contract naturally compiles to <code>Field</code> entities with class memberships, leaving the policies untouched as contracts evolve. With membership in the facts, adding a field to a class is an entities change, reviewable as data.</p>
+<p><strong>Classification is a tag map on a contract entity, and the field travels as a plain string.</strong> Two alternatives were considered. Listing field names inside the policy text (<code>["id", "status", "total"].contains(context.field)</code>) puts data facts in policy code and turns every contract change into a policy change. One <code>Field</code> entity per field, grouped into <code>FieldClass</code> entities via <code>parents</code>, keeps classification in the facts and was the first working version of this iteration; it costs an entity per field, an id naming convention (<code>Field::"Order/cardLast4"</code>), and an entity-reference escape in the request context. Entity tags keep classification in the facts and drop those costs: one entity per contract, and the context carries the field name as a string. What tags give up is hierarchy, since class names are strings in a set rather than entities that could nest under <code>in</code>; nothing planned needs that. Either way, adding a field to a class is an entities change, reviewable as data.</p>
 
 <p><strong>Classes are named for audiences.</strong> <code>customer-visible</code> and <code>operational</code> say who may read, and a field may sit in several classes. Sensitivity tiers like public or confidential, if the contract uses them, map onto classes when ODCS arrives in iteration 5.</p>
 
@@ -298,7 +311,7 @@ permit(
 <h2 id="open-questions">9. Open questions</h2>
 
 <ol>
-<li>Nested and list-shaped payloads. This slice filters one flat object. Real order payloads nest (<code>items[].sku</code>), which needs a naming convention for <code>Field</code> ids and a walk of the payload tree. Deciding it belongs with ODCS, since contracts already name nested properties, and with row filtering for the list case.</li>
+<li>Nested and list-shaped payloads. This iteration filters one flat object. Real order payloads nest (<code>items[].sku</code>), which needs a naming convention for tag keys and a walk of the payload tree. Deciding it belongs with ODCS, since contracts already name nested properties, and with row filtering for the list case.</li>
 <li>Whether <code>ReadOrderField</code> stays a per-resource-type action or becomes a single <code>ReadField</code> action once a second resource type exists.</li>
 <li>Carried from iteration 1: how stripped-field removals are surfaced to tool authors, and measured response-path overhead once mask caching exists to measure against.</li>
 </ol>
@@ -308,9 +321,10 @@ permit(
 <table>
 <tr><th>Term</th><th>Meaning</th></tr>
 <tr><td>API3</td><td>Broken object property level authorization, OWASP API3. Receiving fields inside an allowed object that this caller should not see.</td></tr>
-<tr><td>Field</td><td>A Cedar entity naming one contract field of a resource type, such as <code>Field::"Order/cardLast4"</code>.</td></tr>
-<tr><td>FieldClass</td><td>A Cedar entity grouping the fields an audience may read. Membership uses <code>parents</code>, Cedar's group mechanism.</td></tr>
-<tr><td>Context</td><td>The C in PARC: extra facts about one request. First used in this slice, to carry the field being asked about.</td></tr>
+<tr><td>Entity tags</td><td>A key-value map a Cedar entity carries alongside its attributes, looked up with <code>hasTag</code> and <code>getTag</code>. Unlike attribute names, tag keys are dynamic.</td></tr>
+<tr><td>Contract entity</td><td>The entity holding one data contract's classification map as tags: field name to set of classes, such as <code>Contract::"Order"</code>.</td></tr>
+<tr><td>Class</td><td>A classification label naming an audience that may read a field, such as <code>customer-visible</code>. A field may carry several.</td></tr>
+<tr><td>Context</td><td>The C in PARC: extra facts about one request. First used in this iteration, to carry the name of the field being asked about.</td></tr>
 <tr><td>Fail closed</td><td>A field the facts do not declare matches no permit and is stripped, so drift removes data instead of leaking it.</td></tr>
 <tr><td>Mask</td><td>The set of fields a given caller keeps. Computable per caller and contract version, which is what makes caching possible later.</td></tr>
 </table>
@@ -320,7 +334,7 @@ permit(
 <ol class="sources">
 <li id="r1"><a href="https://owasp.org/API-Security/editions/2023/en/0x11-t10/">OWASP API Security Top 10, 2023 edition</a></li>
 <li id="r2"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
-<li id="r3"><a href="https://docs.cedarpolicy.com/auth/entities-syntax.html">Cedar entities and context JSON format</a>, the <code>__entity</code> escape</li>
+<li id="r3"><a href="https://github.com/cedar-policy/rfcs/blob/main/text/0082-entity-tags.md">Cedar RFC 82, entity tags</a>, the tag mechanism added in Cedar 4.2</li>
 <li id="r4"><a href="https://github.com/k9securityio/cedar-py">cedarpy, Python bindings for the Cedar engine</a></li>
 <li id="r5"><a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>, the Cedar project's engine-independent test corpus format</li>
 <li id="r6"><a href="https://bitol-io.github.io/open-data-contract-standard/">Open Data Contract Standard (ODCS), Bitol project</a></li>

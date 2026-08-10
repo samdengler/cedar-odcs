@@ -1,19 +1,20 @@
 """The response leg of the interceptor: per-field decisions.
 
 Iteration 1 asked one question per tool call: may this principal read
-this object. This slice asks a second round, one question per field in
-the upstream response:
+this object. This iteration asks a second round, one question per
+field in the upstream response:
 
   may User::"alice" ReadOrderField Order::"order-1001",
-  where context.field is Field::"Order/cardLast4"?
+  where context.field is "cardLast4"?
 
 and strips the fields that come back Deny. Per the settled direction,
 the wrapper never rejects a response outright: it removes what it must
 and reports what it removed, so the caller can log the removals.
 
-A response field with no Field entity in the facts is an entity Cedar
-has never heard of. It belongs to no classification class, so no
-policy permits it and it is stripped: schema drift fails closed.
+The field classification map lives in the facts, as entity tags on
+Contract::"Order". A response field missing from that map fails the
+policies' hasTag guard, so no permit matches and it is stripped:
+schema drift fails closed.
 """
 
 import json
@@ -67,17 +68,15 @@ def is_allowed(principal: str, action: str, resource: str, context: dict = None)
 def filter_response(principal: str, resource: str, body: dict) -> FilteredResponse:
     """One ReadOrderField question per field in the upstream response body.
 
-    The field is named as an entity ref in the request context,
-    Field::"<ResourceType>/<fieldName>", so the policies can check its
-    classification class memberships.
+    The field name goes into the request context as a plain string;
+    the policies look it up in the contract's tag map to check its
+    classification classes.
     """
-    resource_type = resource.split("::")[0]
     kept, stripped = {}, []
     for name, value in body.items():
-        context = {
-            "field": {"__entity": {"type": "Field", "id": f"{resource_type}/{name}"}}
-        }
-        decision = is_allowed(principal, 'Action::"ReadOrderField"', resource, context)
+        decision = is_allowed(
+            principal, 'Action::"ReadOrderField"', resource, {"field": name}
+        )
         if decision.allowed:
             kept[name] = value
         else:

@@ -125,8 +125,8 @@ h2:hover .anchor { opacity: 1; }
   <a href="#problem">1. The problem</a>
   <a href="#status">2. What is built and what is not</a>
   <a href="#where-cedar-sits">3. Where Cedar sits in the eventual stack</a>
-  <a href="#cedar-concepts">4. Cedar concepts used in this slice</a>
-  <a href="#the-slice">5. The BOLA slice, file by file</a>
+  <a href="#cedar-concepts">4. Cedar concepts used in this iteration</a>
+  <a href="#the-iteration">5. The BOLA iteration, file by file</a>
   <a href="#tdd">6. Growing by tests</a>
   <a href="#running">7. Running it</a>
   <a href="#settled-direction">8. Direction settled in review</a>
@@ -138,7 +138,7 @@ h2:hover .anchor { opacity: 1; }
 <header class="doc">
   <div class="kicker">Design &middot; Cedar OSDC &middot; August 2026</div>
   <h1>Cedar authorization for MCP tools, iteration 1: broken object level authorization (BOLA)</h1>
-  <p>A standalone Cedar policy engine slice that answers one question, "may this principal read this object", as the first step toward data governance for agent tool calls.</p>
+  <p>A standalone Cedar policy engine setup that answers one question, "may this principal read this object", as the first step toward data governance for agent tool calls.</p>
 </header>
 <main>
 
@@ -148,8 +148,8 @@ h2:hover .anchor { opacity: 1; }
     <li><span class="num">1.</span><a href="#problem">The problem</a></li>
     <li><span class="num">2.</span><a href="#status">What is built and what is not</a></li>
     <li><span class="num">3.</span><a href="#where-cedar-sits">Where Cedar sits in the eventual stack</a></li>
-    <li><span class="num">4.</span><a href="#cedar-concepts">Cedar concepts used in this slice</a></li>
-    <li><span class="num">5.</span><a href="#the-slice">The BOLA slice, file by file</a></li>
+    <li><span class="num">4.</span><a href="#cedar-concepts">Cedar concepts used in this iteration</a></li>
+    <li><span class="num">5.</span><a href="#the-iteration">The BOLA iteration, file by file</a></li>
     <li><span class="num">6.</span><a href="#tdd">Growing by tests</a></li>
     <li><span class="num">7.</span><a href="#running">Running it</a></li>
     <li><span class="num">8.</span><a href="#settled-direction">Direction settled in review</a></li>
@@ -170,7 +170,7 @@ h2:hover .anchor { opacity: 1; }
 <li><strong>API5, Broken Function Level Authorization (BFLA).</strong> Calling an action reserved for another role, such as issuing a refund.</li>
 </ul>
 
-<p>The plan is to express the rules in Cedar<a class="ref" href="#r2">[2]</a>, eventually derive them from Open Data Contract Standard documents<a class="ref" href="#r3">[3]</a>, and enforce them at the Gateway. This document covers only the first slice: BOLA, standalone, in Python, with tests.</p>
+<p>The plan is to express the rules in Cedar<a class="ref" href="#r2">[2]</a>, eventually derive them from Open Data Contract Standard documents<a class="ref" href="#r3">[3]</a>, and enforce them at the Gateway. This document covers only the first iteration: BOLA, standalone, in Python, with tests.</p>
 
 <h2 id="status">2. What is built and what is not</h2>
 
@@ -207,13 +207,13 @@ h2:hover .anchor { opacity: 1; }
 
 <p>Nothing about the MVP depends on this placement being final. The Python wrapper has the same shape an interceptor would have: it receives a principal, an action, and a resource, and returns allow or deny.</p>
 
-<h2 id="cedar-concepts">4. Cedar concepts used in this slice</h2>
+<h2 id="cedar-concepts">4. Cedar concepts used in this iteration</h2>
 
 <p>The code sample rests on five concepts.</p>
 
-<p><strong>Request.</strong> Every question to Cedar has the same shape, called PARC: a <em>principal</em> (who), an <em>action</em> (doing what), a <em>resource</em> (to what), and a <em>context</em> (extra facts about this call, empty in this slice). Example: may <code>User::"alice"</code> perform <code>Action::"ReadOrder"</code> on <code>Order::"order-1001"</code>?</p>
+<p><strong>Request.</strong> Every question to Cedar has the same shape, called PARC: a <em>principal</em> (who), an <em>action</em> (doing what), a <em>resource</em> (to what), and a <em>context</em> (extra facts about this call, empty in this iteration). Example: may <code>User::"alice"</code> perform <code>Action::"ReadOrder"</code> on <code>Order::"order-1001"</code>?</p>
 
-<p><strong>Policy.</strong> A rule that permits (or forbids) some set of requests. The core BOLA policy in this slice is three lines:</p>
+<p><strong>Policy.</strong> A rule that permits (or forbids) some set of requests. The core BOLA policy in this iteration is three lines:</p>
 
 <pre><code>permit(principal, action == Action::"ReadOrder", resource)
 when { resource.owner == principal };</code></pre>
@@ -226,7 +226,7 @@ when { resource.owner == principal };</code></pre>
 
 <p>Cedar also has a schema mechanism that validates policies against declared entity types. The MVP skips it to keep the moving parts down; it enters in a later iteration alongside ODCS, since a data contract is a natural source for a schema.</p>
 
-<h2 id="the-slice">5. The BOLA slice, file by file</h2>
+<h2 id="the-iteration">5. The BOLA iteration, file by file</h2>
 
 <p>Four files in <code>bola-mvp/</code>, readable in one sitting.</p>
 
@@ -242,13 +242,13 @@ when { resource.owner == principal };</code></pre>
 
 <h2 id="tdd">6. Growing by tests</h2>
 
-<p>The working loop for every future iteration: add cases to the JSON corpus that describe the next rule, watch them fail, then write the policy or entity change that makes them pass. Because the attacks are written down before the defenses, a later policy change that weakens a defense fails a test. The same corpus later gates the Rust extension in CI, so the Python slice and the production enforcement point are held to identical rules.</p>
+<p>The working loop for every future iteration: add cases to the JSON corpus that describe the next rule, watch them fail, then write the policy or entity change that makes them pass. Because the attacks are written down before the defenses, a later policy change that weakens a defense fails a test. The same corpus later gates the Rust extension in CI, so the Python iterations and the production enforcement point are held to identical rules.</p>
 
 <p>Planned iterations, each one small:</p>
 
 <ol>
 <li><strong>Field filtering (API3).</strong> Given an allowed object, ask Cedar a second round of questions, one per sensitive field ("may alice read <code>Order.cardNumber</code>?"), and strip denied fields from the response. This is where response filtering lives.</li>
-<li><strong>Function level (API5).</strong> Add actions like <code>RefundOrder</code> permitted only to roles. The support policy in the current slice already shows the pattern.</li>
+<li><strong>Function level (API5).</strong> Add actions like <code>RefundOrder</code> permitted only to roles. The support policy in the current iteration already shows the pattern.</li>
 <li><strong>On behalf of access modes.</strong> Add the acting-for party to the request context and cover the full matrix: customer direct, employee direct, and employee acting for a customer, each against own and other objects.</li>
 <li><strong>ODCS as the source of truth.</strong> Write a small data contract for the orders API, then generate the Cedar schema and the field sensitivity classifications from it instead of hand-writing them.</li>
 <li><strong>Row filtering.</strong> For list endpoints, either evaluate per row or derive filter conditions from policies (Cedar calls this partial evaluation).</li>
