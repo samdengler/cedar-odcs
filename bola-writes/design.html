@@ -131,7 +131,7 @@ h2:hover .anchor { opacity: 1; }
 <nav class="toc">
   <p class="toc-title">Contents</p>
   <a href="#problem">1. The problem</a>
-  <a href="#status">2. What is built and what is not</a>
+  <a href="#scope">2. Scope of this iteration</a>
   <a href="#the-gate">3. The gate runs before the call</a>
   <a href="#owner-fact">4. The owner fact before the call</a>
   <a href="#the-iteration">5. The iteration, file by file</a>
@@ -154,7 +154,7 @@ h2:hover .anchor { opacity: 1; }
   <p class="toc-title">Contents</p>
   <ol>
     <li><span class="num">1.</span><a href="#problem">The problem</a></li>
-    <li><span class="num">2.</span><a href="#status">What is built and what is not</a></li>
+    <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
     <li><span class="num">3.</span><a href="#the-gate">The gate runs before the call</a></li>
     <li><span class="num">4.</span><a href="#owner-fact">The owner fact before the call</a></li>
     <li><span class="num">5.</span><a href="#the-iteration">The iteration, file by file</a></li>
@@ -172,7 +172,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>Reads could be enforced after the fetch, because a fetched response can still be filtered or discarded. An applied write cannot be taken back, so enforcement has to move. This iteration covers the object level only: may this principal update this order at all. Which fields a write may touch, the mass assignment half of API3<a class="ref" href="#r2">[2]</a>, is a later iteration.</p>
 
-<h2 id="status">2. What is built and what is not</h2>
+<h2 id="scope">2. Scope of this iteration</h2>
 
 <div class="callout"><p><strong>Built:</strong> the <code>bola-writes</code> folder in this project. Iteration 1's two policies plus one update policy, six new corpus cases, iteration 1's six cases carried unchanged, and a request-leg wrapper. Twelve pytest tests, all passing.</p>
 <p><strong>Not built:</strong> field-level write checks (mass assignment, planned as iteration 4), <code>Create</code> and <code>Delete</code> verbs, any entity store, and any integration with AgentCore Gateway or Runtime.</p></div>

@@ -131,7 +131,7 @@ h2:hover .anchor { opacity: 1; }
 <nav class="toc">
   <p class="toc-title">Contents</p>
   <a href="#problem">1. The problem</a>
-  <a href="#status">2. What is built and what is not</a>
+  <a href="#scope">2. Scope of this iteration</a>
   <a href="#where-cedar-sits">3. Where Cedar sits in the eventual stack</a>
   <a href="#cedar-concepts">4. Cedar concepts used in this iteration</a>
   <a href="#the-iteration">5. The BOLA iteration, file by file</a>
@@ -154,7 +154,7 @@ h2:hover .anchor { opacity: 1; }
   <p class="toc-title">Contents</p>
   <ol>
     <li><span class="num">1.</span><a href="#problem">The problem</a></li>
-    <li><span class="num">2.</span><a href="#status">What is built and what is not</a></li>
+    <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
     <li><span class="num">3.</span><a href="#where-cedar-sits">Where Cedar sits in the eventual stack</a></li>
     <li><span class="num">4.</span><a href="#cedar-concepts">Cedar concepts used in this iteration</a></li>
     <li><span class="num">5.</span><a href="#the-iteration">The BOLA iteration, file by file</a></li>
@@ -180,7 +180,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>The plan is to express the rules in Cedar<a class="ref" href="#r4">[4]</a>, eventually derive them from Open Data Contract Standard documents<a class="ref" href="#r5">[5]</a>, and enforce them at the Gateway. This document covers only the first iteration: BOLA, standalone, in Python, with tests.</p>
 
-<h2 id="status">2. What is built and what is not</h2>
+<h2 id="scope">2. Scope of this iteration</h2>
 
 <div class="callout"><p><strong>Built:</strong> the <code>bola-reads</code> folder in this project. Two Cedar policies, a set of entity facts, a Python wrapper of about thirty lines, and six pytest tests, all passing. It runs on a laptop with no AWS dependency.</p>
 <p><strong>Not built:</strong> field filtering (API3), function level checks (API5), any parsing of ODCS documents, and any integration with AgentCore Gateway or Runtime. Sections that mention those describe intent, not working code.</p></div>
