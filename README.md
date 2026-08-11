@@ -57,6 +57,17 @@ Each iteration is also a standalone uv project, so the same command works inside
 uv run --project bola-reads pytest -v
 ```
 
+## Onboarding questions
+
+Each new use case is a tool, the API behind it, and the rules that govern it. The iterations define the requirement target; these questions, asked once per use case, say which patterns cover it and what is genuinely missing. Facts come from the token and the tool input first; lookups are added only for gaps the answers prove.
+
+1. Identity: what bearer token reaches the Gateway? Whom does the subject identify (customer, employee, service)? Which claims are present: roles, tenant or account scoping, an `act` claim for acting on behalf of another party?
+2. Verbs: which operations does the tool expose, and which are reads and which are writes? Writes are gated on the request leg before the call; reads are filtered on the response leg.
+3. Rules and their facts: for each rule the use case needs, which facts decide it? Which of those are already in the token or the tool input, checkable with no lookup? Which are relationship facts, like order ownership, that live only in a system of record?
+4. For the proven gaps: where does the fact come from (a claim added to the token, a pre-fetch through the read path, an entity store), and how fresh must it be?
+5. Data contract: what does the response payload contain, field by field, and what classification level does each field carry? Fields outside the contract strip, so the contract must be complete before onboarding.
+6. Grants: which roles hold which verbs, and which classification levels does each reader hold?
+
 ## Iterations
 
 1. Broken object level authorization (BOLA) on reads, done: object level checks, default deny.

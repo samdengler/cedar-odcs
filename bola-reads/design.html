@@ -294,7 +294,7 @@ when { resource.owner == principal };</code></pre>
 <h2 id="open-questions">9. Open questions</h2>
 
 <ol>
-<li>Identity propagation, now a fact-finding item: what claims or headers the Gateway can deliver to an interceptor, and whether OAuth token exchange is available in the identity setup. Known to be restricted; the restrictions are not yet enumerated.</li>
+<li>Identity propagation, now a fact-finding item: what the bearer token carries (issuer, what the subject identifies, roles, tenant or account scoping, an <code>act</code> claim for on behalf of), what of it the Gateway delivers to policy evaluation and to interceptors, and whether OAuth token exchange is available in the identity setup. This inventory gates every design that needs facts at decision time: a fact already in the token or the tool input needs no machinery, and lookups or entity stores enter only for gaps the inventory proves. The same questions repeat for each new use case; the README records them as the onboarding questions.</li>
 <li>How stripped-field removals are surfaced to tool authors, so schema drift gets fixed rather than silently masked forever.</li>
 <li>Measured numbers for the response-path overhead on realistic payloads, once the mask caching exists to measure against.</li>
 </ol>

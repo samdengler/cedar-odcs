@@ -267,7 +267,7 @@ permit(
 
 <ol>
 <li>Create and delete. <code>CreateOrder</code> has no owner to check; ownership is assigned by the creation itself, so its rule is about who may create at all, which is function level. <code>DeleteOrder</code> mirrors update. The verb list comes from the registered tool schemas.</li>
-<li>Owner facts in deployment: entity store or pre-fetch, and the gap between checking the owner and the upstream applying the write (TOCTOU).</li>
+<li>Owner facts in deployment. Before choosing an entity store or a pre-fetch, inventory the bearer token and the tool inputs: a call whose input names the acted-on party can be decided against the token subject with no lookup at all. Lookups enter only for calls the inventory proves have no such binding, and the freshness gap between check and apply (TOCTOU) arrives with them.</li>
 <li>What a rejection reveals. "Not the owner" confirms the order exists; an answer indistinguishable from "no such order" hides it. The denial format is an information-disclosure decision that belongs with the Gateway iteration.</li>
 </ol>
 
