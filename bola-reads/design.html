@@ -238,34 +238,19 @@ when { resource.owner == principal };</code></pre>
 
 <p>Four files in <code>bola-reads/</code>, readable in one sitting.</p>
 
-<p><code>policies.cedar</code> holds two policies: a customer may read an order whose <code>owner</code> attribute equals the principal, and anyone in <code>Role::"support"</code> may read any order. That second policy exists to show role membership, which is how BFLA rules will look later.</p>
-
-<p><code>entities.json</code> holds the facts: three users (alice, bob, and carol the support agent), one role, and two orders with owners. Carol's membership in the support role is expressed by listing the role among her <code>parents</code>, Cedar's group mechanism.</p>
-
-<p><code>authorizer.py</code> loads both files and exposes one function, <code>is_allowed(principal, action, resource)</code>, wrapping the cedarpy bindings<a class="ref" href="#r7">[7]</a>. It does the same job a Gateway interceptor will do: load rules, answer questions.</p>
-
-<p><code>tests/bola.json</code> is the interesting file. The test cases are data: each entry is one authorization question phrased as either a legitimate request or an attack (alice reads her own order, alice swaps the id to bob's order, carol reads anything, an unknown principal or a guessed order id), with the expected decision, the policies expected to determine it, and any expected evaluation errors. The file follows the format of the Cedar project's own integration-test corpus<a class="ref" href="#r12">[12]</a>, which the Rust and Java engines already run in CI.</p>
-
-<p><code>test_corpus.py</code> is a thin pytest runner that feeds every case in <code>tests/</code> to the engine. Because the cases are engine-independent data in an established format, a future Rust enforcement build runs the same JSON files with a Rust runner; the governance rules are defined once.</p>
+<ul>
+<li><code>policies.cedar</code> holds two policies: a customer may read an order whose <code>owner</code> attribute equals the principal, and anyone in <code>Role::"support"</code> may read any order. That second policy exists to show role membership, which is how BFLA rules will look later.</li>
+<li><code>entities.json</code> holds the facts: three users (alice, bob, and carol the support agent), one role, and two orders with owners. Carol's membership in the support role is expressed by listing the role among her <code>parents</code>, Cedar's group mechanism.</li>
+<li><code>authorizer.py</code> loads both files and exposes one function, <code>is_allowed(principal, action, resource)</code>, wrapping the cedarpy bindings<a class="ref" href="#r7">[7]</a>. It does the same job a Gateway interceptor will do: load rules, answer questions.</li>
+<li><code>tests/bola.json</code> is the interesting file. The test cases are data: each entry is one authorization question phrased as either a legitimate request or an attack (alice reads her own order, alice swaps the id to bob's order, carol reads anything, an unknown principal or a guessed order id), with the expected decision, the policies expected to determine it, and any expected evaluation errors. The file follows the format of the Cedar project's own integration-test corpus<a class="ref" href="#r12">[12]</a>, which the Rust and Java engines already run in CI.</li>
+<li><code>test_corpus.py</code> is a thin pytest runner that feeds every case in <code>tests/</code> to the engine. Because the cases are engine-independent data in an established format, a future Rust enforcement build runs the same JSON files with a Rust runner; the governance rules are defined once.</li>
+</ul>
 
 <h2 id="tdd">6. Growing by tests</h2>
 
 <p>The working loop for every future iteration: add cases to the JSON corpus that describe the next rule, watch them fail, then write the policy or entity change that makes them pass. Because the attacks are written down before the defenses, a later policy change that weakens a defense fails a test. The same corpus later gates the Rust extension in CI, so the Python iterations and the production enforcement point are held to identical rules.</p>
 
-<p>Planned iterations, each one small:</p>
-
-<ol>
-<li><strong>BOLA on writes.</strong> The same ownership rule applied to <code>UpdateOrder</code>, gated on the request leg before the upstream API can apply the write.</li>
-<li><strong>Field filtering (API3 reads).</strong> Given an allowed object, ask Cedar a second round of questions, one per sensitive field ("may alice read <code>Order.cardNumber</code>?"), and strip denied fields from the response. This is where response filtering lives.</li>
-<li><strong>Mass assignment (API3 writes).</strong> Per-field checks on the write payload; a denied field rejects the whole call.</li>
-<li><strong>Function level (API5).</strong> Add actions like <code>RefundOrder</code> permitted only to roles. The support policy in the current iteration already shows the pattern.</li>
-<li><strong>On behalf of access modes.</strong> Add the acting-for party to the request context and cover the full matrix: customer direct, employee direct, and employee acting for a customer, each against own and other objects.</li>
-<li><strong>ODCS as the source of truth.</strong> Write a small data contract for the orders API, then generate the Cedar schema and the field sensitivity classifications from it instead of hand-writing them.</li>
-<li><strong>Row filtering.</strong> For list endpoints, either evaluate per row or derive filter conditions from policies (Cedar calls this partial evaluation).</li>
-<li><strong>Enforcement placement.</strong> Move <code>is_allowed</code> into the response interceptor path described in section 8.</li>
-</ol>
-
-<p>No iteration starts before the previous one is understood.</p>
+<p>The iteration plan lives in the README and on the <a href="../index.html">index page</a>, one entry per iteration, so it is maintained in one place as the order changes. Each iteration is small, and no iteration starts before the previous one is understood.</p>
 
 <h2 id="running">7. Running it</h2>
 

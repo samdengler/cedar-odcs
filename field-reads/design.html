@@ -268,25 +268,21 @@ permit(
 
 <h2 id="the-iteration">5. The iteration, file by file</h2>
 
-<p>Everything from iteration 1 is recognizable; each file grew in one direction.</p>
+<p>Everything from the first two iterations is recognizable; each file grew in one direction.</p>
 
-<p><code>policies.cedar</code> carries the three object-level policies verbatim and appends P4 (public and confidential fields on an owned order) and P5 (public and internal fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</p>
-
-<p><code>entities.json</code> carries iteration 1's users, role, and orders, and adds one <code>Contract</code> entity whose tag map is the hand-written stand-in for a contract's classification column. This file is the one ODCS will eventually generate, and the tag map is a near transcription of a contract's property list.</p>
-
-<p><code>field_filter.py</code> replaces <code>authorizer.py</code> as the enforcement wrapper. <code>is_allowed</code> is the same function with a context parameter added. <code>filter_response(principal, resource, body)</code> is the response leg: one question per field, returning the kept body and the list of stripped field names.</p>
-
+<ul>
+<li><code>policies.cedar</code> carries the three object-level policies verbatim and appends P4 (public and confidential fields on an owned order) and P5 (public and internal fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</li>
+<li><code>entities.json</code> carries iteration 1's users, role, and orders, and adds one <code>Contract</code> entity whose tag map is the hand-written stand-in for a contract's classification column. This file is the one ODCS will eventually generate, and the tag map is a near transcription of a contract's property list.</li>
+<li><code>field_filter.py</code> replaces <code>authorizer.py</code> as the enforcement wrapper. <code>is_allowed</code> is the same function with a context parameter added. <code>filter_response(principal, resource, body)</code> is the response leg: one question per field, returning the kept body and the list of stripped field names.
 <pre><code class="lang-python">for name, value in body.items():
     if is_allowed(principal, 'Action::"ReadOrderField"', resource, {"field": name}).allowed:
         kept[name] = value
     else:
-        stripped.append(name)</code></pre>
-
-<p><code>tests/bola.json</code> and <code>tests/bola-writes.json</code> are the corpora of iterations 1 and 2, byte for byte. They run against the grown policy and entity files and must keep passing; they are the regression gate proving the appended policies change no object-level decision.</p>
-
-<p><code>tests/field-reads.json</code> adds twelve <code>ReadOrderField</code> cases: the owner's allows and denies, the support matrix, API1 re-checked at field level, and the two fail-closed cases (undeclared field, guessed order id).</p>
-
-<p><code>test_corpus.py</code> is the same runner, unchanged. <code>test_filter.py</code> is new: it feeds one full upstream payload to <code>filter_response</code> and asserts exactly which fields each caller keeps, that stripped names are reported, and that surviving values pass through unmodified.</p>
+        stripped.append(name)</code></pre></li>
+<li><code>tests/bola.json</code> and <code>tests/bola-writes.json</code> are the corpora of iterations 1 and 2, byte for byte. They run against the grown policy and entity files and must keep passing; they are the regression gate proving the appended policies change no object-level decision.</li>
+<li><code>tests/field-reads.json</code> adds twelve <code>ReadOrderField</code> cases: the owner's allows and denies, the support matrix, API1 re-checked at field level, and the two fail-closed cases (undeclared field, guessed order id).</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_filter.py</code> is new: it feeds one full upstream payload to <code>filter_response</code> and asserts exactly which fields each caller keeps, that stripped names are reported, and that surviving values pass through unmodified.</li>
+</ul>
 
 <h2 id="tdd">6. Growing by tests</h2>
 

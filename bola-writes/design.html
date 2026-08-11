@@ -229,15 +229,13 @@ permit(
 
 <h2 id="the-iteration">5. The iteration, file by file</h2>
 
-<p><code>policies.cedar</code> carries P1 and P2 verbatim and appends P3, the <code>UpdateOrder</code> mirror of P1. It evaluates <code>resource.owner</code> directly, matching P1's style and its error behavior on a guessed order id, which the corpus pins.</p>
-
-<p><code>entities.json</code> is iteration 1's file, unchanged. The write rule needs no new facts; ownership already decides it.</p>
-
-<p><code>tests/bola.json</code> is carried byte for byte as the regression gate. <code>tests/bola-writes.json</code> adds six cases: both owners allowed on their own orders, the id swap denied, support denied, an unknown principal denied, and the guessed order id denied with the pinned evaluation error.</p>
-
-<p><code>authorizer.py</code> is the same load-rules-answer-questions wrapper as iteration 1's, with the request-leg contract in its docstring: forward the upstream call only on Allow, reject the whole call on Deny.</p>
-
-<p><code>test_corpus.py</code> is the same runner, unchanged.</p>
+<ul>
+<li><code>policies.cedar</code> carries P1 and P2 verbatim and appends P3, the <code>UpdateOrder</code> mirror of P1. It evaluates <code>resource.owner</code> directly, matching P1's style and its error behavior on a guessed order id, which the corpus pins.</li>
+<li><code>entities.json</code> is iteration 1's file, unchanged. The write rule needs no new facts; ownership already decides it.</li>
+<li><code>tests/bola.json</code> is carried byte for byte as the regression gate. <code>tests/bola-writes.json</code> adds six cases: both owners allowed on their own orders, the id swap denied, support denied, an unknown principal denied, and the guessed order id denied with the pinned evaluation error.</li>
+<li><code>authorizer.py</code> is the same load-rules-answer-questions wrapper as iteration 1's, with the request-leg contract in its docstring: forward the upstream call only on Allow, reject the whole call on Deny.</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged.</li>
+</ul>
 
 <h2 id="tdd">6. Growing by tests</h2>
 
