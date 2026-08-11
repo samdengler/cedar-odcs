@@ -170,15 +170,15 @@ h2:hover .anchor { opacity: 1; }
 
 <p>An agent running on AgentCore Runtime calls an upstream API through an MCP tool registered in AgentCore Gateway. The tool authenticates with a service credential, so the API sees a trusted caller and returns whatever is asked for. If the agent requests order 2002 while acting for the customer who owns order 1001, the API returns order 2002 anyway. The API layer has no governance to stop it, and fixing the APIs themselves is not an option in the near term.</p>
 
-<p>The governance therefore has to live in the agent stack, between the tool call and the upstream API. The threats to cover, in OWASP API Security Top 10 terms<a class="ref" href="#r1">[1]</a>:</p>
+<p>The governance therefore has to live in the agent stack, between the tool call and the upstream API. The threats to cover, in OWASP API Security Top 10 terms:</p>
 
 <ul>
-<li><strong>API1, Broken Object Level Authorization (BOLA).</strong> Reading an object that belongs to someone else by swapping an id.</li>
-<li><strong>API3, Broken Object Property Level Authorization.</strong> Receiving fields inside an allowed object that this caller should not see, such as a card number.</li>
-<li><strong>API5, Broken Function Level Authorization (BFLA).</strong> Calling an action reserved for another role, such as issuing a refund.</li>
+<li><strong>API1, Broken Object Level Authorization (BOLA)</strong><a class="ref" href="#r1">[1]</a>. Reading an object that belongs to someone else by swapping an id.</li>
+<li><strong>API3, Broken Object Property Level Authorization</strong><a class="ref" href="#r2">[2]</a>. Receiving fields inside an allowed object that this caller should not see, such as a card number.</li>
+<li><strong>API5, Broken Function Level Authorization (BFLA)</strong><a class="ref" href="#r3">[3]</a>. Calling an action reserved for another role, such as issuing a refund.</li>
 </ul>
 
-<p>The plan is to express the rules in Cedar<a class="ref" href="#r2">[2]</a>, eventually derive them from Open Data Contract Standard documents<a class="ref" href="#r3">[3]</a>, and enforce them at the Gateway. This document covers only the first iteration: BOLA, standalone, in Python, with tests.</p>
+<p>The plan is to express the rules in Cedar<a class="ref" href="#r4">[4]</a>, eventually derive them from Open Data Contract Standard documents<a class="ref" href="#r5">[5]</a>, and enforce them at the Gateway. This document covers only the first iteration: BOLA, standalone, in Python, with tests.</p>
 
 <h2 id="status">2. What is built and what is not</h2>
 
@@ -187,7 +187,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="where-cedar-sits">3. Where Cedar sits in the eventual stack</h2>
 
-<p>Cedar is a policy engine, a library that evaluates rules. It does not intercept anything on its own. Something in the request path has to call it and honor the answer. In authorization jargon the engine is the PDP (policy decision point) and the code that calls it is the PEP (policy enforcement point). The natural PEP in this stack is an AgentCore Gateway interceptor, which can inspect and modify tool calls and responses<a class="ref" href="#r4">[4]</a>.</p>
+<p>Cedar is a policy engine, a library that evaluates rules. It does not intercept anything on its own. Something in the request path has to call it and honor the answer. In authorization jargon the engine is the PDP (policy decision point) and the code that calls it is the PEP (policy enforcement point). The natural PEP in this stack is an AgentCore Gateway interceptor, which can inspect and modify tool calls and responses<a class="ref" href="#r6">[6]</a>.</p>
 
 <p>The interceptor runs on both legs of the call. On the request leg it can reject a call outright, which covers function level rules (API5) and any object level rule whose facts are known up front. On the response leg it sees the fetched data, which is where the rest of the governance happens: ownership checks that need the object's attributes (API1), and stripping fields or rows the caller may not see (API3).</p>
 
@@ -242,9 +242,9 @@ when { resource.owner == principal };</code></pre>
 
 <p><code>entities.json</code> holds the facts: three users (alice, bob, and carol the support agent), one role, and two orders with owners. Carol's membership in the support role is expressed by listing the role among her <code>parents</code>, Cedar's group mechanism.</p>
 
-<p><code>authorizer.py</code> loads both files and exposes one function, <code>is_allowed(principal, action, resource)</code>, wrapping the cedarpy bindings<a class="ref" href="#r5">[5]</a>. It does the same job a Gateway interceptor will do: load rules, answer questions.</p>
+<p><code>authorizer.py</code> loads both files and exposes one function, <code>is_allowed(principal, action, resource)</code>, wrapping the cedarpy bindings<a class="ref" href="#r7">[7]</a>. It does the same job a Gateway interceptor will do: load rules, answer questions.</p>
 
-<p><code>tests/bola.json</code> is the interesting file. The test cases are data: each entry is one authorization question phrased as either a legitimate request or an attack (alice reads her own order, alice swaps the id to bob's order, carol reads anything, an unknown principal or a guessed order id), with the expected decision, the policies expected to determine it, and any expected evaluation errors. The file follows the format of the Cedar project's own integration-test corpus<a class="ref" href="#r10">[10]</a>, which the Rust and Java engines already run in CI.</p>
+<p><code>tests/bola.json</code> is the interesting file. The test cases are data: each entry is one authorization question phrased as either a legitimate request or an attack (alice reads her own order, alice swaps the id to bob's order, carol reads anything, an unknown principal or a guessed order id), with the expected decision, the policies expected to determine it, and any expected evaluation errors. The file follows the format of the Cedar project's own integration-test corpus<a class="ref" href="#r12">[12]</a>, which the Rust and Java engines already run in CI.</p>
 
 <p><code>test_corpus.py</code> is a thin pytest runner that feeds every case in <code>tests/</code> to the engine. Because the cases are engine-independent data in an established format, a future Rust enforcement build runs the same JSON files with a Rust runner; the governance rules are defined once.</p>
 
@@ -269,7 +269,7 @@ when { resource.owner == principal };</code></pre>
 
 <h2 id="running">7. Running it</h2>
 
-<p>The project uses uv<a class="ref" href="#r6">[6]</a>; dependencies are declared in <code>pyproject.toml</code> and resolved on first run. From the repository root, every iteration's tests run in one command:</p>
+<p>The project uses uv<a class="ref" href="#r8">[8]</a>; dependencies are declared in <code>pyproject.toml</code> and resolved on first run. From the repository root, every iteration's tests run in one command:</p>
 
 <pre><code>uv run pytest -v</code></pre>
 
@@ -281,13 +281,13 @@ when { resource.owner == principal };</code></pre>
 
 <p>The first review resolved the original three open questions.</p>
 
-<p><strong>Response schemas come from tool authors at registration.</strong> Registering an MCP tool requires a schema for the response, with a classification on each field. That artifact is a data contract, and ODCS already defines per-field classification for it<a class="ref" href="#r3">[3]</a>, so tool registration and contract publication can be the same act. The Cedar schema and the field sensitivity map are compiled from the contract. Invariant to enforce: fields present in a response but absent from the contract are stripped, so schema drift fails closed instead of leaking data.</p>
+<p><strong>Response schemas come from tool authors at registration.</strong> Registering an MCP tool requires a schema for the response, with a classification on each field. That artifact is a data contract, and ODCS already defines per-field classification for it<a class="ref" href="#r5">[5]</a>, so tool registration and contract publication can be the same act. The Cedar schema and the field sensitivity map are compiled from the contract. Invariant to enforce: fields present in a response but absent from the contract are stripped, so schema drift fails closed instead of leaking data.</p>
 
-<p><strong>Requests carry an actor and an acting-for party.</strong> The system implements on behalf of (OBO) access. Three modes exist: a customer interacting directly, an employee interacting directly, and an employee acting for a customer. The principal stays the actual actor; the context carries whom they act for. Employee-only permits require direct mode, and ownership permits evaluate against the acting-for party, so an employee acting for a customer holds roughly the intersection of the employee's and the customer's access. This follows existing standards rather than inventing a model: OAuth 2.0 Token Exchange<a class="ref" href="#r8">[8]</a> carries the actor in an <code>act</code> claim while the subject remains the acted-for party, and the Cedar context is a direct projection of those claims. The intersection semantics match the widely deployed Microsoft Entra on-behalf-of flow<a class="ref" href="#r9">[9]</a>.</p>
+<p><strong>Requests carry an actor and an acting-for party.</strong> The system implements on behalf of (OBO) access. Three modes exist: a customer interacting directly, an employee interacting directly, and an employee acting for a customer. The principal stays the actual actor; the context carries whom they act for. Employee-only permits require direct mode, and ownership permits evaluate against the acting-for party, so an employee acting for a customer holds roughly the intersection of the employee's and the customer's access. This follows existing standards rather than inventing a model: OAuth 2.0 Token Exchange<a class="ref" href="#r10">[10]</a> carries the actor in an <code>act</code> claim while the subject remains the acted-for party, and the Cedar context is a direct projection of those claims. The intersection semantics match the widely deployed Microsoft Entra on-behalf-of flow<a class="ref" href="#r11">[11]</a>.</p>
 
 <p><strong>The interceptor strips, it never rejects.</strong> There is no case where a whole response is refused. Undeclared or denied fields are removed and the removal is logged; the remainder is returned.</p>
 
-<p><strong>Enforcement lives in a Rust Lambda extension.</strong> Interceptors are Lambda functions, and governance must hold even when tools teams implement their own response logic. A Runtime API proxy extension wraps the Lambda Runtime API endpoint, sees the invocation and the function's response payload, and rewrites the response before Lambda returns it, independent of the function code<a class="ref" href="#r7">[7]</a>. Cedar is Rust-native, so the engine runs in-process in the extension. Policies are compiled from the contract at publish time.</p>
+<p><strong>Enforcement lives in a Rust Lambda extension.</strong> Interceptors are Lambda functions, and governance must hold even when tools teams implement their own response logic. A Runtime API proxy extension wraps the Lambda Runtime API endpoint, sees the invocation and the function's response payload, and rewrites the response before Lambda returns it, independent of the function code<a class="ref" href="#r9">[9]</a>. Cedar is Rust-native, so the engine runs in-process in the extension. Policies are compiled from the contract at publish time.</p>
 
 <p><strong>Per-request cost is bounded by mask caching.</strong> Post-fetch enforcement has to touch every response; that cost is inherent until governance can be pushed down into queries. But field permits depend on role, mode, and classification, not on row values, so the field mask for a given (principal mode, contract version) pair is computed once, cached, and applied as a plain JSON transform. Only ownership and row checks, which depend on the data, run Cedar per request.</p>
 
@@ -315,16 +315,18 @@ when { resource.owner == principal };</code></pre>
 <h2 id="references">References</h2>
 
 <ol class="sources">
-<li id="r1"><a href="https://owasp.org/API-Security/editions/2023/en/0x11-t10/">OWASP API Security Top 10, 2023 edition</a></li>
-<li id="r2"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
-<li id="r3"><a href="https://bitol-io.github.io/open-data-contract-standard/">Open Data Contract Standard (ODCS), Bitol project</a></li>
-<li id="r4"><a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html">Amazon Bedrock AgentCore Gateway documentation</a></li>
-<li id="r5"><a href="https://github.com/k9securityio/cedar-py">cedarpy, Python bindings for the Cedar engine</a></li>
-<li id="r6"><a href="https://docs.astral.sh/uv/">uv, Python package and project manager</a></li>
-<li id="r7"><a href="https://aws.amazon.com/blogs/compute/enhancing-runtime-security-and-governance-with-the-aws-lambda-runtime-api-proxy-extension/">AWS Lambda Runtime API proxy extension pattern</a>, response interception independent of function code</li>
-<li id="r8"><a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693, OAuth 2.0 Token Exchange</a>, delegation via the act and may_act claims</li>
-<li id="r9"><a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow">Microsoft Entra on-behalf-of flow</a></li>
-<li id="r10"><a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>, the Cedar project's engine-independent test corpus format</li>
+<li id="r1"><a href="https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/">OWASP API1:2023, Broken Object Level Authorization</a></li>
+<li id="r2"><a href="https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/">OWASP API3:2023, Broken Object Property Level Authorization</a></li>
+<li id="r3"><a href="https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/">OWASP API5:2023, Broken Function Level Authorization</a></li>
+<li id="r4"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
+<li id="r5"><a href="https://bitol-io.github.io/open-data-contract-standard/">Open Data Contract Standard (ODCS), Bitol project</a></li>
+<li id="r6"><a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/gateway.html">Amazon Bedrock AgentCore Gateway documentation</a></li>
+<li id="r7"><a href="https://github.com/k9securityio/cedar-py">cedarpy, Python bindings for the Cedar engine</a></li>
+<li id="r8"><a href="https://docs.astral.sh/uv/">uv, Python package and project manager</a></li>
+<li id="r9"><a href="https://aws.amazon.com/blogs/compute/enhancing-runtime-security-and-governance-with-the-aws-lambda-runtime-api-proxy-extension/">AWS Lambda Runtime API proxy extension pattern</a>, response interception independent of function code</li>
+<li id="r10"><a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693, OAuth 2.0 Token Exchange</a>, delegation via the act and may_act claims</li>
+<li id="r11"><a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-on-behalf-of-flow">Microsoft Entra on-behalf-of flow</a></li>
+<li id="r12"><a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>, the Cedar project's engine-independent test corpus format</li>
 </ol>
 
 </main>

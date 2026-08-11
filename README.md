@@ -6,7 +6,7 @@ Data governance for agent tool calls, enforced with [Cedar](https://docs.cedarpo
 
 Agents on AgentCore Runtime call upstream APIs through MCP tools registered in AgentCore Gateway. The tools authenticate with service credentials, so the APIs return whatever is asked for; the API layer itself has weak governance. Enforcement therefore lives in the agent stack, in Gateway interceptors on both the request and response legs of a tool call.
 
-The threats covered, in OWASP API Security Top 10 terms: API1 broken object level authorization (BOLA), API3 broken object property level authorization, and API5 broken function level authorization (BFLA).
+The threats covered, in OWASP API Security Top 10 terms: [API1 broken object level authorization](https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/) (BOLA), [API3 broken object property level authorization](https://owasp.org/API-Security/editions/2023/en/0xa3-broken-object-property-level-authorization/), and [API5 broken function level authorization](https://owasp.org/API-Security/editions/2023/en/0xa5-broken-function-level-authorization/) (BFLA).
 
 ## Approach
 
