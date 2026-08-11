@@ -135,10 +135,9 @@ h2:hover .anchor { opacity: 1; }
   <a href="#where-cedar-sits">3. Where Cedar sits in the eventual stack</a>
   <a href="#cedar-concepts">4. Cedar concepts used in this iteration</a>
   <a href="#the-iteration">5. The BOLA iteration, file by file</a>
-  <a href="#tdd">6. Growing by tests</a>
-  <a href="#running">7. Running it</a>
-  <a href="#settled-direction">8. Direction settled in review</a>
-  <a href="#open-questions">9. Open questions</a>
+  <a href="#running">6. Running it</a>
+  <a href="#settled-direction">7. Direction settled in review</a>
+  <a href="#open-questions">8. Open questions</a>
   <a href="#glossary" class="tail">Glossary</a>
   <a href="#references" class="tail">References</a>
 </nav>
@@ -158,10 +157,9 @@ h2:hover .anchor { opacity: 1; }
     <li><span class="num">3.</span><a href="#where-cedar-sits">Where Cedar sits in the eventual stack</a></li>
     <li><span class="num">4.</span><a href="#cedar-concepts">Cedar concepts used in this iteration</a></li>
     <li><span class="num">5.</span><a href="#the-iteration">The BOLA iteration, file by file</a></li>
-    <li><span class="num">6.</span><a href="#tdd">Growing by tests</a></li>
-    <li><span class="num">7.</span><a href="#running">Running it</a></li>
-    <li><span class="num">8.</span><a href="#settled-direction">Direction settled in review</a></li>
-    <li><span class="num">9.</span><a href="#open-questions">Open questions</a></li>
+    <li><span class="num">6.</span><a href="#running">Running it</a></li>
+    <li><span class="num">7.</span><a href="#settled-direction">Direction settled in review</a></li>
+    <li><span class="num">8.</span><a href="#open-questions">Open questions</a></li>
   </ol>
   <p class="back"><a href="#glossary">Glossary</a> <a href="#references">References</a></p>
 </div>
@@ -246,13 +244,7 @@ when { resource.owner == principal };</code></pre>
 <li><code>test_corpus.py</code> is a thin pytest runner that feeds every case in <code>tests/</code> to the engine. Because the cases are engine-independent data in an established format, a future Rust enforcement build runs the same JSON files with a Rust runner; the governance rules are defined once.</li>
 </ul>
 
-<h2 id="tdd">6. Growing by tests</h2>
-
-<p>The working loop for every future iteration: add cases to the JSON corpus that describe the next rule, watch them fail, then write the policy or entity change that makes them pass. Because the attacks are written down before the defenses, a later policy change that weakens a defense fails a test. The same corpus later gates the Rust extension in CI, so the Python iterations and the production enforcement point are held to identical rules.</p>
-
-<p>The iteration plan lives in the README and on the <a href="../index.html">index page</a>, one entry per iteration, so it is maintained in one place as the order changes. Each iteration is small, and no iteration starts before the previous one is understood.</p>
-
-<h2 id="running">7. Running it</h2>
+<h2 id="running">6. Running it</h2>
 
 <p>The project uses uv<a class="ref" href="#r8">[8]</a>; dependencies are declared in <code>pyproject.toml</code> and resolved on first run. From the repository root, every iteration's tests run in one command:</p>
 
@@ -262,7 +254,7 @@ when { resource.owner == principal };</code></pre>
 
 <pre><code>uv run --project bola-reads pytest -v</code></pre>
 
-<h2 id="settled-direction">8. Direction settled in review</h2>
+<h2 id="settled-direction">7. Direction settled in review</h2>
 
 <p>The first review resolved the original three open questions.</p>
 
@@ -276,7 +268,7 @@ when { resource.owner == principal };</code></pre>
 
 <p><strong>Per-request cost is bounded by mask caching.</strong> Post-fetch enforcement has to touch every response; that cost is inherent until governance can be pushed down into queries. But field permits depend on role, mode, and classification, not on row values, so the field mask for a given (principal mode, contract version) pair is computed once, cached, and applied as a plain JSON transform. Only ownership and row checks, which depend on the data, run Cedar per request.</p>
 
-<h2 id="open-questions">9. Open questions</h2>
+<h2 id="open-questions">8. Open questions</h2>
 
 <ol>
 <li>Identity propagation, now a fact-finding item: what the bearer token carries (issuer, what the subject identifies, roles, tenant or account scoping, an <code>act</code> claim for on behalf of), what of it the Gateway delivers to policy evaluation and to interceptors, and whether OAuth token exchange is available in the identity setup. This inventory gates every design that needs facts at decision time: a fact already in the token or the tool input needs no machinery, and lookups or entity stores enter only for gaps the inventory proves. The same questions repeat for each new use case; the README records them as the onboarding questions.</li>

@@ -29,6 +29,8 @@ p { margin: 11px 0; }
 a { color: var(--navy); }
 code { background: var(--light); color: var(--navy-deep); padding: 1px 5px; border-radius: 4px;
        font-size: .88em; font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+h2 { color: var(--navy); font-size: 19px; margin: 30px 0 8px; padding-bottom: 6px;
+     border-bottom: 2px solid var(--rule); }
 ol.iterations { margin: 20px 0 0; padding: 0; list-style: none; counter-reset: iter; }
 ol.iterations li { counter-increment: iter; display: grid; grid-template-columns: 44px 1fr auto;
                    gap: 14px; align-items: baseline; padding: 14px 6px; border-bottom: 1px solid var(--rule); }
@@ -55,6 +57,18 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
   <p>Start with the <a href="bola-reads/design.html">iteration 1 design narrative</a>. It covers
      the problem, where Cedar sits in the stack, Cedar concepts, and a walkthrough of the
      code in <code>bola-reads/</code>.</p>
+
+  <h2>Growing by tests</h2>
+  <p>Every iteration grows the same way: test cases are added to a JSON corpus describing the
+     next rule, they fail, and then the policies or facts that make them pass are written.
+     Attacks are recorded before defenses, so a later change that weakens a defense fails a
+     test. The corpus is engine-independent data in the
+     <a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>
+     format, so the Python iterations and the eventual Rust enforcement build are held to
+     identical rules. Each iteration carries its predecessors' corpora as a regression gate,
+     each iteration is small, and no iteration starts before the previous one is understood.</p>
+
+  <h2>Iterations</h2>
   <ol class="iterations">
     <li>
       <span class="name"><a href="bola-reads/design.html">Broken object level authorization (BOLA) on reads</a>

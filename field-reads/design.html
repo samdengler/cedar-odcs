@@ -286,7 +286,7 @@ permit(
 
 <h2 id="tdd">6. Growing by tests</h2>
 
-<p>The loop from iteration 1 held: the twelve corpus cases were written first as the statement of the rule, then the policies and facts that make them pass. The corpus stays engine-independent data in the cedar-integration-tests format<a class="ref" href="#r5">[5]</a>, so the future Rust enforcement build runs the same JSON against the same rules.</p>
+<p>The project's working loop (stated on the <a href="../index.html">index page</a>) held: the twelve corpus cases were written first as the statement of the rule, then the policies and facts that make them pass. The corpus stays engine-independent data in the cedar-integration-tests format<a class="ref" href="#r5">[5]</a>, so the future Rust enforcement build runs the same JSON against the same rules.</p>
 
 <p>The division of labor between the two test files is worth keeping for later iterations. The corpus pins <em>decisions</em>: one PARC question, one expected answer, expected determining policies. <code>test_filter.py</code> pins <em>enforcement</em>: what a payload looks like after the decisions are applied. The first is portable across engines; the second is specific to the enforcement point and will eventually be the contract for the Rust extension's response rewriting.</p>
 

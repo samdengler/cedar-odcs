@@ -239,7 +239,7 @@ permit(
 
 <h2 id="tdd">6. Growing by tests</h2>
 
-<p>The six cases were written first, then the one policy that makes them pass. The support case is the one that earns its place: carol may read any order, and policy1 keeps proving it in the carried corpus, but no policy permits her to update anything, so <code>UpdateOrder</code> falls to default deny. That is function-level authorization (API5) arriving early as an absence: roles hold verbs, and a role that holds read does not thereby hold write. The full API5 iteration adds verbs like <code>RefundOrder</code>; nothing built here will need to be undone for it.</p>
+<p>The six cases were written first, then the one policy that makes them pass. The support case is the interesting one: carol may read any order, and policy1 keeps proving it in the carried corpus, but no policy permits her to update anything, so <code>UpdateOrder</code> falls to default deny. That is function-level authorization (API5) arriving early as an absence: roles hold verbs, and a role that holds read does not thereby hold write. The full API5 iteration adds verbs like <code>RefundOrder</code>; nothing built here will need to be undone for it.</p>
 
 <h2 id="running">7. Running it</h2>
 
