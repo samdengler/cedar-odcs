@@ -18,7 +18,7 @@ Design decisions and the full iteration plan are in the design document.
 
 Each iteration lives in its own directory with its policies, entities, test corpus, and a design document. `index.html` at the root indexes the iterations and links to each design document.
 
-- `bola-mvp/`: iteration 1. Broken object level authorization (BOLA), standalone with no AWS dependency.
+- `bola-reads/`: iteration 1. Broken object level authorization (BOLA) on reads, standalone with no AWS dependency.
   - `design.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
   - `policies.cedar`: two policies; everything else is default deny.
   - `entities.json`: the facts (users, a role, orders with owners).
@@ -54,7 +54,7 @@ uv run pytest -v
 Each iteration is also a standalone uv project, so the same command works inside a single iteration directory, or from the root with `--project`:
 
 ```sh
-uv run --project bola-mvp pytest -v
+uv run --project bola-reads pytest -v
 ```
 
 ## Iterations

@@ -182,7 +182,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="status">2. What is built and what is not</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>bola-mvp</code> folder in this project. Two Cedar policies, a set of entity facts, a Python wrapper of about thirty lines, and six pytest tests, all passing. It runs on a laptop with no AWS dependency.</p>
+<div class="callout"><p><strong>Built:</strong> the <code>bola-reads</code> folder in this project. Two Cedar policies, a set of entity facts, a Python wrapper of about thirty lines, and six pytest tests, all passing. It runs on a laptop with no AWS dependency.</p>
 <p><strong>Not built:</strong> field filtering (API3), function level checks (API5), any parsing of ODCS documents, and any integration with AgentCore Gateway or Runtime. Sections that mention those describe intent, not working code.</p></div>
 
 <h2 id="where-cedar-sits">3. Where Cedar sits in the eventual stack</h2>
@@ -210,10 +210,10 @@ h2:hover .anchor { opacity: 1; }
   ]
   </script>
 </div>
-<figcaption>Target placement. The interceptor runs on the request leg and again on the response leg (dashed), where it filters what the agent gets back. The current MVP replaces the interceptor with a plain Python function so the Cedar part can be learned in isolation.</figcaption>
+<figcaption>Target placement. The interceptor runs on the request leg and again on the response leg (dashed), where it filters what the agent gets back. This iteration replaces the interceptor with a plain Python function so the Cedar part can be learned in isolation.</figcaption>
 </figure>
 
-<p>Nothing about the MVP depends on this placement being final. The Python wrapper takes the same inputs an interceptor would and returns the same answer: a principal, an action, and a resource in; allow or deny out.</p>
+<p>Nothing about this iteration depends on this placement being final. The Python wrapper takes the same inputs an interceptor would and returns the same answer: a principal, an action, and a resource in; allow or deny out.</p>
 
 <h2 id="cedar-concepts">4. Cedar concepts used in this iteration</h2>
 
@@ -226,17 +226,17 @@ h2:hover .anchor { opacity: 1; }
 <pre><code class="lang-cedar">permit(principal, action == Action::"ReadOrder", resource)
 when { resource.owner == principal };</code></pre>
 
-<p><strong>Entities.</strong> The facts the policies refer to: which users exist, which orders exist, who owns each order, who is in which role. The MVP keeps them in <code>entities.json</code>. This is the piece that will later come from data contracts and real systems.</p>
+<p><strong>Entities.</strong> The facts the policies refer to: which users exist, which orders exist, who owns each order, who is in which role. This iteration keeps them in <code>entities.json</code>. This is the piece that will later come from data contracts and real systems.</p>
 
 <p><strong>Default deny.</strong> If no permit policy matches, the answer is Deny. There is no rule saying "deny access to other people's orders"; that outcome falls out of the absence of a permit. Default deny is most of the BOLA defense by itself.</p>
 
 <p><strong>Decision with diagnostics.</strong> The engine returns Allow or Deny plus the list of policies that determined the outcome. A deny with an empty list means default deny. This is useful in tests and later in audit logs.</p>
 
-<p>Cedar also has a schema mechanism that validates policies against declared entity types. The MVP skips it to keep the moving parts down; it enters in a later iteration alongside ODCS, since a data contract is a natural source for a schema.</p>
+<p>Cedar also has a schema mechanism that validates policies against declared entity types. This iteration skips it to keep the moving parts down; it enters in a later iteration alongside ODCS, since a data contract is a natural source for a schema.</p>
 
 <h2 id="the-iteration">5. The BOLA iteration, file by file</h2>
 
-<p>Four files in <code>bola-mvp/</code>, readable in one sitting.</p>
+<p>Four files in <code>bola-reads/</code>, readable in one sitting.</p>
 
 <p><code>policies.cedar</code> holds two policies: a customer may read an order whose <code>owner</code> attribute equals the principal, and anyone in <code>Role::"support"</code> may read any order. That second policy exists to show role membership, which is how BFLA rules will look later.</p>
 
@@ -269,10 +269,13 @@ when { resource.owner == principal };</code></pre>
 
 <h2 id="running">7. Running it</h2>
 
-<p>The project uses uv<a class="ref" href="#r6">[6]</a>; dependencies are declared in <code>pyproject.toml</code> and resolved on first run.</p>
+<p>The project uses uv<a class="ref" href="#r6">[6]</a>; dependencies are declared in <code>pyproject.toml</code> and resolved on first run. From the repository root, every iteration's tests run in one command:</p>
 
-<pre><code>cd bola-mvp
-uv run pytest -v</code></pre>
+<pre><code>uv run pytest -v</code></pre>
+
+<p>The iteration also runs standalone:</p>
+
+<pre><code>uv run --project bola-reads pytest -v</code></pre>
 
 <h2 id="settled-direction">8. Direction settled in review</h2>
 

@@ -1,4 +1,4 @@
-// BOLA MVP: two policies, default deny.
+// BOLA on reads: two policies, default deny.
 //
 // Cedar denies everything unless a permit policy matches.
 // That default-deny is itself the core BOLA defense: an object

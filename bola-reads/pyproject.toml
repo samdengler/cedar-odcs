@@ -1,7 +1,7 @@
 [project]
-name = "bola-mvp"
+name = "bola-reads"
 version = "0.1.0"
-description = "Cedar BOLA authorization, iteration 1"
+description = "Cedar BOLA on reads, iteration 1"
 requires-python = ">=3.10"
 dependencies = [
     "cedarpy>=4.0",
