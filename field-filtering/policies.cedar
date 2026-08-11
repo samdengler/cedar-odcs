@@ -1,5 +1,6 @@
-// Field filtering (API3): iteration 1's two object-level policies,
-// carried forward unchanged, plus two field-level policies.
+// Field filtering (API3 reads): the three object-level policies from
+// iterations 1 and 2, carried forward unchanged, plus two field-level
+// policies.
 //
 // The field policies never name fields. The classification map lives
 // in entities.json as entity tags on Contract::"Order": each tag key
@@ -32,7 +33,17 @@ permit(
   resource
 );
 
-// P3 (policy2): A customer may read public and confidential fields of
+// P3 (policy2): A customer may update an order they own.
+@id("customer-updates-own-order")
+permit(
+  principal,
+  action == Action::"UpdateOrder",
+  resource
+) when {
+  resource.owner == principal
+};
+
+// P4 (policy3): A customer may read public and confidential fields of
 // an order they own. The has and hasTag guards make unknown orders
 // and undeclared fields fail cleanly instead of erroring.
 @id("customer-fields-on-own-order")
@@ -48,7 +59,7 @@ permit(
   ["public", "confidential"].contains(Contract::"Order".getTag(context.field))
 };
 
-// P4 (policy3): A support agent may read public and internal fields
+// P5 (policy4): A support agent may read public and internal fields
 // of any order.
 @id("support-fields-on-any-order")
 permit(

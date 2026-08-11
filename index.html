@@ -57,14 +57,24 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
      code in <code>bola-mvp/</code>.</p>
   <ol class="iterations">
     <li>
-      <span class="name"><a href="bola-mvp/design.html">Broken object level authorization (BOLA)</a>
+      <span class="name"><a href="bola-mvp/design.html">Broken object level authorization (BOLA) on reads</a>
         <span class="desc">Object level checks, default deny. Code in <code>bola-mvp/</code>.</span></span>
       <span class="status done">Done</span>
     </li>
     <li>
-      <span class="name"><a href="field-filtering/design.html">Broken object property level authorization (API3)</a>
+      <span class="name"><a href="bola-writes/design.html">BOLA on writes</a>
+        <span class="desc">The ownership rule gated on the request leg; a denied write rejects the whole call. Code in <code>bola-writes/</code>.</span></span>
+      <span class="status done">Done</span>
+    </li>
+    <li>
+      <span class="name"><a href="field-filtering/design.html">Broken object property level authorization (API3) on reads</a>
         <span class="desc">Per-field decisions, strip denied fields from responses. Code in <code>field-filtering/</code>.</span></span>
       <span class="status done">Done</span>
+    </li>
+    <li>
+      <span class="name">API3 on writes (mass assignment)
+        <span class="desc">Per-field checks on write payloads, reject denied writes.</span></span>
+      <span class="status planned">Planned</span>
     </li>
     <li>
       <span class="name">Function level (API5)

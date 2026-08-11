@@ -255,7 +255,9 @@ when { resource.owner == principal };</code></pre>
 <p>Planned iterations, each one small:</p>
 
 <ol>
-<li><strong>Field filtering (API3).</strong> Given an allowed object, ask Cedar a second round of questions, one per sensitive field ("may alice read <code>Order.cardNumber</code>?"), and strip denied fields from the response. This is where response filtering lives.</li>
+<li><strong>BOLA on writes.</strong> The same ownership rule applied to <code>UpdateOrder</code>, gated on the request leg before the upstream API can apply the write.</li>
+<li><strong>Field filtering (API3 reads).</strong> Given an allowed object, ask Cedar a second round of questions, one per sensitive field ("may alice read <code>Order.cardNumber</code>?"), and strip denied fields from the response. This is where response filtering lives.</li>
+<li><strong>Mass assignment (API3 writes).</strong> Per-field checks on the write payload; a denied field rejects the whole call.</li>
 <li><strong>Function level (API5).</strong> Add actions like <code>RefundOrder</code> permitted only to roles. The support policy in the current iteration already shows the pattern.</li>
 <li><strong>On behalf of access modes.</strong> Add the acting-for party to the request context and cover the full matrix: customer direct, employee direct, and employee acting for a customer, each against own and other objects.</li>
 <li><strong>ODCS as the source of truth.</strong> Write a small data contract for the orders API, then generate the Cedar schema and the field sensitivity classifications from it instead of hand-writing them.</li>

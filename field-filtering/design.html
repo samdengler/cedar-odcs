@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cedar authorization for MCP tools, iteration 2: broken object property level authorization (API3)</title>
+<title>Cedar authorization for MCP tools, iteration 3: broken object property level authorization (API3)</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -145,8 +145,8 @@ h2:hover .anchor { opacity: 1; }
 <div class="page">
 <header class="doc">
   <div class="kicker">Design &middot; Cedar OSDC &middot; August 2026</div>
-  <h1>Cedar authorization for MCP tools, iteration 2: broken object property level authorization (API3)</h1>
-  <p>Iteration 1 answered one question per tool call: may this principal read this object. Iteration 2 asks a second round, one question per field in the response, and strips every field that comes back Deny.</p>
+  <h1>Cedar authorization for MCP tools, iteration 3: broken object property level authorization (API3)</h1>
+  <p>Iterations 1 and 2 gated whole tool calls: may this principal read, or update, this object. Iteration 3 asks a second round, one question per field in the response, and strips every field that comes back Deny.</p>
 </header>
 <main>
 
@@ -170,16 +170,16 @@ h2:hover .anchor { opacity: 1; }
 
 <p>Iteration 1 made objects unreachable without a stated relationship: alice cannot fetch bob's order by swapping an id, and an unknown principal gets nothing. But an object a caller is allowed to read still carries fields that caller should not see. Alice may read her own order, and the upstream response includes the support team's <code>internalNotes</code> and a <code>fraudScore</code>. Carol on the support desk may read any order, and the response includes the customer's <code>shippingAddress</code> and <code>cardLast4</code>. The upstream API returns every field to any authenticated caller; in OWASP terms this is API3, broken object property level authorization<a class="ref" href="#r1">[1]</a>.</p>
 
-<p>Field-level enforcement has to happen on the response leg. The fields do not exist until the upstream API has answered, so the request leg has nothing to filter. This iteration stays standalone Python, like iteration 1, and builds directly on iteration 1's files.</p>
+<p>Field-level enforcement has to happen on the response leg. The fields do not exist until the upstream API has answered, so the request leg has nothing to filter. This iteration stays standalone Python, like its predecessors, and builds directly on iteration 2's files.</p>
 
 <h2 id="status">2. What is built and what is not</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>field-filtering</code> folder in this project. Iteration 1's two policies plus two field policies, field classification facts, a <code>filter_response</code> wrapper that strips denied fields from a payload, and 22 pytest tests, all passing, with iteration 1's six cases carried unchanged.</p>
+<div class="callout"><p><strong>Built:</strong> the <code>field-filtering</code> folder in this project. The three object-level policies from iterations 1 and 2 plus two field policies, the field classification facts, a <code>filter_response</code> wrapper that strips denied fields from a payload, and 28 pytest tests, all passing, with the twelve object-level cases carried unchanged.</p>
 <p><strong>Not built:</strong> function level checks (API5), any parsing of ODCS documents, mask caching, and any integration with AgentCore Gateway or Runtime. Nested payloads and lists are also out; this iteration filters a flat object.</p></div>
 
 <h2 id="second-round">3. The second round of questions</h2>
 
-<p>The request leg keeps iteration 1's object-level check: may this principal <code>ReadOrder</code> this order. The response leg is new. For each field in the payload the wrapper asks one more question, with a new action and, for the first time, a non-empty context. Here is one such question as it appears in the test corpus, together with the expected decision:</p>
+<p>The request leg keeps the object-level checks from iterations 1 and 2. The response leg is new. For each field in the payload the wrapper asks one more question, with a new action and, for the first time, a non-empty context. Here is one such question as it appears in the test corpus, together with the expected decision:</p>
 
 <pre><code class="lang-json">{
   "principal": { "type": "User", "id": "carol" },
@@ -264,13 +264,13 @@ permit(
 
 <p><strong>A declared field can still be readable by nobody.</strong> <code>fraudScore</code> is restricted, and no policy grants restricted, so every caller loses it. When a fraud role exists, one permit granting it the restricted level turns the field on, with no change to the map.</p>
 
-<p>The <code>has</code> guards are also new. Iteration 1's ownership policy evaluates <code>resource.owner</code> directly, and the corpus pins the resulting evaluation error when the order does not exist. The field policy guards with <code>resource has owner</code>, so a guessed order id fails to a clean Deny with no error. Both behaviors stay tested: the old policy is carried unchanged, errors and all, and the new corpus pins the guarded behavior.</p>
+<p>The <code>has</code> guards are also new. The ownership policies of iterations 1 and 2 evaluate <code>resource.owner</code> directly, and their corpora pin the resulting evaluation errors when the order does not exist. The field policy guards with <code>resource has owner</code>, so a guessed order id fails to a clean Deny with no error. Both behaviors stay tested: the old policies are carried unchanged, errors and all, and the new corpus pins the guarded behavior.</p>
 
 <h2 id="the-iteration">5. The iteration, file by file</h2>
 
 <p>Everything from iteration 1 is recognizable; each file grew in one direction.</p>
 
-<p><code>policies.cedar</code> carries P1 and P2 verbatim and appends P3 (public and confidential fields on an owned order) and P4 (public and internal fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</p>
+<p><code>policies.cedar</code> carries the three object-level policies verbatim and appends P4 (public and confidential fields on an owned order) and P5 (public and internal fields for support). Appending matters: cedarpy reports determining policies by position in the file (<code>policy0</code>, <code>policy1</code>, &hellip;), the corpus refers to those ids, and inserting a policy would renumber every case after it.</p>
 
 <p><code>entities.json</code> carries iteration 1's users, role, and orders, and adds one <code>Contract</code> entity whose tag map is the hand-written stand-in for a contract's classification column. This file is the one ODCS will eventually generate, and the tag map is a near transcription of a contract's property list.</p>
 
@@ -282,7 +282,7 @@ permit(
     else:
         stripped.append(name)</code></pre>
 
-<p><code>tests/bola.json</code> is iteration 1's corpus, byte for byte. It runs against the grown policy and entity files and must keep passing; it is the regression gate proving the appended policies change no object-level decision.</p>
+<p><code>tests/bola.json</code> and <code>tests/bola-writes.json</code> are the corpora of iterations 1 and 2, byte for byte. They run against the grown policy and entity files and must keep passing; they are the regression gate proving the appended policies change no object-level decision.</p>
 
 <p><code>tests/field-filtering.json</code> adds twelve <code>ReadOrderField</code> cases: the owner's allows and denies, the support matrix, API1 re-checked at field level, and the two fail-closed cases (undeclared field, guessed order id).</p>
 

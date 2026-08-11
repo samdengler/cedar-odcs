@@ -25,11 +25,19 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `tests/bola.json`: six test cases in the [cedar-integration-tests](https://github.com/cedar-policy/cedar-integration-tests) corpus format.
   - `test_corpus.py`: pytest runner that feeds every corpus case to the engine.
   - `authorizer.py`: the enforcement wrapper; it does the same job a Gateway interceptor will do.
-- `field-filtering/`: iteration 2. Field filtering (API3) on top of iteration 1.
+- `bola-writes/`: iteration 2. BOLA on writes: the same ownership rule gated on the request leg.
+  - `design.html`: the design narrative. Why writes are gated before the call, reject instead of strip, and where the ownership fact comes from pre-flight.
+  - `policies.cedar`: iteration 1's two policies, plus one `UpdateOrder` policy.
+  - `entities.json`: iteration 1's facts, unchanged.
+  - `tests/bola.json`: iteration 1's corpus, carried as a regression gate.
+  - `tests/bola-writes.json`: six object-level write cases.
+  - `test_corpus.py`: the same runner as iteration 1.
+  - `authorizer.py`: the request-leg gate; forward on Allow, reject the whole call on Deny.
+- `field-filtering/`: iteration 3. Field filtering (API3 reads) on top of iterations 1 and 2.
   - `design.html`: the design narrative. The second round of per-field questions, classification as entity tags, and the response-stripping wrapper.
-  - `policies.cedar`: iteration 1's two policies carried forward, plus two field policies that look fields up in the classification map.
+  - `policies.cedar`: the three object-level policies carried forward, plus two field policies that look fields up in the classification map.
   - `entities.json`: iteration 1's facts, plus the classification map as entity tags on a `Contract` entity.
-  - `tests/bola.json`: iteration 1's corpus, byte for byte, as a regression gate.
+  - `tests/bola.json`, `tests/bola-writes.json`: iterations 1 and 2's corpora, byte for byte, as a regression gate.
   - `tests/field-filtering.json`: twelve per-field cases, including the fail-closed ones.
   - `test_corpus.py`: the same runner as iteration 1.
   - `field_filter.py`: `is_allowed` with context, plus `filter_response`, the response-leg wrapper that strips denied fields and reports the removals.
@@ -51,10 +59,12 @@ uv run --project bola-mvp pytest -v
 
 ## Iterations
 
-1. Broken object level authorization (BOLA), done: object level checks, default deny.
-2. Broken object property level authorization (API3), done: per-field decisions, strip denied fields from responses.
-3. Function level (API5): actions permitted only to roles.
-4. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
-5. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
-6. Row filtering for list endpoints.
-7. Enforcement placement: move the checks into the response interceptor.
+1. Broken object level authorization (BOLA) on reads, done: object level checks, default deny.
+2. BOLA on writes, done: the same ownership rule gated on the request leg; a denied write rejects the whole call.
+3. Broken object property level authorization (API3) on reads, done: per-field decisions, strip denied fields from responses.
+4. API3 on writes (mass assignment): per-field checks on write payloads, reject denied writes.
+5. Function level (API5): actions permitted only to roles.
+6. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
+7. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
+8. Row filtering for list endpoints.
+9. Enforcement placement: move the checks into the Gateway interceptors.
