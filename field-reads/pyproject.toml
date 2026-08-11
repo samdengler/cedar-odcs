@@ -1,5 +1,5 @@
 [project]
-name = "field-filtering"
+name = "field-reads"
 version = "0.1.0"
 description = "Cedar field filtering (API3 reads), iteration 3"
 requires-python = ">=3.10"

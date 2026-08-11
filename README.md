@@ -33,12 +33,12 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `tests/bola-writes.json`: six object-level write cases.
   - `test_corpus.py`: the same runner as iteration 1.
   - `authorizer.py`: the request-leg gate; forward on Allow, reject the whole call on Deny.
-- `field-filtering/`: iteration 3. Field filtering (API3 reads) on top of iterations 1 and 2.
+- `field-reads/`: iteration 3. Field filtering (API3 reads) on top of iterations 1 and 2.
   - `design.html`: the design narrative. The second round of per-field questions, classification as entity tags, and the response-stripping wrapper.
   - `policies.cedar`: the three object-level policies carried forward, plus two field policies that look fields up in the classification map.
   - `entities.json`: iteration 1's facts, plus the classification map as entity tags on a `Contract` entity.
   - `tests/bola.json`, `tests/bola-writes.json`: iterations 1 and 2's corpora, byte for byte, as a regression gate.
-  - `tests/field-filtering.json`: twelve per-field cases, including the fail-closed ones.
+  - `tests/field-reads.json`: twelve per-field cases, including the fail-closed ones.
   - `test_corpus.py`: the same runner as iteration 1.
   - `field_filter.py`: `is_allowed` with context, plus `filter_response`, the response-leg wrapper that strips denied fields and reports the removals.
   - `test_filter.py`: one upstream payload filtered end to end for each caller.

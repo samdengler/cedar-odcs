@@ -174,7 +174,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="status">2. What is built and what is not</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>field-filtering</code> folder in this project. The three object-level policies from iterations 1 and 2 plus two field policies, the field classification facts, a <code>filter_response</code> wrapper that strips denied fields from a payload, and 28 pytest tests, all passing, with the twelve object-level cases carried unchanged.</p>
+<div class="callout"><p><strong>Built:</strong> the <code>field-reads</code> folder in this project. The three object-level policies from iterations 1 and 2 plus two field policies, the field classification facts, a <code>filter_response</code> wrapper that strips denied fields from a payload, and 28 pytest tests, all passing, with the twelve object-level cases carried unchanged.</p>
 <p><strong>Not built:</strong> function level checks (API5), any parsing of ODCS documents, mask caching, and any integration with AgentCore Gateway or Runtime. Nested payloads and lists are also out; this iteration filters a flat object.</p></div>
 
 <h2 id="second-round">3. The second round of questions</h2>
@@ -284,7 +284,7 @@ permit(
 
 <p><code>tests/bola.json</code> and <code>tests/bola-writes.json</code> are the corpora of iterations 1 and 2, byte for byte. They run against the grown policy and entity files and must keep passing; they are the regression gate proving the appended policies change no object-level decision.</p>
 
-<p><code>tests/field-filtering.json</code> adds twelve <code>ReadOrderField</code> cases: the owner's allows and denies, the support matrix, API1 re-checked at field level, and the two fail-closed cases (undeclared field, guessed order id).</p>
+<p><code>tests/field-reads.json</code> adds twelve <code>ReadOrderField</code> cases: the owner's allows and denies, the support matrix, API1 re-checked at field level, and the two fail-closed cases (undeclared field, guessed order id).</p>
 
 <p><code>test_corpus.py</code> is the same runner, unchanged. <code>test_filter.py</code> is new: it feeds one full upstream payload to <code>filter_response</code> and asserts exactly which fields each caller keeps, that stripped names are reported, and that surviving values pass through unmodified.</p>
 
@@ -302,7 +302,7 @@ permit(
 
 <p>The iteration also runs standalone:</p>
 
-<pre><code>uv run --project field-filtering pytest -v</code></pre>
+<pre><code>uv run --project field-reads pytest -v</code></pre>
 
 <h2 id="decisions">8. Decisions made in this iteration</h2>
 
