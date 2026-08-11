@@ -68,6 +68,8 @@ Each new use case is a tool, the API behind it, and the rules that govern it. Th
 5. Data contract: what does the response payload contain, field by field, and what classification level does each field carry? Fields outside the contract strip, so the contract must be complete before onboarding.
 6. Grants: which roles hold which verbs, and which classification levels does each reader hold?
 
+The identity questions double as a gap analysis. On behalf of access is in place but new, and today's claims may not carry everything the rules need to check. The corpus states the requirement target: each case names the facts its decision needs, so comparing today's tokens against the cases yields a concrete list of what exists, what is missing, and what must change in the identity setup before enforcement can rely on it. That list is an organizational change plan for data governance, tracked alongside the iterations.
+
 ## Iterations
 
 1. Broken object level authorization (BOLA) on reads, done: object level checks, default deny.
