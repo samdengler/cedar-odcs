@@ -187,7 +187,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="where-cedar-sits">3. Where Cedar sits in the eventual stack</h2>
 
-<p>Cedar is a policy engine, a library that evaluates rules. It does not intercept anything on its own. Something in the request path has to call it and honor the answer. In authorization jargon the engine is the PDP (policy decision point) and the code that calls it is the PEP (policy enforcement point). The natural PEP in this stack is an AgentCore Gateway interceptor, which can inspect and modify tool calls and responses<a class="ref" href="#r6">[6]</a>.</p>
+<p>Cedar is a policy engine, a library that evaluates rules. It does not intercept anything on its own. Something in the request path has to call it and enforce its decision. In authorization jargon the engine is the PDP (policy decision point) and the code that calls it is the PEP (policy enforcement point). The natural PEP in this stack is an AgentCore Gateway interceptor, which can inspect and modify tool calls and responses<a class="ref" href="#r6">[6]</a>.</p>
 
 <p>The interceptor runs on both legs of the call. On the request leg it can reject a call outright, which covers function level rules (API5) and any object level rule whose facts are known up front. On the response leg it sees the fetched data, which is where the rest of the governance happens: ownership checks that need the object's attributes (API1), and stripping fields or rows the caller may not see (API3).</p>
 
