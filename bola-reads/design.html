@@ -168,7 +168,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="problem">1. The problem</h2>
 
-<p>An agent running on AgentCore Runtime calls a work API through an MCP tool registered in AgentCore Gateway. The tool authenticates with a service credential, so the upstream API sees a trusted caller and returns whatever is asked for. If the agent requests order 2002 while acting for the customer who owns order 1001, the API returns order 2002 anyway. The API layer has no governance to stop it, and fixing the APIs themselves is not an option in the near term.</p>
+<p>An agent running on AgentCore Runtime calls an upstream API through an MCP tool registered in AgentCore Gateway. The tool authenticates with a service credential, so the API sees a trusted caller and returns whatever is asked for. If the agent requests order 2002 while acting for the customer who owns order 1001, the API returns order 2002 anyway. The API layer has no governance to stop it, and fixing the APIs themselves is not an option in the near term.</p>
 
 <p>The governance therefore has to live in the agent stack, between the tool call and the upstream API. The threats to cover, in OWASP API Security Top 10 terms<a class="ref" href="#r1">[1]</a>:</p>
 
