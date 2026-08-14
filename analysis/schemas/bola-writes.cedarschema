@@ -1,0 +1,17 @@
+entity Role;
+entity User in [Role];
+entity Order {
+  owner: User
+};
+
+action ReadOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {}
+};
+
+action UpdateOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {}
+};

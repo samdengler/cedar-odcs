@@ -42,6 +42,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `test_corpus.py`: the same runner as iteration 1.
   - `field_filter.py`: `is_allowed` with context, plus `filter_response`, the response-leg wrapper that strips denied fields and reports the removals.
   - `test_filter.py`: one upstream payload filtered end to end for each caller.
+- `analysis/`: symbolic proofs over each iteration's policies, using Cedar's symbolic compiler and the cvc5 SMT solver. Spec equivalence, guardrail no-ops, and never-errors, proven over every possible request; findings and instructions in `analysis/README.md`.
 
 ## Running
 
@@ -55,6 +56,12 @@ Each iteration is also a standalone uv project, so the same command works inside
 
 ```sh
 uv run --project bola-reads pytest -v
+```
+
+The symbolic proofs run separately; they need Rust and the cvc5 solver (see `analysis/README.md`):
+
+```sh
+cd analysis && cargo run
 ```
 
 ## Onboarding questions
@@ -79,5 +86,6 @@ The identity questions double as a gap analysis. On behalf of access is in place
 5. Function level (API5): actions permitted only to roles.
 6. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
 7. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
-8. Row filtering for list endpoints.
-9. Enforcement placement: move the checks into the Gateway interceptors.
+8. Provable composition: prove that combined policy sets preserve each iteration's guarantees, with equivalence and non-interference checks in CI. Per-iteration proofs already run in `analysis/`.
+9. Row filtering for list endpoints.
+10. Enforcement placement: move the checks into the Gateway interceptors.
