@@ -42,6 +42,15 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `test_corpus.py`: the same runner as iteration 1.
   - `field_filter.py`: `is_allowed` with context, plus `filter_response`, the response-leg wrapper that strips denied fields and reports the removals.
   - `test_filter.py`: one upstream payload filtered end to end for each caller.
+- `field-writes/`: iteration 4. Mass assignment defense (API3 writes) on top of iterations 1 through 3.
+  - `design.html`: the design narrative. The payload round on the request leg, the writers map, and whole-call rejection.
+  - `policies.cedar`: the five prior policies carried forward, plus one write-field policy.
+  - `entities.json`: the prior facts, plus the writers map as entity tags on a second `Contract` entity.
+  - `tests/bola.json`, `tests/bola-writes.json`, `tests/field-reads.json`: iterations 1 through 3's corpora, byte for byte, as a regression gate.
+  - `tests/field-writes.json`: eleven write-field cases, including mass assignment failing closed.
+  - `test_corpus.py`: the same runner.
+  - `write_gate.py`: `check_request`, which rejects a payload whole when any field is denied and names the denied fields.
+  - `test_gate.py`: whole-call rejection pinned end to end.
 - `analysis/`: symbolic proofs over each iteration's policies, using Cedar's symbolic compiler and the cvc5 SMT solver. Spec equivalence, guardrail no-ops, and never-errors, proven over every possible request; findings and instructions in `analysis/README.md`.
 
 ## Running
@@ -82,7 +91,7 @@ The identity questions double as a gap analysis. On behalf of access is in place
 1. Broken object level authorization (BOLA) on reads, done: object level checks, default deny.
 2. BOLA on writes, done: the same ownership rule gated on the request leg; a denied write rejects the whole call.
 3. Broken object property level authorization (API3) on reads, done: per-field decisions, strip denied fields from responses.
-4. API3 on writes (mass assignment): per-field checks on write payloads, reject denied writes.
+4. API3 on writes (mass assignment), done: per-field checks on write payloads; any denied field rejects the call whole.
 5. Function level (API5): actions permitted only to roles.
 6. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
 7. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.

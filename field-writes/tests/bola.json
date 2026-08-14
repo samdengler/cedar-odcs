@@ -1,0 +1,67 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "customer reads own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy0"],
+      "errors": []
+    },
+    {
+      "description": "support agent reads alice's order",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy1"],
+      "errors": []
+    },
+    {
+      "description": "support agent reads bob's order",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy1"],
+      "errors": []
+    },
+    {
+      "description": "BOLA: customer swaps id to someone else's order, default deny",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "unknown principal gets default deny",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "guessed order id gets default deny, ownership policy errors on missing owner attribute",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-9999" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": ["policy0"]
+    }
+  ]
+}

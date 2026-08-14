@@ -179,6 +179,22 @@ const ITERATIONS: &[Iteration] = &[
             "guardrails/field-reads/support-confidential.cedar",
         ],
     },
+    // Iteration 4 carries the applicable prior guardrails the way the
+    // corpora are carried: proven again against the grown policy set.
+    Iteration {
+        name: "field-writes",
+        schema: "schemas/field-writes.cedarschema",
+        spec: None,
+        guardrails: &[
+            "guardrails/bola-writes/support-never-updates.cedar",
+            "guardrails/field-reads/fail-closed.cedar",
+            "guardrails/field-reads/restricted-unreadable.cedar",
+            "guardrails/field-reads/support-confidential.cedar",
+            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
+            "guardrails/field-writes/system-fields-unwritable.cedar",
+            "guardrails/field-writes/writes-require-ownership.cedar",
+        ],
+    },
 ];
 
 /// Spawn cvc5 from $CVC5, PATH, or the copy bundled in .tools.

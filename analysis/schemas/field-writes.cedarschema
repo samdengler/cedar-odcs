@@ -1,0 +1,34 @@
+entity Role;
+entity User in [Role];
+entity Order {
+  owner: User
+};
+entity Contract tags String;
+
+action ReadOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {}
+};
+
+action UpdateOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {}
+};
+
+action ReadOrderField appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    field?: String
+  }
+};
+
+action UpdateOrderField appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    field?: String
+  }
+};

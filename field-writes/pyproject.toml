@@ -1,0 +1,13 @@
+[project]
+name = "field-writes"
+version = "0.1.0"
+description = "Cedar mass assignment defense (API3 writes), iteration 4"
+requires-python = ">=3.10"
+dependencies = [
+    "cedarpy>=4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
