@@ -189,5 +189,4 @@ The identity questions double as a gap analysis. On behalf of access is in place
 12. Writes by possession, done: contact, seats, and cancellation by whoever holds the pair; the record is fetched through the read path before a write is forwarded.
 13. The specialist, the agent, and the list, done: the agent as a principal of its own type, the specialist as the acted-for human whose roles decide, the specialist's view on without a pair and off with one, listing for specialists only.
 14. The command line, done: nine verbs matching Cedar's where the meaning is the same, a dry run of one tool call, a report of what a caller may do, and a link into Cedar's playground for any case.
-
 15. The learning path, done: three runnable steps after Cedar's own tutorial, the guide, the proofs page, and caller files in every use case.
