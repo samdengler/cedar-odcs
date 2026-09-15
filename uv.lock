@@ -14,25 +14,27 @@ wheels = [
 [[package]]
 name = "cedar-osdc"
 version = "0.1.0"
-source = { virtual = "." }
-
-[package.dev-dependencies]
-dev = [
+source = { editable = "." }
+dependencies = [
     { name = "cedarpy" },
     { name = "open-data-contract-standard" },
-    { name = "pytest" },
     { name = "pyyaml" },
 ]
 
-[package.metadata]
-
-[package.metadata.requires-dev]
+[package.dev-dependencies]
 dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
     { name = "cedarpy", specifier = ">=4.0" },
     { name = "open-data-contract-standard", specifier = ">=3.2.0" },
-    { name = "pytest", specifier = ">=8.0" },
     { name = "pyyaml", specifier = ">=6.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=8.0" }]
 
 [[package]]
 name = "cedarpy"

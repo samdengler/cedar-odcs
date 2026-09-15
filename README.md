@@ -94,7 +94,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `policies.cedar`, `entities.json`: iteration 9's policies and iteration 7's build output, byte for byte; a test says so.
   - `events/*.json`: fifteen Gateway events in the documented shapes, one response per tool.
   - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.
-- `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules; `what-reservations-changed.html` is the writeup of what the reservation use case changed in it.
+- `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules; `what-reservations-changed.html` is the writeup of what the reservation use case changed in it; `cli.py` is the `cedar-osdc` command and `iteration-14.html` its design narrative.
 - `usecases/orders/`: iteration 9's policies and iteration 7's contract sources on core, every corpus and Gateway fixture carried, at parity with the numbered iterations.
 - `usecases/reservations/`: iteration 11. A reservation is held by whoever presents its record locator and the holder's last name.
   - `iteration-11.html`: the design narrative. Possession in context, two legs with one credential, nested records by path, and the core split.
@@ -107,6 +107,19 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `tests/*.json`: forty-three cases. `events/`: twenty-four Gateway fixtures.
   - `usecase.py`, `test_build.py`, `test_interceptor.py`, `test_corpus.py`.
 - `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
+
+## Command line
+
+Requires [uv](https://docs.astral.sh/uv/). From the repository root, `uv sync` installs the `cedar-osdc` command, which runs the mechanism against a use case directory:
+
+```sh
+uv run cedar-osdc run-tests usecases/reservations
+uv run cedar-osdc check-access usecases/reservations --token agent.json --presented locator=ABC123 --presented lastName=Smith
+uv run cedar-osdc dry-run usecases/reservations --token agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
+uv run cedar-osdc share usecases/reservations --case "co-traveler"
+```
+
+The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a token grants. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A token file is a JSON object of claims; `usecases/reservations/tokens.json` holds three to copy from. The design narrative is `core/iteration-14.html`.
 
 ## Running
 
@@ -162,3 +175,4 @@ The identity questions double as a gap analysis. On behalf of access is in place
 11. Reservations by locator and last name, done: a second use case with no customer identity, possession decided on the response leg, nested records by path, the mechanism extracted into `core/`.
 12. Writes by possession, done: contact, seats, and cancellation by whoever holds the pair; the record is fetched through the read path before a write is forwarded.
 13. The specialist, the agent, and the list, done: the agent as a principal of its own type, the specialist as the acted-for human whose roles decide, the specialist's view on without a pair and off with one, listing for specialists only.
+14. The command line, done: nine verbs matching Cedar's where the meaning is the same, a dry run of one tool call, a report of what a token grants, and a link into Cedar's playground for any case.

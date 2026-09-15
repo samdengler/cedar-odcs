@@ -20,6 +20,8 @@ use case holding parity on every move.
   maps and the resource entity declaration; nested columns from the
   catalog's `type_json`, nested levels from path-scoped tag keys.
 - `corpus.py`: the engine-independent corpus runner.
+- `cli.py`: the `cedar-osdc` command (iteration 14): run-tests, authorize,
+  dry-run, check-access, share, build, validate, prove.
 
 A use case directory (`usecases/<name>/`) holds `usecase.py`,
 `policies.cedar`, `facts.json`, `principals.cedarschema`,
