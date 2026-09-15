@@ -188,7 +188,7 @@ h2:hover .anchor { opacity: 1; }
 <tr><td><code>run-tests DIR</code></td><td>runs the corpus and reports every case, with the policy that decided a failure; can write the cases in the cedar command's own test format</td><td><code>cedar run-tests</code></td></tr>
 <tr><td><code>authorize DIR</code></td><td>one Cedar request, with the policy that decided it by name</td><td><code>cedar authorize</code></td></tr>
 <tr><td><code>dry-run DIR</code></td><td>one tool call through both legs, without calling the tool</td><td>none</td></tr>
-<tr><td><code>check-access DIR</code></td><td>what a token grants: verbs held, paths readable, paths writable</td><td>none, by analogy with <code>cedar check-parse</code></td></tr>
+<tr><td><code>check-access DIR</code></td><td>what a caller may do: verbs held, paths readable, paths writable</td><td>none, by analogy with <code>cedar check-parse</code></td></tr>
 <tr><td><code>share DIR</code></td><td>a pre-filled link to Cedar's playground for a case or a request</td><td>the playground's share button</td></tr>
 <tr><td><code>build DIR</code></td><td>the contract build, catalog to contract to Cedar</td><td>none</td></tr>
 <tr><td><code>validate DIR</code></td><td>the policies against the built schema, through the cedar command if installed</td><td><code>cedar validate</code></td></tr>
@@ -200,9 +200,9 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="dry-run">4. One call, run dry</h2>
 
-<p>A dry run is a tool call performed without its effect. The command builds the Gateway event iteration 10 documented, from a token file of claims and the tool's arguments, and puts it through the request handler; with a response payload it runs the response leg too. The output is the decision in words:</p>
+<p>A dry run is a tool call performed without its effect. The command builds the Gateway event iteration 10 documented, from a caller file of claims and the tool's arguments, and puts it through the request handler; with a response payload it runs the response leg too. The output is the decision in words:</p>
 
-<pre><code>$ cedar-osdc dry-run usecases/reservations --token agent.json \
+<pre><code>$ cedar-osdc dry-run usecases/reservations --caller agent.json \
     --tool reservations___get_reservation \
     --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
 Caller     Agent::"reservations-assistant", customer-conversation
@@ -213,13 +213,13 @@ Returned   {
              "recordLocator": "ABC123",
              ...</code></pre>
 
-<p>A rejected call says which verb was refused or which paths were, and exits nonzero. The token file is the same JSON of claims the fixtures use, so the three token shapes from iteration 13 are ready to hand.</p>
+<p>A rejected call says which verb was refused or which paths were, and exits nonzero. The caller file is the same JSON of claims the fixtures use, so the three token shapes from iteration 13 are ready to hand.</p>
 
 <h2 id="check-access">5. What a token grants</h2>
 
 <p>The corpus states expected decisions and <code>run-tests</code> holds the policies to them. <code>check-access</code> states nothing in advance: for one token it asks every verb the schema declares, every path in the classification map, and every path in the writers map, and reports the answers. The presented pair and a record to decide on are options:</p>
 
-<pre><code>$ cedar-osdc check-access usecases/reservations --token agent.json \
+<pre><code>$ cedar-osdc check-access usecases/reservations --caller agent.json \
     --presented locator=ABC123 --presented lastName=Smith
 Access of Agent::"reservations-assistant" (customer-conversation), presenting {"locator": "ABC123", "lastName": "SMITH"}
 On Reservation::"ABC123" with attributes {"recordLocator": "ABC123", "holderLastName": "SMITH"}
@@ -248,7 +248,7 @@ https://www.cedarpolicy.com/en/playground#data:H4sIA...</code></pre>
 <h2 id="the-iteration">7. The iteration, file by file</h2>
 
 <ul>
-<li><code>core/cli.py</code>: the nine verbs, the use case loader, the policy name lookup from <code>@id</code> annotations, the token file to bearer encoding, and the playground link.</li>
+<li><code>core/cli.py</code>: the nine verbs, the use case loader, the policy name lookup from <code>@id</code> annotations, the caller file to bearer encoding, and the playground link.</li>
 <li><code>pyproject.toml</code> at the root: the package becomes installable, with <code>cedar-osdc</code> as its console script and core's dependencies as the project's; the numbered iterations keep their own projects.</li>
 <li><code>core/test_cli.py</code>: every command against the reservations use case, checking the words against the decisions the corpus and the handlers already pin, and the link's round trip.</li>
 </ul>
@@ -263,9 +263,9 @@ https://www.cedarpolicy.com/en/playground#data:H4sIA...</code></pre>
 
 <pre><code>uv sync
 uv run cedar-osdc run-tests usecases/reservations
-uv run cedar-osdc check-access usecases/reservations --token usecases/reservations/tokens.json</code></pre>
+uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers.json</code></pre>
 
-<p>The token argument takes a file holding one token's claims; the fixtures file holds three, so extract one first or point at a file of your own. <code>validate</code> needs the official cedar command (<code>cargo install cedar-policy-cli</code>), and <code>prove</code> needs Rust and cvc5 as <code>analysis/README.md</code> describes. Everything else needs Python only.</p>
+<p>The caller argument takes a caller file, one JSON object of the claims in that caller's credential; each use case ships a few under `callers/`. <code>validate</code> needs the official cedar command (<code>cargo install cedar-policy-cli</code>), and <code>prove</code> needs Rust and cvc5 as <code>analysis/README.md</code> describes. Everything else needs Python only.</p>
 
 <h2 id="decisions">10. Decisions made in this iteration</h2>
 
@@ -281,7 +281,7 @@ uv run cedar-osdc check-access usecases/reservations --token usecases/reservatio
 
 <ol>
 <li>The playground format. It is versioned, with an interface version field, and undocumented. A change breaks <code>share</code> alone.</li>
-<li>Tokens as files. A token file is claims, decoded; nothing about the command reminds a learner that the real thing is signed and verified before the handler runs. The guide has to.</li>
+<li>Tokens as files. A caller file is claims, decoded; nothing about the command reminds a learner that the real thing is signed and verified before the handler runs. The guide has to.</li>
 <li>Whether <code>check-access</code> should take a mode instead of a token, for a learner who does not yet know the three token shapes.</li>
 </ol>
 
@@ -290,8 +290,8 @@ uv run cedar-osdc check-access usecases/reservations --token usecases/reservatio
 <table>
 <tr><th>Term</th><th>Meaning</th></tr>
 <tr><td>Dry run</td><td>One tool call through both legs without calling the tool: what the interceptors would have done.</td></tr>
-<tr><td>Access check</td><td>A report of what a token grants, from real authorization questions, stating nothing in advance.</td></tr>
-<tr><td>Token file</td><td>A JSON object of claims standing in for a decoded, verified token.</td></tr>
+<tr><td>Access check</td><td>A report of what a caller may do, from real authorization questions, stating nothing in advance.</td></tr>
+<tr><td>Caller file</td><td>A JSON object of claims standing in for a decoded, verified token.</td></tr>
 <tr><td>Playground link</td><td>Cedar's playground URL with our policies, schema, entities, and request in its fragment.</td></tr>
 </table>
 

@@ -1,0 +1,52 @@
+{
+  "name": "notes",
+  "catalog_name": "demo",
+  "schema_name": "notes",
+  "full_name": "demo.notes.notes",
+  "table_type": "MANAGED",
+  "data_source_format": "DELTA",
+  "comment": "Notes as served by the notes API",
+  "owner": "notes-owners",
+  "columns": [
+    {
+      "name": "note_id",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 0,
+      "nullable": false,
+      "comment": "Note identifier"
+    },
+    {
+      "name": "author_id",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 1,
+      "nullable": false,
+      "comment": "User who wrote the note"
+    },
+    {
+      "name": "title",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 2,
+      "nullable": false,
+      "comment": "Title"
+    },
+    {
+      "name": "body",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 3,
+      "nullable": true,
+      "comment": "The note itself"
+    },
+    {
+      "name": "reviewer_notes",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 4,
+      "nullable": true,
+      "comment": "Comments left by a reviewer"
+    }
+  ]
+}

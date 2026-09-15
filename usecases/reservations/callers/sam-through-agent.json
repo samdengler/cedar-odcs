@@ -1,0 +1,12 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "sam",
+  "aud": "reservations-gateway",
+  "roles": [
+    "specialist"
+  ],
+  "act": {
+    "sub": "reservations-assistant",
+    "client_id": "reservations-assistant"
+  }
+}

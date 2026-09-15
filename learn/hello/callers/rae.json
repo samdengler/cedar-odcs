@@ -1,0 +1,8 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "rae",
+  "aud": "notes",
+  "roles": [
+    "reviewer"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": {\"name\": \"notes___get_note\", \"arguments\": {\"noteId\": \"note-1\"}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWRhIiwiYXVkIjoibm90ZXMiLCJyb2xlcyI6W119.signature-checked-by-the-gateway"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "notes___get_note",
+          "arguments": {
+            "noteId": "note-1"
+          }
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {},
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"note-1\", \"owner\": \"ada\", \"title\": \"Packing list\", \"body\": \"Passport, chargers, the blue jacket\", \"reviewerNotes\": \"Approved for the trip board\"}"
+            }
+          ],
+          "structuredContent": {
+            "id": "note-1",
+            "owner": "ada",
+            "title": "Packing list",
+            "body": "Passport, chargers, the blue jacket",
+            "reviewerNotes": "Approved for the trip board"
+          }
+        }
+      }
+    }
+  }
+}

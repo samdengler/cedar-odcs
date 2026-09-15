@@ -1,0 +1,4 @@
+entity Note {
+  owner: User
+};
+entity Contract tags String;

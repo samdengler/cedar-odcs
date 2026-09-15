@@ -11,12 +11,12 @@ from core.cli import main, playground_link
 
 REPO = Path(__file__).resolve().parents[1]
 R = str(REPO / "usecases/reservations")
-TOKENS = json.loads((REPO / "usecases/reservations/tokens.json").read_text())
+TOKENS = json.loads((REPO / "usecases/reservations/callers.json").read_text())
 RECORDS = json.loads((REPO / "usecases/reservations/records.json").read_text())
 
 
 @pytest.fixture
-def token(tmp_path):
+def caller(tmp_path):
     def write(name):
         path = tmp_path / f"{name}.json"
         path.write_text(json.dumps(TOKENS[name]))
@@ -51,31 +51,31 @@ def test_authorize_names_the_policy(capsys):
     assert out.startswith("Allow") and "specialist-reads-any-reservation" in out
 
 
-def test_dry_run_reports_both_legs(capsys, token, tmp_path):
+def test_dry_run_reports_both_legs(capsys, caller, tmp_path):
     record = tmp_path / "record.json"
     record.write_text(json.dumps(RECORDS["ABC123"]))
-    code, out = run(capsys, "dry-run", R, "--token", token("agent"), "--tool", "reservations___get_reservation",
+    code, out = run(capsys, "dry-run", R, "--caller", caller("agent"), "--tool", "reservations___get_reservation",
                     "--arg", "recordLocator=ABC123", "--arg", "lastName=Smith", "--response", str(record))
     assert code == 0
     assert "Request    forwarded" in out
     assert "stripped: passengers[].passportNumber, passengers[].specialServiceRequests, remarks" in out
 
 
-def test_dry_run_rejects_in_words(capsys, token):
-    code, out = run(capsys, "dry-run", R, "--token", token("agent"), "--tool", "reservations___cancel_reservation",
+def test_dry_run_rejects_in_words(capsys, caller):
+    code, out = run(capsys, "dry-run", R, "--caller", caller("agent"), "--tool", "reservations___cancel_reservation",
                     "--arg", "recordLocator=ABC123", "--arg", "lastName=Jones")
     assert code == 1
     assert "rejected: CancelReservation is not permitted" in out
 
 
-def test_check_access_for_the_pair_and_the_specialist(capsys, token):
-    code, out = run(capsys, "check-access", R, "--token", token("agent"),
+def test_check_access_for_the_pair_and_the_specialist(capsys, caller):
+    code, out = run(capsys, "check-access", R, "--caller", caller("agent"),
                     "--presented", "locator=ABC123", "--presented", "lastName=Smith")
     assert code == 0
     assert "Verbs held      LookupReservation, ReadReservation, UpdateReservation, CancelReservation\n" in out
     assert "Writable        passengers[].seat (owner), contact.email (owner), contact.phone (owner)" in out
     assert "remarks (internal)" in out.split("Not readable")[1].split("\n")[0]
-    code, out = run(capsys, "check-access", R, "--token", token("sam-through-agent"))
+    code, out = run(capsys, "check-access", R, "--caller", caller("sam-through-agent"))
     assert "acting for sam" in out and "ListReservations" in out.split("Verbs held")[1].split("\n")[0]
     assert "Writable        remarks (specialist)" in out
 

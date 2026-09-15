@@ -3,10 +3,10 @@
     cedar-osdc run-tests    usecases/reservations
     cedar-osdc authorize    usecases/reservations --principal 'User::"sam"' \\
                               --action 'Action::"ReadReservation"' --resource 'Reservation::"ABC123"'
-    cedar-osdc dry-run      usecases/reservations --token sam.json \\
+    cedar-osdc dry-run      usecases/reservations --caller sam.json \\
                               --tool reservations___get_reservation --arg recordLocator=XYZ789 \\
                               --response record.json
-    cedar-osdc check-access usecases/reservations --token agent.json \\
+    cedar-osdc check-access usecases/reservations --caller agent.json \\
                               --presented locator=ABC123 --presented lastName=SMITH
     cedar-osdc share        usecases/reservations --case "co-traveler"
     cedar-osdc build        usecases/reservations
@@ -16,7 +16,7 @@
 Verbs match the official cedar command where the meaning is the same
 (authorize, validate, run-tests, new) and add the two ideas Cedar has
 no word for: a dry run of one tool call through both legs, and a
-report of the access a token grants. Files are Cedar's own formats:
+report of what a caller may do. Files are Cedar's own formats:
 policies.cedar, entities.json, .cedarschema, the corpus in the
 cedar-integration-tests form.
 
@@ -94,10 +94,12 @@ def _pairs(items) -> dict:
     return out
 
 
-def _token(path: str) -> dict:
+def _caller(path: str) -> dict:
+    """A caller file: the claims of the caller's credential, the JWT the
+    Gateway verified, as one JSON object with at least a sub."""
     claims = json.loads(Path(path).read_text())
     if not isinstance(claims, dict) or "sub" not in claims:
-        raise Usage(f"{path} is not a token: a JSON object of claims with a sub")
+        raise Usage(f"{path} is not a caller file: a JSON object of claims with a sub")
     return claims
 
 
@@ -213,7 +215,7 @@ def cmd_authorize(args):
 def cmd_dry_run(args):
     module = load_use_case(args.directory)
     use_case = module.USE_CASE
-    claims = _token(args.token)
+    claims = _caller(args.caller)
     tool = use_case.tools.get(args.tool)
     if tool is None:
         raise Usage(f"tool {args.tool} is not in the use case's tool table: {', '.join(use_case.tools)}")
@@ -263,7 +265,7 @@ def cmd_dry_run(args):
 def cmd_check_access(args):
     module = load_use_case(args.directory)
     use_case = module.USE_CASE
-    claims = _token(args.token)
+    claims = _caller(args.caller)
     engine = Engine(use_case)
     projection = engine.projection(claims)
     context = {}
@@ -456,14 +458,14 @@ def main(argv=None) -> int:
     p.set_defaults(func=cmd_authorize)
 
     p = with_dir(sub.add_parser("dry-run", help="one tool call through both legs, without calling the tool"))
-    p.add_argument("--token", required=True, metavar="FILE", help="JSON claims of the caller's token")
+    p.add_argument("--caller", required=True, metavar="FILE", help="a caller file: the claims of the caller's credential")
     p.add_argument("--tool", required=True, help="an MCP tool name from the use case's tool table")
     p.add_argument("--arg", action="append", metavar="KEY=VALUE", help="a tool argument (JSON values allowed)")
     p.add_argument("--response", metavar="FILE", help="the tool's response payload, to run the response leg")
     p.set_defaults(func=cmd_dry_run)
 
-    p = with_dir(sub.add_parser("check-access", help="what a token grants: verbs, readable paths, writable paths"))
-    p.add_argument("--token", required=True, metavar="FILE")
+    p = with_dir(sub.add_parser("check-access", help="what a caller may do: verbs, readable paths, writable paths"))
+    p.add_argument("--caller", required=True, metavar="FILE", help="a caller file: the claims of the caller's credential")
     p.add_argument("--presented", action="append", metavar="KEY=VALUE", help="a presented fact, e.g. lastName=SMITH")
     p.add_argument("--record", metavar="FILE", help="a payload row to decide on (default: the first stored one)")
     p.set_defaults(func=cmd_check_access)

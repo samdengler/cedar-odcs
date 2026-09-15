@@ -1,0 +1,196 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "ada reads her own note",
+      "principal": {
+        "type": "User",
+        "id": "ada"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNote"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {},
+      "decision": "Allow",
+      "reason": [
+        "policy0"
+      ],
+      "errors": []
+    },
+    {
+      "description": "ada may not read bo's note",
+      "principal": {
+        "type": "User",
+        "id": "ada"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNote"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-2"
+      },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "rae the reviewer reads any note",
+      "principal": {
+        "type": "User",
+        "id": "rae"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNote"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-2"
+      },
+      "context": {},
+      "decision": "Allow",
+      "reason": [
+        "policy1"
+      ],
+      "errors": []
+    },
+    {
+      "description": "ada reads the body of her own note: confidential is the owner's level",
+      "principal": {
+        "type": "User",
+        "id": "ada"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNoteField"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {
+        "field": "body"
+      },
+      "decision": "Allow",
+      "reason": [
+        "policy2"
+      ],
+      "errors": []
+    },
+    {
+      "description": "ada may not read the reviewer's notes: internal is not the owner's level",
+      "principal": {
+        "type": "User",
+        "id": "ada"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNoteField"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {
+        "field": "reviewerNotes"
+      },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "rae reads the reviewer's notes on any note",
+      "principal": {
+        "type": "User",
+        "id": "rae"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNoteField"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {
+        "field": "reviewerNotes"
+      },
+      "decision": "Allow",
+      "reason": [
+        "policy3"
+      ],
+      "errors": []
+    },
+    {
+      "description": "rae may not read the body: confidential is not the reviewer's level",
+      "principal": {
+        "type": "User",
+        "id": "rae"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNoteField"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {
+        "field": "body"
+      },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a field the contract does not declare fails closed",
+      "principal": {
+        "type": "User",
+        "id": "rae"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNoteField"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {
+        "field": "draftOf"
+      },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "an unknown user reads nothing: the default deny",
+      "principal": {
+        "type": "User",
+        "id": "mallory"
+      },
+      "action": {
+        "type": "Action",
+        "id": "ReadNote"
+      },
+      "resource": {
+        "type": "Note",
+        "id": "note-1"
+      },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

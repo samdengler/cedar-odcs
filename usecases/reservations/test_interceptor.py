@@ -156,14 +156,14 @@ def test_agent_alone_without_a_pair_is_refused():
 
 def test_the_agent_is_typed_as_an_agent_and_the_specialist_is_acted_for():
     from core.claims import project
-    tokens = json.loads((HERE / "tokens.json").read_text())
-    p = project(tokens["agent"], USE_CASE.entities)
+    callers = json.loads((HERE / "callers.json").read_text())
+    p = project(callers["agent"], USE_CASE.entities)
     assert p.principal == 'Agent::"reservations-assistant"' and p.mode == "customer-conversation"
-    p = project(tokens["sam-through-agent"], USE_CASE.entities)
+    p = project(callers["sam-through-agent"], USE_CASE.entities)
     assert p.principal == 'Agent::"reservations-assistant"'
     assert p.context == {"actingFor": {"__entity": {"type": "User", "id": "sam"}}}
     assert p.acted_for_entity["parents"] == [{"type": "Role", "id": "specialist"}]
-    p = project(tokens["sam"], USE_CASE.entities)
+    p = project(callers["sam"], USE_CASE.entities)
     assert p.principal == 'User::"sam"' and p.mode == "employee-direct"
 
 

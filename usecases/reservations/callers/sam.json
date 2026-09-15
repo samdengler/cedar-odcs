@@ -1,0 +1,8 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "sam",
+  "aud": "reservations-gateway",
+  "roles": [
+    "specialist"
+  ]
+}

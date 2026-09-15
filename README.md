@@ -2,6 +2,18 @@
 
 Data governance for agent tool calls, enforced with [Cedar](https://docs.cedarpolicy.com/) policies derived from [Open Data Contract Standard](https://bitol-io.github.io/open-data-contract-standard/) documents.
 
+## Start here
+
+Clone, then from the repository root with [uv](https://docs.astral.sh/uv/) installed:
+
+```sh
+uv sync
+uv run cedar-osdc run-tests learn/hello
+uv run cedar-osdc check-access learn/hello --caller learn/hello/callers/ada.json
+```
+
+Then follow the [learning path](learn/README.md): three steps that begin where Cedar's own tutorial ends, each a use case you can run, change, and break. The [guide](learn/guide.md) says what to know about your own domain to fill in a use case, and the [proofs page](learn/proofs.md) says what the symbolic proofs give and do not. The rest of this README is the map of the repository and the record of how it was built.
+
 ## Problem
 
 Agents on AgentCore Runtime call upstream APIs through MCP tools registered in AgentCore Gateway. The tools authenticate with service credentials, so the APIs return whatever is asked for; the API layer itself has weak governance. Enforcement therefore lives in the agent stack, in Gateway interceptors on both the request and response legs of a tool call.
@@ -66,9 +78,9 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `entities.json`: the prior facts, plus an employee role that support and finance belong to.
   - `tests/bola.json` through `tests/function-level.json`: iterations 1 through 5's corpora, byte for byte; every carried case is direct mode.
   - `tests/on-behalf-of.json`: fifteen cases across the three modes.
-  - `tokens/*.json`: one hand-written token payload per mode, standing in for decoded tokens.
+  - `callers/*.json`: one hand-written token payload per mode, standing in for decoded callers.
   - `claims.py`: `project`, the claims to Cedar request mapping (RFC 8693 `sub` and `act`), and `is_allowed` asked with a token.
-  - `test_claims.py`: the three modes entered through their tokens; roles read from the token.
+  - `test_claims.py`: the three modes entered through their callers; roles read from the token.
 - `contract/`: iteration 7. ODCS as source of truth: the tag maps and the Cedar schema generated at build time.
   - `design.html`: the design narrative. The two-stage build, the Unity Catalog tag convention, and what the contract does and does not decide.
   - `unity/`: recorded Unity Catalog API responses, the tables endpoint and the entity tag assignments endpoint, standing in for live calls.
@@ -94,6 +106,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `policies.cedar`, `entities.json`: iteration 9's policies and iteration 7's build output, byte for byte; a test says so.
   - `events/*.json`: fifteen Gateway events in the documented shapes, one response per tool.
   - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.
+- `learn/`: iteration 15. The learning path (`README.md`), the hello use case (`hello/`), steps 2 and 3 (`roles.md`, `possession.md`), the guide (`guide.md`), and the proofs page (`proofs.md`).
 - `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules; `what-reservations-changed.html` is the writeup of what the reservation use case changed in it; `cli.py` is the `cedar-osdc` command and `iteration-14.html` its design narrative.
 - `usecases/orders/`: iteration 9's policies and iteration 7's contract sources on core, every corpus and Gateway fixture carried, at parity with the numbered iterations.
 - `usecases/reservations/`: iteration 11. A reservation is held by whoever presents its record locator and the holder's last name.
@@ -103,7 +116,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `iteration-12.html`: writes by possession and the pre-fetch before a write.
   - `iteration-13.html`: the specialist's view, the agent as a principal, and the list.
   - `policies.cedar`: six possession policies, seven specialist policies, and one forbid: only employees are acted for.
-  - `records.json`: the read path's stand-in for the pre-fetch. `tokens.json`: the three token shapes.
+  - `records.json`: the read path's stand-in for the pre-fetch. `callers.json`, `callers/`: the three caller shapes.
   - `tests/*.json`: forty-three cases. `events/`: twenty-four Gateway fixtures.
   - `usecase.py`, `test_build.py`, `test_interceptor.py`, `test_corpus.py`.
 - `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
@@ -114,12 +127,12 @@ Requires [uv](https://docs.astral.sh/uv/). From the repository root, `uv sync` i
 
 ```sh
 uv run cedar-osdc run-tests usecases/reservations
-uv run cedar-osdc check-access usecases/reservations --token agent.json --presented locator=ABC123 --presented lastName=Smith
-uv run cedar-osdc dry-run usecases/reservations --token agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
+uv run cedar-osdc check-access usecases/reservations --caller agent.json --presented locator=ABC123 --presented lastName=Smith
+uv run cedar-osdc dry-run usecases/reservations --caller agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
 uv run cedar-osdc share usecases/reservations --case "co-traveler"
 ```
 
-The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a token grants. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A token file is a JSON object of claims; `usecases/reservations/tokens.json` holds three to copy from. The design narrative is `core/iteration-14.html`.
+The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a caller may do. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A caller file is a JSON object of claims; `usecases/reservations/callers.json` holds three to copy from. The design narrative is `core/iteration-14.html`.
 
 ## Running
 
@@ -158,7 +171,7 @@ Each new use case is a tool, the API behind it, and the rules that govern it. Th
 5. Data contract: what does the response payload contain, field by field, and what classification level does each field carry? Fields outside the contract strip, so the contract must be complete before onboarding.
 6. Grants: which roles hold which verbs, and which classification levels does each reader hold?
 
-The identity questions double as a gap analysis. On behalf of access is in place but new, and today's claims may not carry everything the rules need to check. The corpus states the requirement target: each case names the facts its decision needs, so comparing today's tokens against the cases yields a concrete list of what exists, what is missing, and what must change in the identity setup before enforcement can rely on it. That list is an organizational change plan for data governance, tracked alongside the iterations.
+The identity questions double as a gap analysis. On behalf of access is in place but new, and today's claims may not carry everything the rules need to check. The corpus states the requirement target: each case names the facts its decision needs, so comparing today's callers against the cases yields a concrete list of what exists, what is missing, and what must change in the identity setup before enforcement can rely on it. That list is an organizational change plan for data governance, tracked alongside the iterations.
 
 ## Iterations
 
@@ -175,4 +188,6 @@ The identity questions double as a gap analysis. On behalf of access is in place
 11. Reservations by locator and last name, done: a second use case with no customer identity, possession decided on the response leg, nested records by path, the mechanism extracted into `core/`.
 12. Writes by possession, done: contact, seats, and cancellation by whoever holds the pair; the record is fetched through the read path before a write is forwarded.
 13. The specialist, the agent, and the list, done: the agent as a principal of its own type, the specialist as the acted-for human whose roles decide, the specialist's view on without a pair and off with one, listing for specialists only.
-14. The command line, done: nine verbs matching Cedar's where the meaning is the same, a dry run of one tool call, a report of what a token grants, and a link into Cedar's playground for any case.
+14. The command line, done: nine verbs matching Cedar's where the meaning is the same, a dry run of one tool call, a report of what a caller may do, and a link into Cedar's playground for any case.
+
+15. The learning path, done: three runnable steps after Cedar's own tutorial, the guide, the proofs page, and caller files in every use case.

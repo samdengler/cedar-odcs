@@ -1,0 +1,69 @@
+[
+  {
+    "uid": {
+      "type": "User",
+      "id": "ada"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "bo"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "rae"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "reviewer"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "reviewer"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Note",
+      "id": "note-1"
+    },
+    "attrs": {
+      "owner": {
+        "__entity": {
+          "type": "User",
+          "id": "ada"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Note",
+      "id": "note-2"
+    },
+    "attrs": {
+      "owner": {
+        "__entity": {
+          "type": "User",
+          "id": "bo"
+        }
+      }
+    },
+    "parents": []
+  }
+]

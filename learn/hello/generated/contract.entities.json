@@ -1,0 +1,32 @@
+[
+  {
+    "uid": {
+      "type": "Contract",
+      "id": "Note"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "id": "public",
+      "owner": "public",
+      "title": "public",
+      "body": "confidential",
+      "reviewerNotes": "internal"
+    }
+  },
+  {
+    "uid": {
+      "type": "Contract",
+      "id": "Note/writers"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "id": "system",
+      "owner": "system",
+      "title": "system",
+      "body": "owner",
+      "reviewerNotes": "reviewer"
+    }
+  }
+]

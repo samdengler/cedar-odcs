@@ -1,0 +1,6 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "ada",
+  "aud": "notes",
+  "roles": []
+}

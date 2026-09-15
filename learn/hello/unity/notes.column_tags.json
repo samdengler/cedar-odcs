@@ -1,0 +1,94 @@
+{
+  "tag_assignments": [
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.note_id",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.note_id",
+      "tag_key": "field_name",
+      "tag_value": "id",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.author_id",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.author_id",
+      "tag_key": "field_name",
+      "tag_value": "owner",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.author_id",
+      "tag_key": "cedar_entity_type",
+      "tag_value": "User",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.title",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.body",
+      "tag_key": "classification",
+      "tag_value": "confidential",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.body",
+      "tag_key": "writer",
+      "tag_value": "owner",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.reviewer_notes",
+      "tag_key": "classification",
+      "tag_value": "internal",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "demo.notes.notes.reviewer_notes",
+      "tag_key": "writer",
+      "tag_value": "reviewer",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "notes-owners",
+      "source_type": "MANUAL"
+    }
+  ]
+}

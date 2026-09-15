@@ -1,0 +1,23 @@
+entity Role in [Role];
+entity User in [Role];
+entity Note {
+  owner: User
+};
+entity Contract tags String;
+
+action ReadNote appliesTo {
+  principal: [User],
+  resource: [Note],
+  context: {
+    actingFor?: User
+  }
+};
+
+action ReadNoteField appliesTo {
+  principal: [User],
+  resource: [Note],
+  context: {
+    actingFor?: User,
+    field?: String
+  }
+};

@@ -5,8 +5,10 @@ composition of the iterations, using Cedar's symbolic compiler
 ([cedar-policy-symcc](https://crates.io/crates/cedar-policy-symcc))
 and the cvc5 SMT solver. The corpus samples decisions by example; these
 checks prove properties over every possible request. The compiler
-itself is verified in Lean ([cedar-spec](https://github.com/cedar-policy/cedar-spec)),
-so the proofs are trustworthy end to end.
+itself is verified in Lean ([cedar-spec](https://github.com/cedar-policy/cedar-spec)).
+The solver, the schemas and entity models written here, and the
+enforcement code that builds requests are not; "What the proofs
+assume" below says what a green run does and does not establish.
 
 ## What is proved
 
@@ -181,6 +183,38 @@ The runner's output for the composition section:
   ...
 208 proved, 0 failed, 7 differences shown as expected
 ```
+
+## What the proofs assume
+
+A proof here is a statement about a policy set under a schema, as far
+as the symbolic compiler and cvc5 are correct. Three things sit
+outside it, and the enforcement code in `core/` is responsible for
+them:
+
+1. The schema's attributes are present. Every proof runs under a
+   schema that says, for instance, that an order always has an owner.
+   The response leg builds entities from payloads that may lack one;
+   the reveal below shows the unguarded policies of iterations 1 and
+   2 failing validation when the schema admits a missing owner, and
+   the guarded policies passing. Guard attribute reads with `has`.
+2. Entities are well formed. The tag maps are data the contract build
+   wrote; a proof holds for every possible map, which is a strength,
+   and says nothing about whether the deployed map is the intended
+   one.
+3. The request was built correctly. Which token became which
+   principal, which tool argument became which presented fact, which
+   payload field became which attribute: the projection and the
+   handlers decide these, and no proof reaches them. The critical
+   review of this project found its worst defects in that layer,
+   beside a green proof run.
+
+Two limits of the method itself. A guardrail no-op proves the base set
+never allows what the forbid names, so a forbid naming a level outside
+every allowlist, a misspelled one say, passes trivially; there is no
+vacuity check yet, and a new guardrail should be read against the
+corpus case it generalizes. And a declared revision makes a change
+visible rather than right; the revision file is where a reviewer
+should look.
 
 ## Findings
 

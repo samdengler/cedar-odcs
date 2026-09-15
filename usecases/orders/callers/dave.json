@@ -1,0 +1,8 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "dave",
+  "aud": "orders-gateway",
+  "roles": [
+    "finance"
+  ]
+}

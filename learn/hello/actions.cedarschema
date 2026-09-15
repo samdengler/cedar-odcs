@@ -1,0 +1,16 @@
+action ReadNote appliesTo {
+  principal: [User],
+  resource: [Note],
+  context: {
+    actingFor?: User
+  }
+};
+
+action ReadNoteField appliesTo {
+  principal: [User],
+  resource: [Note],
+  context: {
+    actingFor?: User,
+    field?: String
+  }
+};
