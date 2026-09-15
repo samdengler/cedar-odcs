@@ -236,7 +236,7 @@ forbid(
 
 <h2 id="guardrails">5. Every guardrail against the final set</h2>
 
-<p>Eighteen guardrail files exist across iterations 2 through 6. Each iteration listed the ones it carried, and the retirements were sentences in design documents. The second pass puts every file against the final policy set and prints one of three statuses. Carried: proven a no-op against the final set. Revised: superseded by a file of the same name under <code>guardrails/on-behalf-of/</code>, which is the one proven. Retired: listed with the iteration that retired it and the reason, and shown to fail, so the retirement is a checked fact:</p>
+<p>Nineteen guardrail files exist across iterations 2 through 9. Each iteration listed the ones it carried, and the retirements were sentences in design documents. The second pass puts every file against the final policy set and prints one of three statuses. Carried: proven a no-op against the final set. Revised: superseded by a file of the same name under a later iteration's guardrail directory, which is the one proven. Retired: listed with the iteration that retired it and the reason, and shown to fail, so the retirement is a checked fact:</p>
 
 <pre><code>  SHOWN retired  guardrails/bola-writes/support-never-updates.cedar: iteration 5 granted the support role an object-level update: differs under Action::"UpdateOrder", as expected
   PASS  carried  guardrails/field-reads/fail-closed.cedar
@@ -248,8 +248,8 @@ forbid(
 
 <table>
 <tr><th>Status</th><th>Count</th><th>Files</th></tr>
-<tr><td>carried</td><td>12</td><td>fail-closed, restricted-unreadable, mass-assignment-fail-closed, system-fields-unwritable, refund-requires-finance, and the seven under <code>guardrails/on-behalf-of/</code></td></tr>
-<tr><td>revised</td><td>4</td><td>support-confidential (iteration 3), cancel-requires-owner-or-support, role-writes-only-role-fields, refund-implies-no-read (iteration 5)</td></tr>
+<tr><td>carried</td><td>12</td><td>fail-closed, restricted-unreadable, mass-assignment-fail-closed, system-fields-unwritable, refund-requires-finance, six under <code>guardrails/on-behalf-of/</code>, and acting-bounded-by-ownership under <code>guardrails/row-filtering/</code></td></tr>
+<tr><td>revised</td><td>5</td><td>support-confidential (iteration 3), cancel-requires-owner-or-support, role-writes-only-role-fields, refund-implies-no-read (iteration 5), acting-bounded-by-ownership (iteration 6, revised by iteration 9 to name the order verbs)</td></tr>
 <tr><td>retired</td><td>2</td><td>support-never-updates (iteration 2), writes-require-ownership (iteration 4), both by iteration 5's role-granted update</td></tr>
 </table>
 
