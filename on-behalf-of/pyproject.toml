@@ -1,0 +1,13 @@
+[project]
+name = "on-behalf-of"
+version = "0.1.0"
+description = "Cedar on behalf of access modes, iteration 6"
+requires-python = ">=3.10"
+dependencies = [
+    "cedarpy>=4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

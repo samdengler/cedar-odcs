@@ -1,0 +1,6 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "carol",
+  "aud": "orders-gateway",
+  "roles": ["support"]
+}

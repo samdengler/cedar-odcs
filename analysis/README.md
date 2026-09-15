@@ -48,6 +48,13 @@ Current results, all proved:
   this iteration grants support an object-level update:
   support-never-updates and writes-require-ownership. The five that
   still apply are reproven.
+- `on-behalf-of`: never errors (the `if context has actingFor then ...
+  else principal` owner expression included); while acting for a
+  party nothing is allowed outside that party's ownership, for every
+  verb; acting reads only public and confidential fields and writes
+  only owner fields. Four earlier guardrails that mention ownership or
+  a role are revised for mode (`guardrails/on-behalf-of/`); the five
+  mode-free ones are carried unchanged and reproven.
 
 ## Findings
 

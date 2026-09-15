@@ -215,6 +215,28 @@ const ITERATIONS: &[Iteration] = &[
             "guardrails/function-level/refund-implies-no-read.cedar",
         ],
     },
+    // Iteration 6 gives every policy a mode. Guardrails that mention
+    // ownership or a role are revised to the acted-for party and to
+    // direct mode; the mode-free ones are carried as they are.
+    Iteration {
+        name: "on-behalf-of",
+        schema: "schemas/on-behalf-of.cedarschema",
+        spec: None,
+        guardrails: &[
+            "guardrails/field-reads/fail-closed.cedar",
+            "guardrails/field-reads/restricted-unreadable.cedar",
+            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
+            "guardrails/field-writes/system-fields-unwritable.cedar",
+            "guardrails/function-level/refund-requires-finance.cedar",
+            "guardrails/on-behalf-of/support-confidential.cedar",
+            "guardrails/on-behalf-of/cancel-requires-owner-or-support.cedar",
+            "guardrails/on-behalf-of/role-writes-only-role-fields.cedar",
+            "guardrails/on-behalf-of/refund-implies-no-read.cedar",
+            "guardrails/on-behalf-of/acting-bounded-by-ownership.cedar",
+            "guardrails/on-behalf-of/acting-reads-customer-levels-only.cedar",
+            "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
+        ],
+    },
 ];
 
 /// Spawn cvc5 from $CVC5, PATH, or the copy bundled in .tools.

@@ -60,6 +60,15 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `test_corpus.py`: the same runner.
   - `request_gate.py`: `check_call`, the whole request leg: the verb round, then the payload round for updates.
   - `test_gate.py`: verb rejection before the payload is read; role-granted updates bounded by the writers map.
+- `on-behalf-of/`: iteration 6. On behalf of access modes on top of iterations 1 through 5.
+  - `design.html`: the design narrative. Three modes and one principal, every policy given a mode, and the claims the corpus needs, each marked assumed until confirmed.
+  - `policies.cedar`: the eleven prior policies, each revised for mode, plus one forbid: only employees act for others.
+  - `entities.json`: the prior facts, plus an employee role that support and finance belong to.
+  - `tests/bola.json` through `tests/function-level.json`: iterations 1 through 5's corpora, byte for byte; every carried case is direct mode.
+  - `tests/on-behalf-of.json`: fifteen cases across the three modes.
+  - `tokens/*.json`: one hand-written token payload per mode, standing in for decoded tokens.
+  - `claims.py`: `project`, the claims to Cedar request mapping (RFC 8693 `sub` and `act`), and `is_allowed` asked with a token.
+  - `test_claims.py`: the three modes entered through their tokens; roles read from the token, not the store.
 - `analysis/`: symbolic proofs over each iteration's policies, using Cedar's symbolic compiler and the cvc5 SMT solver. Spec equivalence, guardrail no-ops, and never-errors, proven over every possible request; findings and instructions in `analysis/README.md`.
 
 ## Running
@@ -102,7 +111,7 @@ The identity questions double as a gap analysis. On behalf of access is in place
 3. Broken object property level authorization (API3) on reads, done: per-field decisions, strip denied fields from responses.
 4. API3 on writes (mass assignment), done: per-field checks on write payloads; any denied field rejects the call whole.
 5. Function level (API5), done: verbs held by roles; a verb held implies no other; the first role-granted write path.
-6. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
+6. On behalf of access modes, done: customer direct, employee direct, employee acting for a customer; the principal is the actor and the context carries the acted-for party.
 7. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
 8. Provable composition: prove that combined policy sets preserve each iteration's guarantees, with equivalence and non-interference checks in CI. Per-iteration proofs already run in `analysis/`.
 9. Row filtering for list endpoints.
