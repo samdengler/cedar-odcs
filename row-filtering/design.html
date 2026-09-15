@@ -190,9 +190,9 @@ permit(
   resource == Collection::"orders"
 );</code></pre>
 
-<p>That reads as a wide grant and is not one. Listing decides nothing about what comes back. Dave in finance may call the list and receives no rows, because the finance role grants no read and the rows are decided by <code>ReadOrder</code>. The forbid from iteration 6 still applies: bob claiming to act for alice is refused the list call, and the corpus pins <code>policy11</code> as the reason.</p>
+<p>That reads as a wide grant. Listing decides nothing about what comes back. Dave in finance may call the list and receives no rows, because the finance role grants no read and the rows are decided by <code>ReadOrder</code>. The forbid from iteration 6 still applies: bob claiming to act for alice is refused the list call, and the corpus pins <code>policy11</code> as the reason.</p>
 
-<p>On the response leg, the wrapper asks per row exactly what iteration 1 asked of one order, drops the rows that come back Deny, and then runs iteration 3's per-field round on each row that stays:</p>
+<p>On the response leg, the wrapper asks per row what iteration 1 asked of one order, drops the rows that come back Deny, and then runs iteration 3's per-field round on each row that stays:</p>
 
 <figure class="figure">
 <div data-sequence>
@@ -248,25 +248,25 @@ def entity_from_row(row: dict) -> dict:
 
 <p>Which payload field becomes an attribute, and of what type, is what iteration 7's contract says: the <code>customer_id</code> column carries the tag <code>cedar_entity_type: User</code>, the build wrote <code>entity Order { owner: User }</code>, and <code>ATTRIBUTES</code> is that declaration. Every other field stays a field, looked up in the tag maps by the field policies and never made an attribute.</p>
 
-<p>A row is the fact about the order it describes, so it replaces any stored entity of the same id, and an order no store has ever heard of is decided the same way. Two rows cannot be placed at all and fail closed: a row with no <code>id</code> cannot be an entity and is dropped before any question is asked; a row with no <code>owner</code> is an entity without the attribute, the unguarded ownership policy from iteration 1 raises an evaluation error on it, the decision is Deny, and the row is dropped. Both removals are reported.</p>
+<p>A row is the fact about the order it describes, so it replaces any stored entity of the same id, and an order no store has ever heard of is decided the same way. A row with no usable <code>id</code> (absent, not a string, or holding characters an entity reference could misread) cannot be an entity and is dropped before any question is asked. A row with no <code>owner</code> is decided without ownership: the unguarded ownership policy from iteration 1 raises an evaluation error on it, which is a Deny, so a customer loses the row, while support, whose read policy needs no owner, keeps it with support's fields. Every removal is reported with the row's position, its id when it had one, and the reason.</p>
 
 <h2 id="the-iteration">5. The iteration, file by file</h2>
 
 <ul>
 <li><code>policies.cedar</code> carries iteration 6's twelve policies verbatim and appends P13, the list verb.</li>
 <li><code>entities.json</code> is iteration 7's build output, unchanged. The collection entity is not in it: the permit names <code>Collection::"orders"</code> by id and needs no facts about it.</li>
-<li><code>row_filter.py</code> holds <code>filter_rows(principal, rows, context)</code>: the row round with entities built from the rows, then the field round, returning the surviving rows, the ids dropped, and the fields stripped per row.</li>
+<li><code>row_filter.py</code> holds <code>filter_rows(principal, rows, context)</code>: the row round with entities built from the rows, then the field round, returning the surviving rows, the rows dropped with position, id, and reason, and the fields stripped per row position.</li>
 <li><code>tests/bola.json</code> through <code>tests/contract.json</code> are carried byte for byte. <code>tests/row-filtering.json</code> adds six cases for the list verb: each role, the acting mode, the forbid, and another collection.</li>
-<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_rows.py</code> pins the response leg: the rows and fields each caller and mode receives, an order no store knows decided from its row, and the two fail-closed drops.</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_rows.py</code> pins the response leg: the rows and fields each caller and mode receives, an order no store knows decided from its row, the ownerless row lost by a customer and kept by support, and the drop of a row with no usable id.</li>
 </ul>
 
 <h2 id="tdd">6. Growing by tests</h2>
 
-<p>The corpus cases came first and were short work: the verb is one permit. The response-leg tests were the substance. The first draft of <code>filter_rows</code> asked <code>ReadOrder</code> against <code>entities.json</code>, and the test for an order the store never heard of failed, which is the point the iteration exists to make: at the Gateway there is no store, and the row is the fact. The fail-closed tests came from asking what the wrapper should do with a row it cannot place, and the answer for the ownerless row fell out of iteration 1's unguarded policy rather than any new code.</p>
+<p>The corpus cases came first and were brief: the verb is one permit. The response-leg tests were the substance. A filter that asked <code>ReadOrder</code> against <code>entities.json</code> would fail the test for an order the store never heard of, which is the iteration's claim: at the Gateway there is no store, and the row is the fact. The fail-closed tests came from asking what the wrapper should do with a row it cannot place. The ownerless row has no single answer: iteration 1's unguarded ownership policy errors on it, so a customer loses it, and support's read policy never looks at the owner, so support keeps it; the test pins both.</p>
 
 <h2 id="proofs">7. Proved as well as tested</h2>
 
-<p>The new permit never errors, and the twelve carried guardrails are reproven against the thirteen-policy set. One needed revising. Iteration 6's guardrail that acting mode is bounded by ownership was written over every action, and the list call is the one verb with no order to own; against the new set it forbade every list call made while acting, which the corpus allows. The revised guardrail names the six order verbs explicitly, and the composition run marks the old one revised and proves the new one. The preservation proof shows the six order actions decide exactly as in iteration 7. Findings and instructions are in <code>analysis/README.md</code>.</p>
+<p>The new permit never errors, and the twelve carried guardrails are reproven against the thirteen-policy set. One needed revising. Iteration 6's guardrail that acting mode is bounded by ownership was written over every action, and the list call is the one verb with no order to own; against the new set it forbade every list call made while acting, which the corpus allows. The revised guardrail names the six order verbs, and the composition run marks the old one revised and proves the new one. The preservation proof shows the six order actions decide as in iteration 7. Findings and instructions are in <code>analysis/README.md</code>.</p>
 
 <h2 id="running">8. Running it</h2>
 
@@ -287,7 +287,7 @@ def entity_from_row(row: dict) -> dict:
 
 <p><strong>The contract says which field is an attribute.</strong> The entity reference tag from iteration 7 is the only source of <code>ATTRIBUTES</code>. No field becomes an attribute by convention.</p>
 
-<p><strong>Rows the wrapper cannot place are dropped and reported.</strong> Fail closed, in the same way undeclared fields are stripped.</p>
+<p><strong>Rows the wrapper cannot place are dropped and reported.</strong> They fail closed, as undeclared fields do.</p>
 
 <h2 id="open-questions">10. Open questions</h2>
 

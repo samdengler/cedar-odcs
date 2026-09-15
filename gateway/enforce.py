@@ -19,6 +19,7 @@ already tested and proven, reached from a Gateway event.
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -46,14 +47,22 @@ class CallDecision:
 @dataclass
 class RowsDecision:
     rows: list
-    dropped: list = field(default_factory=list)
-    stripped: dict = field(default_factory=dict)
+    dropped: list = field(default_factory=list)   # {"position", "id", "reason"} per row removed
+    stripped: dict = field(default_factory=dict)  # position -> fields removed
+
+
+# Read once per process, as in iteration 9.
+POLICIES = load_policies()
+ENTITIES = load_entities()
+ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:@/-]+$")
 
 
 def _entities(projection: Projection, extra: list = None) -> str:
-    stored = load_entities()
-    replaced = {projection.principal_entity["uid"]["id"]} | {e["uid"]["id"] for e in (extra or [])}
-    kept = [e for e in stored if e["uid"]["id"] not in replaced]
+    # The token's principal and the payload's rows replace stored
+    # entities with the same uid, type and id both; an Order and a
+    # Contract that share an id string are different entities.
+    replaced = [projection.principal_entity["uid"]] + [e["uid"] for e in (extra or [])]
+    kept = [e for e in ENTITIES if e["uid"] not in replaced]
     return json.dumps(kept + [projection.principal_entity] + (extra or []))
 
 
@@ -64,7 +73,7 @@ def is_allowed(projection: Projection, action: str, resource: str, context: dict
         "resource": resource,
         "context": {**projection.context, **(context or {})},
     }
-    result = cedarpy.is_authorized(request, load_policies(), _entities(projection, extra))
+    result = cedarpy.is_authorized(request, POLICIES, _entities(projection, extra))
     return result.decision == cedarpy.Decision.Allow
 
 
@@ -74,8 +83,12 @@ def check_call(claims: dict, action: str, resource: str, body: dict = None) -> C
     if not is_allowed(projection, action, resource):
         return CallDecision(allowed=False, denied_verb=True)
     field_action = FIELD_ACTIONS.get(action)
-    if field_action is None or not body:
+    if field_action is None:
         return CallDecision(allowed=True, denied_verb=False)
+    if not isinstance(body, dict) or not body:
+        # A write with no fields to check is not forwarded: the payload
+        # round is the only thing that bounds a role-granted update.
+        return CallDecision(allowed=False, denied_verb=False, denied_fields=["<no payload>"])
     denied = [
         name for name in body
         if not is_allowed(projection, field_action, resource, {"field": name})
@@ -110,16 +123,17 @@ def filter_rows(claims: dict, rows: list) -> RowsDecision:
     projection = project(claims)
     kept, dropped, stripped = [], [], {}
     for position, row in enumerate(rows):
-        if "id" not in row:
-            dropped.append(f"row {position}: no id")
+        row_id = row.get("id") if isinstance(row, dict) else None
+        if not isinstance(row_id, str) or not ID_PATTERN.match(row_id):
+            dropped.append({"position": position, "id": None, "reason": "no usable id"})
             continue
         entity = entity_from_row(row)
-        if not is_allowed(projection, 'Action::"ReadOrder"', f'Order::"{row["id"]}"', None, [entity]):
-            dropped.append(row["id"])
+        if not is_allowed(projection, 'Action::"ReadOrder"', f'Order::"{row_id}"', None, [entity]):
+            dropped.append({"position": position, "id": row_id, "reason": "ReadOrder denied"})
             continue
         allowed_row, removed = filter_fields(projection, row)
         if removed:
-            stripped[row["id"]] = removed
+            stripped[position] = removed
         kept.append(allowed_row)
     return RowsDecision(rows=kept, dropped=dropped, stripped=stripped)
 

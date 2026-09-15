@@ -14,13 +14,16 @@ The resource entity for each row is built from the row itself. The
 response leg has the data in hand, so there is no store to ask: the
 payload field that the contract marks as an entity reference (owner,
 from `entity Order { owner: User }` in contract/generated/) becomes
-the attribute the ownership policies read. A row with no id cannot be
-an entity and is dropped; a row with no owner fails the unguarded
-ownership policy with an evaluation error, which is a Deny, and is
-dropped too. Both removals are reported.
+the attribute the ownership policies read. A row with no usable id
+cannot be an entity and is dropped before any question is asked. A
+row with no owner is decided without ownership: the ownership
+policies error on it, which is a Deny, so a customer loses the row,
+while a role that reads any order keeps it. Every removal is reported
+with the row's position, its id when it had one, and the reason.
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -45,16 +48,26 @@ class Decision:
 @dataclass
 class RowsDecision:
     rows: list                                   # what the caller receives
-    dropped: list = field(default_factory=list)  # ids (or positions) of rows removed
-    stripped: dict = field(default_factory=dict) # row id -> fields removed
+    dropped: list = field(default_factory=list)  # {"position", "id", "reason"} per row removed
+    stripped: dict = field(default_factory=dict) # position -> fields removed
+
+
+# Read once per process: the policies and the built entities do not
+# change between requests, and the response leg asks many questions.
+POLICIES = (HERE / "policies.cedar").read_text()
+ENTITIES = json.loads((HERE / "entities.json").read_text())
+
+# An id is interpolated into a Cedar entity reference, so it may hold
+# nothing the reference syntax could misread.
+ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:@/-]+$")
 
 
 def load_policies() -> str:
-    return (HERE / "policies.cedar").read_text()
+    return POLICIES
 
 
 def load_entities() -> list:
-    return json.loads((HERE / "entities.json").read_text())
+    return ENTITIES
 
 
 def entity_from_row(row: dict) -> dict:
@@ -86,15 +99,16 @@ def filter_rows(principal: str, rows: list, context: dict = None) -> RowsDecisio
     stored = load_entities()
     kept, dropped, stripped = [], [], {}
     for position, row in enumerate(rows):
-        if "id" not in row:
-            dropped.append(f"row {position}: no id")
+        row_id = row.get("id") if isinstance(row, dict) else None
+        if not isinstance(row_id, str) or not ID_PATTERN.match(row_id):
+            dropped.append({"position": position, "id": None, "reason": "no usable id"})
             continue
         entity = entity_from_row(row)
         # The row is the fact; a stored order of the same id is replaced.
         entities = [e for e in stored if e["uid"] != entity["uid"]] + [entity]
-        resource = f'Order::"{row["id"]}"'
+        resource = f'Order::"{row_id}"'
         if not is_allowed(principal, 'Action::"ReadOrder"', resource, entities, context).allowed:
-            dropped.append(row["id"])
+            dropped.append({"position": position, "id": row_id, "reason": "ReadOrder denied"})
             continue
         allowed_row, removed = {}, []
         for name, value in row.items():
@@ -104,6 +118,6 @@ def filter_rows(principal: str, rows: list, context: dict = None) -> RowsDecisio
             else:
                 removed.append(name)
         if removed:
-            stripped[row["id"]] = removed
+            stripped[position] = removed
         kept.append(allowed_row)
     return RowsDecision(rows=kept, dropped=dropped, stripped=stripped)

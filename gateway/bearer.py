@@ -85,20 +85,43 @@ def load_entities() -> list:
     return json.loads((HERE / "entities.json").read_text())
 
 
+class TokenError(Exception):
+    """The forwarded header is not a bearer token this handler reads."""
+
+
 def _b64url(segment: str) -> bytes:
-    return base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4))
+    # Strict decoding: a character outside the alphabet is an error,
+    # never discarded.
+    standard = segment.translate(str.maketrans("-_", "+/")) + "=" * (-len(segment) % 4)
+    return base64.b64decode(standard, validate=True)
 
 
 def claims_of(bearer: str) -> dict:
     """The payload of a JWT the Gateway has already verified.
 
     The interceptor sees the raw Authorization header and nothing
-    parsed; the signature, issuer, audience, and expiry were checked
+    parsed. The signature, issuer, audience, and expiry were checked
     by the Gateway's JWT authorizer before the interceptor ran, so the
-    payload is decoded here without re-verifying. That trust holds
-    only for the token the Gateway validated, which is why the
-    interceptor reads it from the request the Gateway forwarded and
-    from nowhere else.
+    payload is decoded here without re-verifying. That trust rests on
+    three conditions the deployment must meet: the gateway uses the
+    JWT authorizer (an unauthenticated or IAM-authorized gateway
+    forwards a header nobody checked); passRequestHeaders forwards the
+    header the authorizer validated; and the token forwarded is the
+    inbound one, whose sub and act claims the projection reads, and
+    not a token the Gateway exchanged for the target. The handler
+    reads the header from the request the Gateway forwarded and from
+    nowhere else. Anything that is not a well-formed bearer JWT raises
+    TokenError, which the handlers turn into a rejection.
     """
-    token = bearer.split(" ", 1)[1] if bearer.lower().startswith("bearer ") else bearer
-    return json.loads(_b64url(token.split(".")[1]))
+    if not isinstance(bearer, str) or not bearer.lower().startswith("bearer "):
+        raise TokenError("no bearer token")
+    parts = bearer.split(" ", 1)[1].strip().split(".")
+    if len(parts) != 3:
+        raise TokenError("not a JWT")
+    try:
+        claims = json.loads(_b64url(parts[1]))
+    except (ValueError, UnicodeDecodeError) as e:
+        raise TokenError(f"payload not decodable: {e}") from e
+    if not isinstance(claims, dict) or "sub" not in claims:
+        raise TokenError("no subject claim")
+    return claims

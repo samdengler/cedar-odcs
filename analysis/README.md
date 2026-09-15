@@ -68,7 +68,7 @@ Current results, all proved:
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
   restrictions; every guardrail ever written has a checked status
-  against the final set. 90 proofs, 3 expected differences shown.
+  against the final set. 141 proofs, 3 expected differences shown.
 
 ## Composition
 
@@ -80,13 +80,13 @@ Three kinds of check, all in `src/main.rs`:
   iteration's schema, for every request environment whose action the
   older iteration already had, the older and the newer policy sets
   are proven to decide identically. New actions have environments of
-  their own and are left out, which is where non-interference comes
-  for free: a policy for `RefundOrder` cannot change a `ReadOrder`
+  their own and are left out, and non-interference follows
+  without a separate proof: a policy for `RefundOrder` cannot change a `ReadOrder`
   decision because the two are proven in separate environments.
 - Declared revisions. An iteration that changes an earlier decision
   on purpose declares the change as a policy file in `revisions/`.
   It is added to the older set before comparing, so the proof reads:
-  the older iteration plus exactly these widenings equals the newer
+  the older iteration plus these widenings equals the newer
   one. The runner also compares without the revisions and shows the
   difference, so a declared revision is visible rather than assumed.
 - Restrictions. A forbid in `restrictions/` added to both sides
@@ -182,8 +182,8 @@ The runner's output for the composition section:
    caught at build time.
 4. Entity tags (`hasTag`/`getTag`) are fully supported by the symbolic
    compiler, which was this prototype's open fact-finding question. The
-   tag proofs hold for every possible tag map, not just the one in
-   `entities.json`.
+   tag proofs hold for every possible tag map, including every map other than
+   the one in `entities.json`.
 5. Iteration 5 widened earlier decisions in two places, and its design
    document declared one. The preservation proof with only the
    declared object-level update failed under `UpdateOrderField`, an

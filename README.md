@@ -68,7 +68,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `tests/on-behalf-of.json`: fifteen cases across the three modes.
   - `tokens/*.json`: one hand-written token payload per mode, standing in for decoded tokens.
   - `claims.py`: `project`, the claims to Cedar request mapping (RFC 8693 `sub` and `act`), and `is_allowed` asked with a token.
-  - `test_claims.py`: the three modes entered through their tokens; roles read from the token, not the store.
+  - `test_claims.py`: the three modes entered through their tokens; roles read from the token.
 - `contract/`: iteration 7. ODCS as source of truth: the tag maps and the Cedar schema generated at build time.
   - `design.html`: the design narrative. The two-stage build, the Unity Catalog tag convention, and what the contract does and does not decide.
   - `unity/`: recorded Unity Catalog API responses, the tables endpoint and the entity tag assignments endpoint, standing in for live calls.
@@ -85,7 +85,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `entities.json`: iteration 7's build output, unchanged.
   - `tests/*.json`: iterations 1 through 7's corpora, byte for byte, plus `tests/row-filtering.json`: six list verb cases.
   - `row_filter.py`: `filter_rows`, the response leg for a list: one `ReadOrder` per row built from the row itself, then the per-field round on each surviving row.
-  - `test_rows.py`: the rows and fields each caller and mode receives; rows without an id or an owner dropped.
+  - `test_rows.py`: the rows and fields each caller and mode receives; a row without a usable id dropped; a row without an owner decided without ownership.
 - `gateway/`: iteration 10. Enforcement in AgentCore Gateway interceptors.
   - `design.html`: the design narrative. The two interception points, the handlers, where the native policy engine fits, and the Lambda extension decision revisited.
   - `interceptor.py`: `request_handler` and `response_handler`, the Gateway's event and result formats for MCP targets, and the tool table.

@@ -50,6 +50,8 @@ def contract_entities(contract: OpenDataContractStandard, role_names: set) -> li
     for obj in contract.schema_:
         classification, writers = {}, {}
         for prop in obj.properties:
+            if prop.name in classification:
+                raise ContractError(f"{obj.name}.{prop.name}: declared twice")
             if prop.classification not in LEVELS:
                 raise ContractError(f"{obj.name}.{prop.name}: classification {prop.classification!r}")
             writer = custom(prop, "writer", "system")

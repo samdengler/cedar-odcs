@@ -457,6 +457,9 @@ fn all_guardrails(analysis: &Path) -> Vec<String> {
         let dir = dir.unwrap().path();
         for file in std::fs::read_dir(&dir).unwrap() {
             let file = file.unwrap().path();
+            if file.extension().and_then(|e| e.to_str()) != Some("cedar") {
+                continue;
+            }
             files.push(
                 file.strip_prefix(analysis).unwrap().to_string_lossy().into_owned(),
             );

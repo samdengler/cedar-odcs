@@ -195,9 +195,9 @@ h2:hover .anchor { opacity: 1; }
   "reason":    ["policy0"]
 }</code></pre>
 
-<p>The allow comes from <code>policy0</code>, the ownership policy from iteration 1, not from any support policy. That is the model in one case: while acting for alice, carol holds alice's access, and alice's access is what the ownership policies grant.</p>
+<p>The allow comes from <code>policy0</code>, the ownership policy from iteration 1; no support policy fires. That is the model in one case: while acting for alice, carol holds alice's access, and alice's access is what the ownership policies grant.</p>
 
-<p>The context is a projection of the token. OAuth 2.0 Token Exchange<a class="ref" href="#r2">[2]</a> defines a delegated token whose subject (<code>sub</code>) is the party on whose behalf the request is made and whose actor claim (<code>act</code>) names the party making it. The projection in <code>claims.py</code> reads exactly that:</p>
+<p>The context is a projection of the token. OAuth 2.0 Token Exchange<a class="ref" href="#r2">[2]</a> defines a delegated token whose subject (<code>sub</code>) is the party on whose behalf the request is made and whose actor claim (<code>act</code>) names the party making it. The projection in <code>claims.py</code> reads that:</p>
 
 <pre><code class="lang-python">act = claims.get("act")
 if act is None:
@@ -272,7 +272,7 @@ forbid(
 
 <h2 id="claims">5. The claims the corpus needs</h2>
 
-<p>Every fact the policies read in this iteration comes from the token. This table is the requirement the identity setup is measured against. The status column is what is known today: each claim is an assumption until a real token confirms it, and a shortfall is a change request to the identity setup, not a reason to redesign the rules.</p>
+<p>Every fact the policies read in this iteration comes from the token. This table is the requirement the identity setup is measured against. The status column is what is known today: each claim is an assumption until a real token confirms it, and a shortfall becomes a change request to the identity setup.</p>
 
 <table>
 <tr><th>Claim</th><th>What the rules read from it</th><th>Standard</th><th>Status</th></tr>
@@ -283,7 +283,7 @@ forbid(
 <tr><td><code>may_act</code></td><td>Nothing yet. Which parties an employee may act for would come from it.</td><td>RFC 8693 section 4.4</td><td>Not used; see open questions.</td></tr>
 </table>
 
-<p>Two of these are the likely gaps. Whether the subject identifier matches the owner identifier is a fact about two systems, not one token, and a mismatch would make every ownership rule fail closed for every caller. And whether delegated tokens carry <code>act</code> at all decides whether the third mode exists as a token or only as a corpus. Both are answerable from one real token of each mode and one order record, which is the fact-finding this iteration asks for.</p>
+<p>Two of these are the likely gaps. Whether the subject identifier matches the owner identifier is a fact about two systems, and a mismatch would make every ownership rule fail closed for every caller. And whether delegated tokens carry <code>act</code> at all decides whether the third mode exists as a token or only as a corpus. Both are answerable from one real token of each mode and one order record, which is the fact-finding this iteration asks for.</p>
 
 <h2 id="the-iteration">6. The iteration, file by file</h2>
 
@@ -299,9 +299,9 @@ forbid(
 
 <h2 id="tdd">7. Growing by tests</h2>
 
-<p>The fifteen cases were written first. The first draft of the policies added on behalf of permits alongside the carried ones and left the role permits alone; the case "internal field of alice's order is not readable while acting" failed, because support's field permit still fired. Rather than add forbids to cancel permits in one mode, the role permits were given the direct-mode condition, and the draft's duplicate permits collapsed into the conditional owner expression on the carried ones. The final set has the same number of permits as iteration 5.</p>
+<p>The fifteen cases were written first. Adding on behalf of permits beside the carried ones and leaving the role permits alone would fail the case "internal field of alice's order is not readable while acting", because support's field permit would still fire. So the role permits carry the direct-mode condition, and the owner expression on the carried ones is conditional. The final set has the same number of permits as iteration 5.</p>
 
-<p>The carried corpora did their job in the other direction: forty-nine direct-mode cases, none of which changed, ran against a policy set in which every policy had been edited.</p>
+<p>The carried corpora held in the other direction: forty-nine direct-mode cases, none of which changed, ran against a policy set in which every policy had been edited.</p>
 
 <h2 id="proofs">8. Proved as well as tested</h2>
 
@@ -328,11 +328,11 @@ cd analysis && cargo run</code></pre>
 
 <h2 id="decisions">10. Decisions made in this iteration</h2>
 
-<p><strong>The principal is the actor.</strong> As settled in iteration 1's review. Audit records who made the call; the acted-for party is context. The projection from a delegated token therefore swaps the parties: the token's actor becomes the principal and the token's subject becomes <code>actingFor</code>.</p>
+<p><strong>The principal is the actor.</strong> Iteration 1's review settled it, and audit records who made the call; the acted-for party is context. The projection from a delegated token therefore swaps the parties: the token's actor becomes the principal and the token's subject becomes <code>actingFor</code>.</p>
 
-<p><strong>Acting for a customer holds the customer's access.</strong> Iteration 1 said "roughly the intersection" of the employee's and the customer's access. The two rules it also stated, role permits off while acting and ownership evaluated against the acted-for party, yield the customer's access exactly: alice's fields on alice's orders, confidential ones included. A strict intersection would drop the confidential fields, which are what an agent helping alice needs, so the two rules are taken as the definition and the intersection reading is recorded here as the alternative.</p>
+<p><strong>Acting for a customer holds the customer's access.</strong> Iteration 1 said "roughly the intersection" of the employee's and the customer's access. The two rules it also stated, role permits off while acting and ownership evaluated against the acted-for party, yield the customer's access: alice's fields on alice's orders, confidential ones included. A strict intersection would drop the confidential fields, which are what an agent helping alice needs, so the two rules are taken as the definition and the intersection reading is recorded here as the alternative.</p>
 
-<p><strong>Mode is a revision of every policy, not a third kind of policy.</strong> Every carried decision is preserved, and the policy set stays the size it was.</p>
+<p><strong>Mode is a revision of every policy.</strong> Every carried decision is preserved, and the policy set stays the size it was.</p>
 
 <p><strong>Roles come from the token.</strong> The principal entity is built per request from the role claim. The store's role facts are for the corpus; the Gateway has no store to ask.</p>
 

@@ -97,3 +97,57 @@ def test_response_headers_and_status_are_kept():
     response = out["mcp"]["transformedGatewayResponse"]
     assert response["statusCode"] == 200
     assert response["headers"] == {"Mcp-Session-Id": "session-1"}
+
+
+def _mutated(name: str, mutate) -> dict:
+    ev = event(name)
+    mutate(ev)
+    return ev
+
+
+def test_update_without_its_payload_is_rejected():
+    ev = _mutated("request-carol-updates-notes", lambda e: e["mcp"]["gatewayRequest"]["body"]["params"]["arguments"].pop("changes"))
+    out = request_handler(ev)
+    assert out["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+
+
+def test_write_under_another_argument_name_is_rejected():
+    def mutate(e):
+        args = e["mcp"]["gatewayRequest"]["body"]["params"]["arguments"]
+        args["patch"] = args.pop("changes")
+    out = request_handler(_mutated("request-carol-updates-notes", mutate))
+    message = out["mcp"]["transformedGatewayResponse"]["body"]["error"]["message"]
+    assert "unexpected arguments: patch" in message
+
+
+def test_missing_arguments_or_header_reject_rather_than_raise():
+    ev = _mutated("request-alice-reads-own-order", lambda e: e["mcp"]["gatewayRequest"]["body"]["params"].pop("arguments"))
+    assert request_handler(ev)["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+    ev = _mutated("request-alice-reads-own-order", lambda e: e["mcp"]["gatewayRequest"]["headers"].pop("Authorization"))
+    assert request_handler(ev)["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+    ev = _mutated("request-alice-reads-own-order", lambda e: e["mcp"]["gatewayRequest"]["headers"].update({"Authorization": "Basic YWxpY2U6cHc="}))
+    assert request_handler(ev)["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+
+
+def test_header_name_casing_does_not_matter():
+    def mutate(e):
+        h = e["mcp"]["gatewayRequest"]["headers"]
+        h["authorization"] = h.pop("Authorization")
+    out = request_handler(_mutated("request-alice-reads-own-order", mutate))
+    assert "transformedGatewayRequest" in out["mcp"]
+
+
+def test_unfilterable_response_is_withheld():
+    def mutate(e):
+        e["mcp"]["gatewayResponse"]["body"]["result"] = {"content": [{"type": "image", "data": "...", "mimeType": "image/png"}]}
+    out = response_handler(_mutated("response-alice-reads-own-order", mutate))
+    assert out["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+    assert "withheld" in out["mcp"]["transformedGatewayResponse"]["body"]["error"]["message"]
+
+
+def test_non_text_content_items_are_kept():
+    def mutate(e):
+        e["mcp"]["gatewayResponse"]["body"]["result"]["content"].append({"type": "image", "data": "...", "mimeType": "image/png"})
+    out = response_handler(_mutated("response-alice-reads-own-order", mutate))
+    content = out["mcp"]["transformedGatewayResponse"]["body"]["result"]["content"]
+    assert [c["type"] for c in content] == ["text", "image"]

@@ -190,7 +190,7 @@ permit(
   resource
 );</code></pre>
 
-<p>The interesting decisions are the ones no policy makes. Alice asking to refund her own order matches nothing, because the ownership policies name <code>ReadOrder</code>, <code>UpdateOrder</code>, and <code>CancelOrder</code>, never <code>RefundOrder</code>. Carol asking to refund matches nothing, because the support role holds read, cancel, and update. And Dave in finance asking to <em>read</em> an order matches nothing either: holding refund does not imply read. Each verb is granted on its own line, and the corpus pins every cross-verb attempt as Deny.</p>
+<p>The decisions no policy makes matter most. Alice asking to refund her own order matches nothing, because the ownership policies name <code>ReadOrder</code>, <code>UpdateOrder</code>, and <code>CancelOrder</code>, never <code>RefundOrder</code>. Carol asking to refund matches nothing, because the support role holds read, cancel, and update. And Dave in finance asking to <em>read</em> an order matches nothing either: holding refund does not imply read. Each verb is granted on its own line, and the corpus pins every cross-verb attempt as Deny.</p>
 
 <table>
 <tr><th>Verb</th><th>Owner</th><th>Support</th><th>Finance</th></tr>
@@ -267,7 +267,7 @@ permit(
   Contract::"Order/writers".getTag(context.field) == "support"
 };</code></pre>
 
-<p>So carol's payload of <code>{internalNotes, shippingAddress}</code> is rejected whole, naming <code>shippingAddress</code>: the object-level permit opened the door, and the writers map says which fields are behind it. The owner's field policy still asks for <code>owner</code>, so alice loses nothing and gains nothing from the change; <code>internalNotes</code> was unwritable for her before and stays so.</p>
+<p>So carol's payload of <code>{internalNotes, shippingAddress}</code> is rejected whole, naming <code>shippingAddress</code>: the object-level permit admits the role to updates, and the writers map says which fields. The owner's field policy still asks for <code>owner</code>, so alice loses nothing and gains nothing from the change; <code>internalNotes</code> was unwritable for her before and stays so.</p>
 
 <h2 id="the-iteration">5. The iteration, file by file</h2>
 
@@ -293,7 +293,7 @@ return CallDecision(allowed=not denied, denied_verb=False, denied_fields=denied)
 
 <h2 id="tdd">6. Growing by tests</h2>
 
-<p>The fourteen cases were written first, then the five policies and the one map entry. For the first time, the carried corpus did not pass unchanged. Iteration 2 pinned this case:</p>
+<p>The fourteen cases were written first, then the five policies and the one map entry. For the first time, a carried case could not stay as it was. Iteration 2 pinned this case:</p>
 
 <pre><code class="lang-json">{
   "description": "support agent may read any order but update none: no write permit exists",
@@ -303,7 +303,7 @@ return CallDecision(allowed=not denied, denied_verb=False, denied_fields=denied)
   "decision":  "Deny"
 }</code></pre>
 
-<p>Granting the role the verb flips it to Allow, and the runner failed on it exactly as the method promises: a defense recorded as a test fails the moment a change weakens it. The change is intended, so the case is revised rather than deleted, and its description says which iteration revised it and what the decision was before:</p>
+<p>Granting the role the verb flips it to Allow, and a run against the unrevised corpus fails on it, as the method promises: a defense recorded as a test fails the moment a change weakens it. The change is intended, so the case is revised rather than deleted, and its description says which iteration revised it and what the decision was before:</p>
 
 <pre><code class="lang-json">{
   "description": "support agent may update any order: revised in iteration 5, which grants the role the verb (Deny through iteration 4)",
@@ -321,15 +321,15 @@ return CallDecision(allowed=not denied, denied_verb=False, denied_fields=denied)
 <p>Four new guardrails hold over every possible request and every possible role membership:</p>
 
 <ul>
-<li><strong>Refund requires finance.</strong> Nobody outside the role ever refunds: not an owner, not support.</li>
-<li><strong>Cancel requires owner or support.</strong> Finance holds refund, not cancel.</li>
+<li><strong>Refund requires finance.</strong> Nobody outside the role ever refunds, owner and support included.</li>
+<li><strong>Cancel requires owner or support.</strong> Finance holds refund only.</li>
 <li><strong>Role writes only role fields.</strong> Through the support role, a field is writable only when the writers map names <code>support</code>. This replaces iteration 4's writes-require-ownership, retired knowingly by this iteration's object-level permit.</li>
 <li><strong>The finance role grants no read.</strong> A finance member reads an order only by owning it or through another role that holds the verb.</li>
 </ul>
 
 <p>Iteration 8's preservation proof later showed that this iteration widened two earlier decisions, where this document first declared one. Granting support the object-level update is the declared one. The support field policy, P11, is the other: it widens <code>UpdateOrderField</code>, an action iteration 4 already had, for any writers map that names <code>support</code>, and iteration 4's map never did, so no carried case sampled it. Both are recorded as declared revisions in <code>analysis/revisions/</code>.</p>
 
-<p>The last one was falsified on its first try. Written as "finance reads only as owner", the prover produced a principal who is in both the finance and support roles and reads through support. Role membership is not exclusive, the same lesson the support-never-updates guardrail taught in iteration 2, and the invariant that holds is about the role, not the person. Two guardrails from earlier iterations are retired: support-never-updates and writes-require-ownership no longer hold, by design. The five that still apply are carried and reproven against the eleven-policy set. Findings and instructions are in <code>analysis/README.md</code>.</p>
+<p>The last one was falsified on its first try. Written as "finance reads only as owner", the prover produced a principal who is in both the finance and support roles and reads through support. Role membership is not exclusive, the same lesson the support-never-updates guardrail taught in iteration 2, and the invariant that holds is a statement about the role. Two guardrails from earlier iterations are retired: support-never-updates and writes-require-ownership no longer hold, by design. The five that still apply are carried and reproven against the eleven-policy set. Findings and instructions are in <code>analysis/README.md</code>.</p>
 
 <h2 id="running">8. Running it</h2>
 
@@ -344,9 +344,9 @@ cd analysis && cargo run</code></pre>
 
 <h2 id="decisions">9. Decisions made in this iteration</h2>
 
-<p><strong>Verbs are granted one at a time.</strong> Finance holds refund and nothing else; the corpus pins that refund implies no read. When a use case needs finance to read orders, that is one more permit and one more field policy naming the levels finance holds, not an implication.</p>
+<p><strong>Verbs are granted one at a time.</strong> Finance holds refund and nothing else; the corpus pins that refund implies no read. When a use case needs finance to read orders, that is one more permit and one more field policy naming the levels finance holds.</p>
 
-<p><strong>A role-granted update is bounded by the writers map.</strong> The object-level permit says the role may update orders; the writer value says which fields. Widening support's writes to another field is a map change, reviewable as data, not a policy change.</p>
+<p><strong>A role-granted update is bounded by the writers map.</strong> The object-level permit says the role may update orders; the writer value says which fields. Widening support's writes to another field is a map change, reviewable as data.</p>
 
 <p><strong>A carried decision changes only through a revised case.</strong> The revised case keeps the old decision in its description. The regression gate is not weakened silently, and the diff of the corpus is the record of what governance changed.</p>
 

@@ -96,3 +96,20 @@ def test_writer_naming_no_role_fails_the_build():
     contract = generate.load_contract((HERE / "order.odcs.yaml").read_text())
     with pytest.raises(generate.ContractError, match="names no role"):
         generate.contract_entities(contract, role_names=set())
+
+
+def test_two_columns_becoming_one_field_fails_the_build():
+    table, assignments = _fixtures()
+    assignments["tag_assignments"].append({
+        "entity_type": "columns", "entity_name": "commerce.sales.orders.estimated_delivery",
+        "tag_key": "field_name", "tag_value": "fraudScore",
+    })
+    with pytest.raises(unity_import.ContractError, match="both become field 'fraudScore'"):
+        unity_import.contract_from_unity(table, assignments, "Order", "x")
+
+
+def test_unmapped_column_type_fails_the_build():
+    table, assignments = _fixtures()
+    table["columns"][0]["type_name"] = "MAP"
+    with pytest.raises(unity_import.ContractError, match="maps to no logicalType"):
+        unity_import.contract_from_unity(table, assignments, "Order", "x")

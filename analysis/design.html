@@ -168,14 +168,14 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="problem">1. The problem</h2>
 
-<p>Six iterations have grown one policy set. Each carried its predecessors' corpora as a regression gate, and the gate worked: iteration 5 tripped it on purpose and revised one case, iteration 6 edited every policy and tripped nothing. But a corpus samples. It checks the writers map in <code>entities.json</code>, the four users, the two orders. A decision that changed for a map nobody wrote, or a principal in two roles at once, passes the gate unseen. Iteration 2's first guardrail and iteration 5's fourth were both falsified that way, by the prover rather than the corpus.</p>
+<p>Nine iterations have grown one policy set. Each carried its predecessors' corpora as a regression gate, and the gate worked: iteration 5 tripped it on purpose and revised one case, iteration 6 edited every policy and tripped nothing. But a corpus samples. It checks the writers map in <code>entities.json</code>, the four users, the two orders. A decision that changed for a map nobody wrote, or a principal in two roles at once, passes the gate unseen. Iteration 2's first guardrail and iteration 5's fourth were both falsified that way, by the prover rather than the corpus.</p>
 
-<p>The per-iteration proofs in <code>analysis/</code> have covered invariants within one policy set since iteration 4. What they have not covered is the relation between sets: that iteration 5 changed exactly the decisions it said it changed, that iteration 6 changed none in direct mode, and that a guardrail proven in iteration 3 still holds against the set as it stands today, or is known and recorded not to. This iteration proves the composition.</p>
+<p>The per-iteration proofs in <code>analysis/</code> have covered invariants within one policy set since iteration 4. What they have not covered is the relation between sets: that iteration 5 changed the decisions it said it changed, that iteration 6 changed none in direct mode, and that a guardrail proven in iteration 3 still holds against the set as it stands today, or is known and recorded not to. This iteration proves the composition.</p>
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
-<div class="callout"><p><strong>Built:</strong> in <code>analysis/</code>, preservation proofs for each consecutive pair of iterations, declared revisions and restrictions as data, a status for every guardrail against the final set with retirements shown to fail, the runner moved to the compiler's compiled policy set API, and <code>check.sh</code> at the repository root running every test and every proof in one command. 90 properties proven, 3 expected differences shown.</p>
-<p><strong>Not built:</strong> equivalence of refactorings (a rewritten policy set against its original, which the same machinery supports when a refactoring happens), proofs over generated schemas (iteration 7's business), and any continuous integration, which was declined for this repository.</p></div>
+<div class="callout"><p><strong>Built:</strong> in <code>analysis/</code>, preservation proofs for each consecutive pair of iterations, declared revisions and restrictions as data, a status for every guardrail against the final set with retirements shown to fail, the runner moved to the compiler's compiled policy set API, and <code>check.sh</code> at the repository root running every test and every proof in one command. 141 properties proven, 3 expected differences shown.</p>
+<p><strong>Not built:</strong> equivalence of refactorings (a rewritten policy set against its original, which the same machinery supports when a refactoring happens), and any continuous integration, which was declined for this repository.</p></div>
 
 <h2 id="preservation">3. Preservation between iterations</h2>
 
@@ -188,7 +188,7 @@ let envs: Vec&lt;RequestEnv&gt; = newer_schema
     .filter(|env| older_actions.contains(&amp;action_of(env)))
     .collect();</code></pre>
 
-<p>New actions have request environments of their own and are left out of the comparison. That is where non-interference comes for free: Cedar proves each action's decisions in its own environment, so a policy for <code>RefundOrder</code> cannot change a <code>ReadOrder</code> decision, and no separate proof is needed to say so. The output names what was compared:</p>
+<p>New actions have request environments of their own and are left out of the comparison. Non-interference follows without a separate proof: Cedar proves each action's decisions in its own environment, so a policy for <code>RefundOrder</code> cannot change a <code>ReadOrder</code> decision, and no separate proof is needed to say so. The output names what was compared:</p>
 
 <pre><code>  PASS  bola-reads preserved in bola-writes
         actions compared: Action::"ReadOrder"
@@ -197,11 +197,11 @@ let envs: Vec&lt;RequestEnv&gt; = newer_schema
   PASS  field-reads preserved in field-writes
         actions compared: Action::"ReadOrder", Action::"ReadOrderField", Action::"UpdateOrder"</code></pre>
 
-<p>Three pairs are preserved outright. The remaining two are the interesting ones, because each newer iteration changed something on purpose.</p>
+<p>Five pairs are preserved outright. Two changed something on purpose, because each newer iteration changed something on purpose.</p>
 
 <h2 id="revisions">4. Declared revisions and restrictions</h2>
 
-<p>Iteration 5 revised a carried case: support may update any order. A plain preservation proof between iterations 4 and 5 must fail, and it does. The runner therefore takes a declared revision, the policy that carries the widening, adds it to the older set, and proves that the older iteration plus exactly that equals the newer one. The revision is a file, the same text as P10 of the iteration 5 policy set:</p>
+<p>Iteration 5 revised a carried case: support may update any order. A plain preservation proof between iterations 4 and 5 must fail, and it does. The runner therefore takes a declared revision, the policy that carries the widening, adds it to the older set, and proves that the older iteration plus that equals the newer one. The revision is a file, the same text as P10 of the iteration 5 policy set:</p>
 
 <pre><code class="lang-cedar">@id("support-updates-any-order")
 permit(
@@ -277,7 +277,7 @@ forbid(
 
 <h2 id="decisions">8. Decisions made in this iteration</h2>
 
-<p><strong>Preservation is proven under the newer schema over the older actions.</strong> The older policies compile under the newer schema because each schema only adds. Comparing per action environment makes non-interference a consequence rather than a separate proof.</p>
+<p><strong>Preservation is proven under the newer schema over the older actions.</strong> The older policies compile under the newer schema because each schema only adds. Comparing per action environment makes non-interference a consequence of the per-action proofs.</p>
 
 <p><strong>Revisions are declared as policy files.</strong> A widening is the policy that carries it, added to the older set. The runner shows the pair differing without it, so a declaration is checked in both directions: it accounts for the whole difference, and there is a difference to account for.</p>
 
@@ -291,7 +291,7 @@ forbid(
 
 <ol>
 <li>Refactoring equivalence. When a policy set is rewritten without meaning to change any decision, the same equivalence query proves it. Nothing has been refactored yet; the machinery waits for the first case.</li>
-<li>Proofs over generated schemas. The schemas in <code>schemas/</code> are hand-written per iteration. When iteration 7 generates the schema and the tag maps from the contract, the proofs should run over the generated schema and the pair chain gains a generated member.</li>
+<li>Generated schemas in the chain. Iteration 7's schema is the build output named in <code>SCHEMA_OVERRIDES</code>, and its pair proves the generated schema decides as the hand-written one. Later contracts, or more than one table, will need the override table to become a convention.</li>
 <li>Whether the corpus should sample what the proofs find. The second widening in iteration 5 could be added to iteration 4's carried corpus as a revised case, mirroring the first. The proof already covers it; the question is whether the corpus should record every proven revision or only the ones a design document declared.</li>
 </ol>
 

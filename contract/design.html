@@ -135,7 +135,7 @@ h2:hover .anchor { opacity: 1; }
   <a href="#build">3. The build, from catalog to policy input</a>
   <a href="#tags">4. Column tags in Unity Catalog</a>
   <a href="#contract">5. The contract</a>
-  <a href="#generated">6. What is generated</a>
+  <a href="#generated">6. The generated maps and entity declaration</a>
   <a href="#the-iteration">7. The iteration, file by file</a>
   <a href="#tdd">8. Growing by tests</a>
   <a href="#proofs">9. Proved as well as tested</a>
@@ -225,10 +225,10 @@ h2:hover .anchor { opacity: 1; }
 <tr><td><code>classification</code></td><td><code>public</code>, <code>internal</code>, <code>confidential</code>, <code>restricted</code></td><td>the property's <code>classification</code>; the classification map</td><td>the build fails</td></tr>
 <tr><td><code>writer</code></td><td><code>owner</code>, <code>system</code>, or a role name</td><td>a <code>writer</code> custom property; the writers map</td><td><code>system</code>: writable by nobody</td></tr>
 <tr><td><code>field_name</code></td><td>the API field name</td><td>the property's <code>name</code></td><td>the column name camel-cased</td></tr>
-<tr><td><code>cedar_entity_type</code></td><td>a Cedar entity type</td><td>an attribute of the resource entity in the schema</td><td>the column is a field, not an attribute</td></tr>
+<tr><td><code>cedar_entity_type</code></td><td>a Cedar entity type</td><td>an attribute of the resource entity in the schema</td><td>the column stays a field</td></tr>
 </table>
 
-<p>The recorded tag assignments for the orders table, in the shape the endpoint returns them:</p>
+<p>The recorded tag assignments for the orders table, as the endpoint returns them:</p>
 
 <pre><code class="lang-json">{
   "entity_type": "columns",
@@ -242,7 +242,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>An unclassified column fails the build. The onboarding questions in the README say the contract must be complete before a tool is onboarded, and build time is the place to find out it is not; a missing tag at runtime would strip the field silently forever. A missing writer tag, by contrast, defaults to <code>system</code>, because unwritable is the safe reading of "nobody said".</p>
 
-<p>Databricks also classifies columns automatically, with governed tags such as <code>class.email_address</code> and <code>class.credit_card</code> that a scanning agent applies<a class="ref" href="#r6">[6]</a>. Those are detectors of what a column contains, not decisions about who may see it. The build ignores them for now; an open question below proposes using them as a check on the authored level.</p>
+<p>Databricks also classifies columns automatically, with governed tags such as <code>class.email_address</code> and <code>class.credit_card</code> that a scanning agent applies<a class="ref" href="#r6">[6]</a>. Those detect what a column contains; the authored level decides who may see it. The build ignores them for now; an open question below proposes using them as a check on the authored level.</p>
 
 <h2 id="contract">5. The contract</h2>
 
@@ -259,7 +259,7 @@ h2:hover .anchor { opacity: 1; }
     value: owner
   description: Delivery address</code></pre>
 
-<p>Classification is the spec's own field, a free-text string the spec's examples fill with exactly these words<a class="ref" href="#r2">[2]</a>. Writability has no field in the spec, so it travels as a custom property, the spec's extension point at every level. The owner reference does the same:</p>
+<p>Classification is the spec's own field, a free-text string the spec's examples fill with these words<a class="ref" href="#r2">[2]</a>. Writability has no field in the spec, so it travels as a custom property, the spec's extension point at every level. The owner reference does the same:</p>
 
 <pre><code class="lang-json">- name: owner
   physicalName: customer_id
@@ -276,7 +276,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>The document also records its server, <code>type: databricks</code> with the catalog and schema, and two custom properties naming the source table. Stage two validates the whole document against the Pydantic model published for the standard<a class="ref" href="#r7">[7]</a> before reading a field from it.</p>
 
-<h2 id="generated">6. What is generated</h2>
+<h2 id="generated">6. The generated maps and entity declaration</h2>
 
 <p>The two tag maps, now with nine entries each, two more than iteration 6 typed. <code>owner</code> is declared public so it survives filtering of the owner's own order, and <code>estimatedDelivery</code> is a column the catalog has that no earlier iteration knew:</p>
 
@@ -312,7 +312,7 @@ entity Contract tags String;</code></pre>
 <li><code>facts.json</code> holds the sample users, roles, and orders from iteration 6, everything in <code>entities.json</code> that a contract does not describe.</li>
 <li><code>principals.cedarschema</code> and <code>actions.cedarschema</code> are the hand-written schema fragments.</li>
 <li><code>build.py</code> runs both stages and writes <code>order.odcs.yaml</code>, <code>generated/contract.entities.json</code>, <code>generated/order.entities.cedarschema</code>, <code>generated/orders.cedarschema</code>, and <code>entities.json</code>. It returns the outputs as text first, so the tests can compare without writing.</li>
-<li><code>policies.cedar</code> is iteration 6's file, unchanged: the point of the iteration is that it did not need to change.</li>
+<li><code>policies.cedar</code> is iteration 6's file, unchanged: it did not need to change, which is the iteration's claim.</li>
 <li><code>tests/bola.json</code> through <code>tests/on-behalf-of.json</code> are carried byte for byte. <code>tests/contract.json</code> adds five cases about the generated maps.</li>
 <li><code>test_build.py</code> pins the build: committed artifacts are current, the contract validates, every entry iteration 6 wrote by hand is carried with the same value, the generated schema equals the hand-written one, and an incomplete catalog fails the build.</li>
 </ul>
@@ -321,7 +321,7 @@ entity Contract tags String;</code></pre>
 
 <p>The corpus cases came first, and the first of them is the iteration's claim in one line: alice reads <code>estimatedDelivery</code>, Allow, by <code>policy3</code>, a policy written in iteration 3 that has never heard of the field. The field is on because the catalog declares it public and the build put it in the map. The fourth case is the writer default at work: nobody tagged a writer for the column, so the owner may not set it. The fifth is the fail-closed invariant restated against the generated map: <code>promoCode</code>, in no map, is stripped.</p>
 
-<p>The build tests were written before the build. The drift test in particular shaped it: <code>build()</code> returns every output as text so the test can regenerate in memory and compare with what is committed, which is also why the generated YAML is rendered deterministically, keys in the spec's order.</p>
+<p>The build tests and the build were written together, and the drift test decided one thing about it: <code>build()</code> returns every output as text so the test can regenerate in memory and compare with what is committed, which is also why the generated YAML is rendered deterministically, keys in the spec's order.</p>
 
 <h2 id="proofs">9. Proved as well as tested</h2>
 
@@ -340,7 +340,7 @@ cd analysis && cargo run</code></pre>
 
 <h2 id="decisions">11. Decisions made in this iteration</h2>
 
-<p><strong>Build time, never runtime.</strong> The catalog is read and the contract is parsed when the artifact is built. The enforcement point loads committed files. A deployment carries a specific build of <code>entities.json</code> and the schema.</p>
+<p><strong>Everything runs at build time.</strong> The catalog is read and the contract is parsed when the artifact is built. The enforcement point loads committed files. A deployment carries a specific build of <code>entities.json</code> and the schema.</p>
 
 <p><strong>An unclassified column fails the build.</strong> A gap in the contract is found before onboarding, where it can be fixed, instead of being masked at runtime.</p>
 
@@ -355,7 +355,7 @@ cd analysis && cargo run</code></pre>
 <h2 id="open-questions">12. Open questions</h2>
 
 <ol>
-<li>Automatic classification as a check. A column carrying a Databricks <code>class.*</code> tag for a card number or an email address, with an authored level of <code>public</code>, is probably a mistake. The build could fail on that disagreement. Which detector tags imply which minimum level is a governance decision, not a build rule.</li>
+<li>Automatic classification as a check. A column carrying a Databricks <code>class.*</code> tag for a card number or an email address, with an authored level of <code>public</code>, is probably a mistake. The build could fail on that disagreement. Which detector tags imply which minimum level is a governance decision.</li>
 <li>Contract versioning and rollout. The document carries a version and the build is deterministic, but nothing yet ties a deployed enforcement point to a contract version, or says what happens to in-flight tool registrations when a field is reclassified.</li>
 <li>Field names. The API's field names and the table's column names differ, and the <code>field_name</code> tag bridges them one column at a time. If the API's response schema is registered separately, that schema is the better source for names, and the contract's <code>physicalName</code> would link the two.</li>
 <li>Generating grants from the contract. ODCS has a <code>roles</code> section with a free-text <code>access</code> field. It could carry which roles hold which levels and verbs, and the build could emit the role policies. That would move the last hand-written governance artifact into the contract, at the cost of a policy generator that itself needs proving.</li>

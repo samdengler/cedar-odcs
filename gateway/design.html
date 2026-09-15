@@ -176,7 +176,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>Iteration 1 placed the enforcement point in the AgentCore Gateway, between the tool call and the upstream API, and then replaced it with a Python function so the Cedar part could be learned in isolation<a class="ref" href="#r1">[1]</a>. Nine iterations later the function has grown into a request leg (the verb round and the payload round) and a response leg (the field round and the row round), each pinned by a corpus and proven in <code>analysis/</code>. This iteration puts them back where they were always going: Gateway interceptors<a class="ref" href="#r2">[2]</a>.</p>
 
-<p>The Gateway invokes a request interceptor before it calls the target and a response interceptor before it answers the agent. Each is a Lambda function that receives the JSON-RPC message in flight and returns a transformed one, and the request interceptor can return a response instead, which the Gateway sends without calling the target. Those are exactly the two moves the iterations built: reject on the request leg, strip on the response leg.</p>
+<p>The Gateway invokes a request interceptor before it calls the target and a response interceptor before it answers the agent. Each is a Lambda function that receives the JSON-RPC message in flight and returns a transformed one, and the request interceptor can return a response instead, which the Gateway sends without calling the target. Those are the two moves the iterations built: reject on the request leg, strip on the response leg.</p>
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
@@ -210,7 +210,7 @@ h2:hover .anchor { opacity: 1; }
 <figcaption>Both interception points are Gateway configuration, one Lambda each. The JWT authorizer has validated the token before either runs; the target is reached only when the request interceptor passes the call.</figcaption>
 </figure>
 
-<p>The request interceptor receives the JSON-RPC message the agent sent, and, when the interceptor is configured with <code>passRequestHeaders</code>, the request headers including the bearer token<a class="ref" href="#r3">[3]</a>. Here is one fixture event, the shape the documentation gives, with the token shortened:</p>
+<p>The request interceptor receives the JSON-RPC message the agent sent, and, when the interceptor is configured with <code>passRequestHeaders</code>, the request headers including the bearer token<a class="ref" href="#r3">[3]</a>. Here is one fixture event, the event as the documentation gives it, with the token shortened:</p>
 
 <pre><code class="lang-json">{
   "interceptorInputVersion": "1.0",
@@ -235,7 +235,7 @@ h2:hover .anchor { opacity: 1; }
   }
 }</code></pre>
 
-<p>The response interceptor receives the same request plus the target's response, <code>gatewayResponse</code> with its status, headers, and JSON-RPC body. Nothing arrives pre-parsed: the interceptor decodes the token itself, and the token it decodes is the one the Gateway's authorizer validated moments before, read from the request the Gateway forwarded and from nowhere else. Signature, issuer, audience, and expiry are the authorizer's job; the handler reads the payload.</p>
+<p>The response interceptor receives the same request plus the target's response, <code>gatewayResponse</code> with its status, headers, and JSON-RPC body. Nothing arrives pre-parsed: the interceptor decodes the token itself, and the token it decodes is the one the Gateway's authorizer validated moments before, read from the request the Gateway forwarded and from nowhere else. Signature, issuer, audience, and expiry are the authorizer's job; the handler reads the payload. That trust rests on three deployment conditions the handler's docstring states: the gateway uses the JWT authorizer, the forwarded header is the one the authorizer validated, and the forwarded token is the inbound one whose subject and actor claims the projection reads, and never a token exchanged for the target.</p>
 
 <h2 id="request-leg">4. The request leg handler</h2>
 
@@ -249,7 +249,7 @@ h2:hover .anchor { opacity: 1; }
     "orders___list_orders":  {"action": "ListOrders",  "collection": "orders", "returns": "list"},
 }</code></pre>
 
-<p>A tool the table does not name is rejected: an ungoverned tool is a gap, and the request leg fails closed on it the way the field round fails closed on an undeclared field. A method other than <code>tools/call</code>, such as <code>tools/list</code>, passes through untouched. An allowed call is returned as a <code>transformedGatewayRequest</code> with the same body. A denied one becomes a response the Gateway sends instead of calling the target, the short-circuit the documentation describes, carrying a JSON-RPC error so the agent sees a refused call and not a broken transport:</p>
+<p>A tool the table does not name is rejected: an ungoverned tool is a gap, and the request leg fails closed on it the way the field round fails closed on an undeclared field. An argument the table does not name is rejected too, and an update must carry its payload object, so a write cannot arrive under another key and skip the field round. Anything the handler cannot evaluate, a malformed event, a header that is not a bearer token, an argument that is not an id, is rejected the same way instead of raising, because what the Gateway does with a failed interceptor is not something the handler should depend on. A method other than <code>tools/call</code>, such as <code>tools/list</code>, passes through untouched. An allowed call is returned as a <code>transformedGatewayRequest</code> with the same body. A denied one becomes a response the Gateway sends instead of calling the target, the short-circuit the documentation describes, carrying a JSON-RPC error so the agent sees a refused call:</p>
 
 <pre><code class="lang-json">{
   "interceptorOutputVersion": "1.0",
@@ -269,7 +269,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="response-leg">5. The response leg handler</h2>
 
-<p>The response interceptor can rewrite the result body<a class="ref" href="#r3">[3]</a>, which is all the response leg ever needed. The handler finds the tool's payload in the MCP result, in <code>structuredContent</code> when the tool provides it and otherwise in the JSON text of the first text content item<a class="ref" href="#r4">[4]</a>, runs iteration 9's <code>filter_rows</code> for a list tool or the one-row equivalent for an object tool, and writes the filtered payload back into both places so an agent reading either sees the same thing. The status and headers pass through; the removals go to the log.</p>
+<p>The response interceptor can rewrite the result body<a class="ref" href="#r3">[3]</a>, which is all the response leg ever needed. The handler finds the tool's payload in the MCP result, in <code>structuredContent</code> when the tool provides it and otherwise in the JSON text of the first text content item<a class="ref" href="#r4">[4]</a>, runs iteration 9's <code>filter_rows</code> for a list tool or the one-row equivalent for an object tool, and writes the filtered payload back into both places so an agent reading either sees the same thing. The status and headers pass through, content items that are not text are kept, and the removals go to the log. A response the handler cannot filter, a payload of the wrong kind or a token it cannot read, is withheld and replaced by an error, so an unexpected response leaves as nothing.</p>
 
 <p>The three response fixtures are iterations 3, 6, and 9 as Gateway events: alice's order comes back to her with the public and confidential fields; bob's order comes back to carol with the public and internal fields; and the full list comes back to carol acting for alice as alice's two rows with alice's fields, and to dave in finance as an empty list.</p>
 
@@ -277,7 +277,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>The Gateway also has a native policy engine, AgentCore Policy, which evaluates Cedar policies against every tool call before the target is reached<a class="ref" href="#r5">[5]</a>. Its entity model is fixed: the principal is an <code>AgentCore::OAuthUser</code> built from the token's subject, with the other claims as tags on it; the action is the tool name; the resource is the gateway; and the context exposes the tool's input arguments. It evaluates on the request leg only, and it loads no entity data of its own.</p>
 
-<p>Measured against the rounds this project built, that covers exactly one: the verb round for rules whose facts are in the token and the tool input. Whether a caller with the finance role may call the refund tool is such a rule, and so is the on behalf of forbid, if the actor claim appears as a tag. Ownership needs the order's owner, which is in no token; the field rounds need the tag maps, which are entities; and the response leg is outside the engine's reach. So the interceptors stay the enforcement point, and AgentCore Policy is a second, independent check on the verb rules, in <code>LOG_ONLY</code> mode first. The policies for it would be generated from the same corpus, in its entity model; that is a small follow-up once the claims table from iteration 6 is confirmed, because the tag names are the claim names.</p>
+<p>Measured against the rounds this project built, that covers one: the verb round for rules whose facts are in the token and the tool input. Whether a caller with the finance role may call the refund tool is such a rule, and so is the on behalf of forbid, if the actor claim appears as a tag. Ownership needs the order's owner, which is in no token; the field rounds need the tag maps, which are entities; and the response leg is outside the engine's reach. So the interceptors stay the enforcement point, and AgentCore Policy is a second, independent check on the verb rules, in <code>LOG_ONLY</code> mode first. The policies for it would be generated from the same corpus, in its entity model; that is a small follow-up once the claims table from iteration 6 is confirmed, because the tag names are the claim names.</p>
 
 <h2 id="extension">7. The Lambda extension decision, revisited</h2>
 
@@ -298,7 +298,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="tdd">9. Growing by tests</h2>
 
-<p>The events were written first, from the documentation, and the tests said what each should produce; the handlers were written to them. Two things came out of that order. The rejection for an ungoverned tool was not in the first draft of the handler, which passed unknown tools through; writing the fixture made the gap visible. And the response handler's first draft rewrote only <code>structuredContent</code>, until a test compared it with the text content and they differed.</p>
+<p>The events were written first, from the documentation, and the tests said what each should produce; the handlers were written to them. Two fixtures shaped the handlers: the ungoverned tool event, which the request handler rejects instead of passing through, and the response comparison of <code>structuredContent</code> with the text content, which is why the handler rewrites both.</p>
 
 <h2 id="running">10. Running it</h2>
 
@@ -315,11 +315,11 @@ h2:hover .anchor { opacity: 1; }
 
 <p><strong>Gateway interceptors are the enforcement point.</strong> One Lambda per interception point, attached to the gateway, holding for every target. The Runtime API proxy extension is set aside.</p>
 
-<p><strong>The handlers add no governance.</strong> They parse, decode, name the verb, and call the wrappers already tested and proven. The test that the policies and entities are byte for byte the proven ones is the point.</p>
+<p><strong>The handlers add no governance.</strong> They parse, decode, name the verb, and call the wrappers already tested and proven. A test pins that the policies and entities are the proven ones, byte for byte.</p>
 
 <p><strong>An ungoverned tool is rejected.</strong> Every tool the gateway exposes must be in the table, the same completeness rule the contract build applies to columns.</p>
 
-<p><strong>The token is decoded, not re-verified.</strong> The Gateway's authorizer validates it before any interceptor runs. The handler reads the forwarded header only.</p>
+<p><strong>The token is decoded once; the Gateway verified it.</strong> The Gateway's authorizer validates it before any interceptor runs. The handler reads the forwarded header only.</p>
 
 <p><strong>AgentCore Policy is a second check on the verb rules.</strong> It cannot see owners, tag maps, or responses; the interceptors can. Its policies would be generated from the corpus once the claim names are confirmed.</p>
 
@@ -331,6 +331,7 @@ h2:hover .anchor { opacity: 1; }
 <li>Payload size. A Lambda invocation carries at most 6 MB in and out. A large list response needs either the mask cache from iteration 1's review, so the field round costs one decision per distinct owner, or push-down of the row condition from iteration 9's open questions.</li>
 <li>The claims table from iteration 6, still assumed. The handlers read <code>sub</code>, <code>act</code>, and <code>roles</code>; the first deployment's token settles whether those are the names.</li>
 <li>Tool naming. The table keys follow the Gateway's target-and-operation convention with three underscores. The table itself could be generated from tool registration, which is the same act as contract publication in iteration 1's review.</li>
+<li>Two sources of facts. The request leg decides <code>ReadOrder</code> and <code>UpdateOrder</code> against the stored entities, and the response leg against the payload, so an order the store does not know is refused on the way in and would be filtered correctly on the way out. This is iteration 2's pre-fetch question arriving at the Gateway: either the request leg fetches the object first, or object-level reads move wholly to the response leg and only writes keep a request-leg round. The fixtures show both legs; the handlers do not yet reconcile them.</li>
 <li>The agent's own identity, carried from iteration 6. Token exchange gives the exchanged token both the agent's and the caller's identity<a class="ref" href="#r7">[7]</a>; no rule reads the agent's yet.</li>
 </ol>
 

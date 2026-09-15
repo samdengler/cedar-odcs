@@ -64,6 +64,8 @@ def column_tags(assignments: dict) -> dict:
     for a in assignments["tag_assignments"]:
         if a["entity_type"] != "columns":
             continue
+        if "." not in a["entity_name"]:
+            raise ContractError(f"tag assignment on {a['entity_name']!r} names no column")
         column = a["entity_name"].rsplit(".", 1)[1]
         tags.setdefault(column, {})[a["tag_key"]] = a["tag_value"]
     return tags
@@ -76,6 +78,8 @@ def property_from_column(column: dict, tags: dict) -> dict:
         raise ContractError(f"column {name} has no classification tag")
     if level not in LEVELS:
         raise ContractError(f"column {name} has classification {level!r}, not one of {LEVELS}")
+    if column["type_name"] not in LOGICAL_TYPES:
+        raise ContractError(f"column {name} has type {column['type_name']!r}, which maps to no logicalType")
     custom = [{"property": "writer", "value": tags.get("writer", "system")}]
     if "cedar_entity_type" in tags:
         custom.append({"property": "cedarEntityType", "value": tags["cedar_entity_type"]})
@@ -100,6 +104,13 @@ def contract_from_unity(table: dict, assignments: dict, entity_name: str, contra
         property_from_column(c, tags.get(c["name"], {}))
         for c in sorted(table["columns"], key=lambda c: c["position"])
     ]
+    seen = {}
+    for prop in properties:
+        if prop["name"] in seen:
+            raise ContractError(
+                f"columns {seen[prop['name']]} and {prop['physicalName']} both become field {prop['name']!r}"
+            )
+        seen[prop["name"]] = prop["physicalName"]
     host = "dbc-example.cloud.databricks.com"
     return {
         "apiVersion": CONTRACT_VERSION,
