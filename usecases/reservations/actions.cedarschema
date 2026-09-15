@@ -27,3 +27,28 @@ action ReadReservationField appliesTo {
     field?: String
   }
 };
+
+action UpdateReservation appliesTo {
+  principal: [User],
+  resource: [Reservation],
+  context: {
+    presented?: Presented
+  }
+};
+
+action UpdateReservationField appliesTo {
+  principal: [User],
+  resource: [Reservation],
+  context: {
+    presented?: Presented,
+    field?: String
+  }
+};
+
+action CancelReservation appliesTo {
+  principal: [User],
+  resource: [Reservation],
+  context: {
+    presented?: Presented
+  }
+};

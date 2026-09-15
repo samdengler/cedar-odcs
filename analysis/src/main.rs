@@ -407,6 +407,10 @@ const ITERATIONS: &[Iteration] = &[
             "guardrails/reservations/fail-closed.cedar",
             "guardrails/reservations/restricted-unreadable.cedar",
             "guardrails/reservations/possession-reads-customer-levels-only.cedar",
+            "guardrails/reservations/writes-require-pair.cedar",
+            "guardrails/reservations/possession-writes-named-record-only.cedar",
+            "guardrails/reservations/possession-writes-owner-paths-only.cedar",
+            "guardrails/reservations/mass-assignment-fail-closed.cedar",
         ],
     },
 ];

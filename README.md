@@ -100,8 +100,10 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `iteration-11.html`: the design narrative. Possession in context, two legs with one credential, nested records by path, and the core split.
   - `unity/`: a reservations table with struct and array columns, and path-scoped tag assignments.
   - `reservation.odcs.yaml`, `generated/`, `entities.json`: the build's outputs, committed.
-  - `policies.cedar`: the lookup, the read, and the field read, all by possession.
-  - `tests/reservations.json`: fifteen cases. `events/`: five Gateway fixtures.
+  - `iteration-12.html`: writes by possession and the pre-fetch before a write.
+  - `policies.cedar`: the lookup, the read, the field read, the update, the field update, and the cancel, all by possession.
+  - `records.json`: the read path's stand-in for the pre-fetch.
+  - `tests/reservations.json`, `tests/reservation-writes.json`: twenty-seven cases. `events/`: fourteen Gateway fixtures.
   - `usecase.py`, `test_build.py`, `test_interceptor.py`, `test_corpus.py`.
 - `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
 
@@ -157,5 +159,5 @@ The identity questions double as a gap analysis. On behalf of access is in place
 9. Row filtering, done: list endpoints return only the rows the caller may read, each reduced to the fields they may read.
 10. Enforcement placement, done: the request and response legs as Gateway interceptor handlers, tested against the documented event shapes; deployment to an account is a later step.
 11. Reservations by locator and last name, done: a second use case with no customer identity, possession decided on the response leg, nested records by path, the mechanism extracted into `core/`.
-12. Writes by possession, with the pre-fetch a write needs: planned.
+12. Writes by possession, done: contact, seats, and cancellation by whoever holds the pair; the record is fetched through the read path before a write is forwarded.
 13. The specialist's view, the list verb, and the agent as a principal of its own: planned.

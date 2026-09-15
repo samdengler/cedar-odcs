@@ -73,7 +73,9 @@ Current results, all proved:
   error; a lookup and a read require a presented pair; a pair reaches
   only the record it names; undeclared paths fail closed, nested ones
   included; restricted leaves are unreadable; possession reads public
-  and confidential leaves only.
+  and confidential leaves only. Iteration 12 adds the writes: no write
+  without a pair; possession writes only the record it names and only
+  owner paths; mass assignment fails closed, nested paths included.
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
   restrictions; every guardrail ever written has a checked status
@@ -171,7 +173,7 @@ The runner's output for the composition section:
   PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
   revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
   ...
-180 proved, 0 failed, 4 differences shown as expected
+190 proved, 0 failed, 4 differences shown as expected
 ```
 
 ## Findings

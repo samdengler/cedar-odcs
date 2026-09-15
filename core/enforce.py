@@ -95,9 +95,17 @@ class Engine:
     # ---- the request leg
 
     def check_call(self, claims: dict, action: str, resource: str,
-                   body: dict = None, context: dict = None) -> CallDecision:
+                   body: dict = None, context: dict = None, row_id: str = None) -> CallDecision:
         projection = self.projection(claims)
-        if not self.is_allowed(projection, action, resource, context):
+        extra = []
+        if action in self.use_case.prefetch_actions:
+            # The verb needs the record: fetch it through the read path
+            # and decide on its attributes. No record, no call.
+            record = self.use_case.fetch(row_id) if row_id is not None else None
+            if not isinstance(record, dict):
+                return CallDecision(allowed=False, denied_verb=True)
+            extra = [self.entity_from_row(record)]
+        if not self.is_allowed(projection, action, resource, context, extra):
             return CallDecision(allowed=False, denied_verb=True)
         field_action = self.use_case.field_actions.get(action)
         if field_action is None:
@@ -109,7 +117,7 @@ class Engine:
         def allow(path):
             if path not in decided:
                 decided[path] = self.is_allowed(
-                    projection, field_action, resource, {**(context or {}), "field": path}
+                    projection, field_action, resource, {**(context or {}), "field": path}, extra
                 )
             return decided[path]
 

@@ -27,6 +27,12 @@ class UseCase:
     field_actions: dict
     # MCP tool name to how the handlers treat it (see core.interceptor).
     tools: dict = field(default_factory=dict)
+    # Request-leg verbs that cannot be decided without the record: the
+    # engine fetches it through `fetch` (row id to payload, or None)
+    # before the verb round, and the payload round sees it too. A
+    # write by possession needs this; a read decides on the response.
+    prefetch_actions: set = field(default_factory=set)
+    fetch: object = None
 
     @property
     def policies(self) -> str:

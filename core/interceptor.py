@@ -156,6 +156,7 @@ class Handlers:
             decision = self.engine.check_call(
                 claims, tool["action"], self._resource(tool, arguments),
                 self._payload(tool, arguments), self._context(tool, arguments),
+                row_id=arguments.get(tool["id"]) if "id" in tool else None,
             )
         except (TokenError, ValueError, KeyError, TypeError) as e:
             log.info("rejected: request could not be evaluated: %s", e)
