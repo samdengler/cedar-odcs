@@ -1,0 +1,15 @@
+[project]
+name = "contract"
+version = "0.1.0"
+description = "ODCS as source of truth, iteration 7: Cedar artifacts generated from a data contract at build time"
+requires-python = ">=3.10"
+dependencies = [
+    "cedarpy>=4.0",
+    "pyyaml>=6.0",
+    "open-data-contract-standard>=3.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

@@ -69,11 +69,21 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `tokens/*.json`: one hand-written token payload per mode, standing in for decoded tokens.
   - `claims.py`: `project`, the claims to Cedar request mapping (RFC 8693 `sub` and `act`), and `is_allowed` asked with a token.
   - `test_claims.py`: the three modes entered through their tokens; roles read from the token, not the store.
+- `contract/`: iteration 7. ODCS as source of truth: the tag maps and the Cedar schema generated at build time.
+  - `design.html`: the design narrative. The two-stage build, the Unity Catalog tag convention, and what the contract does and does not decide.
+  - `unity/`: recorded Unity Catalog API responses, the tables endpoint and the entity tag assignments endpoint, standing in for live calls.
+  - `unity_import.py`: stage one, catalog to contract. An unclassified column fails the build.
+  - `order.odcs.yaml`: the generated ODCS v3.2.0 document, committed.
+  - `generate.py`: stage two, contract to the classification map, the writers map, and the resource entity declaration.
+  - `build.py`: both stages; assembles `entities.json` from `facts.json` and the generated maps, and `generated/orders.cedarschema` from the hand-written principal and action fragments and the generated entity declarations.
+  - `policies.cedar`: iteration 6's file, unchanged.
+  - `tests/*.json`: iterations 1 through 6's corpora, byte for byte, plus `tests/contract.json`: five cases about the generated maps.
+  - `test_build.py`: committed artifacts are current; the contract validates; iteration 6's map entries are carried; the generated schema equals the hand-written one; an incomplete catalog fails the build.
 - `analysis/`: symbolic proofs over each iteration's policies, using Cedar's symbolic compiler and the cvc5 SMT solver. Spec equivalence, guardrail no-ops, and never-errors, proven over every possible request; findings and instructions in `analysis/README.md`.
 
 ## Running
 
-Requires [uv](https://docs.astral.sh/uv/). From the repository root, this runs every iteration's test corpus:
+Requires [uv](https://docs.astral.sh/uv/). From the repository root, this runs every iteration's test corpus and iteration 7's build tests:
 
 ```sh
 uv run pytest -v
@@ -112,7 +122,7 @@ The identity questions double as a gap analysis. On behalf of access is in place
 4. API3 on writes (mass assignment), done: per-field checks on write payloads; any denied field rejects the call whole.
 5. Function level (API5), done: verbs held by roles; a verb held implies no other; the first role-granted write path.
 6. On behalf of access modes, done: customer direct, employee direct, employee acting for a customer; the principal is the actor and the context carries the acted-for party.
-7. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
+7. ODCS as source of truth, done: Unity Catalog column tags to an ODCS contract to the tag maps and the Cedar schema, generated at build time and committed.
 8. Provable composition: prove that combined policy sets preserve each iteration's guarantees, with equivalence and non-interference checks in CI. Per-iteration proofs already run in `analysis/`.
 9. Row filtering for list endpoints.
 10. Enforcement placement: move the checks into the Gateway interceptors.

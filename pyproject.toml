@@ -12,6 +12,9 @@ dependencies = []
 dev = [
     "cedarpy>=4.0",
     "pytest>=8.0",
+    # Iteration 7's build stages: the ODCS model and its YAML.
+    "open-data-contract-standard>=3.2.0",
+    "pyyaml>=6.0",
 ]
 
 # Every iteration names its corpus runner test_corpus.py. The default

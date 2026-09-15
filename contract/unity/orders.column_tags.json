@@ -1,0 +1,184 @@
+{
+  "tag_assignments": [
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.order_id",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.order_id",
+      "tag_key": "writer",
+      "tag_value": "system",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.order_id",
+      "tag_key": "field_name",
+      "tag_value": "id",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.customer_id",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.customer_id",
+      "tag_key": "writer",
+      "tag_value": "system",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.customer_id",
+      "tag_key": "field_name",
+      "tag_value": "owner",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.customer_id",
+      "tag_key": "cedar_entity_type",
+      "tag_value": "User",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.status",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.status",
+      "tag_key": "writer",
+      "tag_value": "system",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.total",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.total",
+      "tag_key": "writer",
+      "tag_value": "system",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.shipping_address",
+      "tag_key": "classification",
+      "tag_value": "confidential",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.shipping_address",
+      "tag_key": "writer",
+      "tag_value": "owner",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.card_last4",
+      "tag_key": "classification",
+      "tag_value": "confidential",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.card_last4",
+      "tag_key": "writer",
+      "tag_value": "system",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.internal_notes",
+      "tag_key": "classification",
+      "tag_value": "internal",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.internal_notes",
+      "tag_key": "writer",
+      "tag_value": "support",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.fraud_score",
+      "tag_key": "classification",
+      "tag_value": "restricted",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.fraud_score",
+      "tag_key": "writer",
+      "tag_value": "system",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "commerce.sales.orders.estimated_delivery",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-14T12:00:00Z",
+      "updated_by": "orders-data-owners",
+      "source_type": "MANUAL"
+    }
+  ]
+}
