@@ -65,11 +65,22 @@ def test_employee_for_customer_holds_the_customers_access():
     assert not is_allowed(t, 'Action::"ReadOrderField"', ALICE_ORDER, {"field": "internalNotes"}).allowed
 
 
-def test_roles_come_from_the_token_not_the_store():
-    # The store says carol is support; a token without the role claim
-    # is what the policies see, and the role's grants are gone.
-    stripped = {**token("employee-direct"), "roles": []}
-    assert not is_allowed(stripped, 'Action::"ReadOrder"', BOB_ORDER).allowed
+def test_roles_are_the_union_of_token_and_store():
+    # The store says carol is support; a delegated token whose actor
+    # claim carries no roles, as RFC 8693 allows, still lands carol in
+    # the acting mode with the store's roles.
+    bare = {**token("employee-for-customer"), "act": {"sub": "carol"}}
+    assert project(bare).principal_entity["parents"] == [{"type": "Role", "id": "support"}]
+    assert is_allowed(bare, 'Action::"ReadOrder"', ALICE_ORDER).allowed
+    # A role the token names and the store does not is granted.
+    promoted = {**token("customer-direct"), "sub": "bob", "roles": ["support"]}
+    assert is_allowed(promoted, 'Action::"ReadOrder"', ALICE_ORDER).allowed
+
+
+def test_a_malformed_role_claim_is_an_error():
+    import pytest
+    with pytest.raises(ValueError):
+        project({**token("employee-direct"), "roles": "support"})
 
 
 def test_customer_token_with_an_actor_claim_is_forbidden():

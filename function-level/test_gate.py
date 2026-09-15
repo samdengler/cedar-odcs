@@ -58,3 +58,10 @@ def test_denied_verb_short_circuits_the_payload_round():
     assert not result.allowed
     assert result.denied_verb
     assert result.denied_fields == []
+
+
+def test_a_role_granted_update_with_no_payload_is_rejected():
+    result = check_call('User::"carol"', 'Action::"UpdateOrder"', OTHER, {})
+    assert not result.allowed
+    assert not result.denied_verb
+    assert result.denied_fields == ["<no payload>"]

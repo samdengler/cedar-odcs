@@ -288,7 +288,7 @@ denied = [
 return CallDecision(allowed=not denied, denied_verb=False, denied_fields=denied)</code></pre></li>
 <li><code>tests/bola.json</code>, <code>tests/field-reads.json</code>, and <code>tests/field-writes.json</code> are carried byte for byte. <code>tests/bola-writes.json</code> is carried with one case revised, described in the next section.</li>
 <li><code>tests/function-level.json</code> adds fourteen cases: the two allows per new verb, every cross-verb attempt (owner refunds, support refunds, finance cancels, finance reads), the role-granted update and its bound (<code>internalNotes</code> allowed, <code>total</code> denied, finance denied on <code>internalNotes</code>), the unknown principal, and the guessed order id.</li>
-<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_gate.py</code> pins the enforcement: a denied verb rejects before the payload is read, and a role-granted update is rejected whole when the payload reaches past the writers map.</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_gate.py</code> pins the enforcement: a denied verb rejects before the payload is read, a role-granted update is rejected whole when the payload reaches past the writers map, and an update naming no field is rejected, since the payload round is the only bound on a role-granted update.</li>
 </ul>
 
 <h2 id="tdd">6. Growing by tests</h2>

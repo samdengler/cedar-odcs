@@ -216,7 +216,7 @@ principal_entity = {
     "parents": [{"type": "Role", "id": role} for role in roles],
 }</code></pre>
 
-<p>The projection also builds the principal entity. Role membership has lived in <code>entities.json</code> since iteration 1, where carol has the support role as a parent. At the Gateway there is no store to ask; the token says what roles the actor holds, so the entity is built per request from the <code>roles</code> claim and replaces any stored entity of the same id. A token for carol without the role claim is a carol with no role, whatever the store says, and <code>test_claims.py</code> pins that.</p>
+<p>The projection also builds the principal entity. Role membership has lived in <code>entities.json</code> since iteration 1, where carol has the support role as a parent. The entity is built per request with the union of the token's <code>roles</code> claim and the store's role facts for that actor. The union matters for delegated tokens: RFC 8693 puts identity claims in the actor claim and says nothing about roles there, so a conforming token may name the actor and nothing else, and the store then supplies the roles. A role the token names that the store does not is granted for the request. A role claim of any other shape than a list of strings is an error, never a set of one-character roles. <code>test_claims.py</code> pins all three.</p>
 
 <table>
 <tr><th>Mode</th><th>Token</th><th>Principal</th><th>Context</th><th>Holds</th></tr>
@@ -278,7 +278,7 @@ forbid(
 <tr><th>Claim</th><th>What the rules read from it</th><th>Standard</th><th>Status</th></tr>
 <tr><td><code>sub</code></td><td>The principal in direct mode; the acted-for party in delegated mode. Compared to <code>Order.owner</code>, so it must be the same identifier the order system records as the owner.</td><td>RFC 7519</td><td>Assumed: that the subject identifier and the order owner identifier agree.</td></tr>
 <tr><td><code>act.sub</code></td><td>The principal in delegated mode.</td><td>RFC 8693 section 4.1</td><td>Assumed: that the identity setup issues an actor claim on delegated tokens.</td></tr>
-<tr><td><code>roles</code> (top level in direct mode, inside <code>act</code> when delegated)</td><td>The principal's role parents: support, finance, and through them employee.</td><td>Custom claim</td><td>Assumed: the claim name, its placement on the actor, and the role names.</td></tr>
+<tr><td><code>roles</code> (top level in direct mode, inside <code>act</code> when delegated)</td><td>Role parents added to the store's for the principal: support, finance, and through them employee.</td><td>Custom claim</td><td>Assumed: the claim name, its placement on the actor, and the role names. Optional: absent, the store's facts stand alone.</td></tr>
 <tr><td><code>iss</code>, <code>aud</code>, <code>exp</code></td><td>Nothing. The Gateway's JWT authorizer validates them before an interceptor runs.</td><td>RFC 7519</td><td>Not an authorization fact; configured, not read.</td></tr>
 <tr><td><code>may_act</code></td><td>Nothing yet. Which parties an employee may act for would come from it.</td><td>RFC 8693 section 4.4</td><td>Not used; see open questions.</td></tr>
 </table>
@@ -294,7 +294,7 @@ forbid(
 <li><code>tokens/customer-direct.json</code>, <code>tokens/employee-direct.json</code>, <code>tokens/employee-for-customer.json</code> are hand-written payloads standing in for decoded tokens, one per mode. They are the corpus's requirement written as tokens.</li>
 <li><code>tests/bola.json</code> through <code>tests/function-level.json</code> are carried byte for byte.</li>
 <li><code>tests/on-behalf-of.json</code> adds fifteen cases: the two direct modes restated, the delegated reads, fields, update, and cancel on the customer's own order, the delegated refund denied, finance acting for a customer, a customer and a stranger forbidden from acting, acting for oneself, and the guessed order id while acting.</li>
-<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_claims.py</code> enters each mode through its token and checks the projection and the decisions, and pins that roles come from the token.</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_claims.py</code> enters each mode through its token and checks the projection and the decisions, and pins that roles are the union of the token and the store.</li>
 </ul>
 
 <h2 id="tdd">7. Growing by tests</h2>
@@ -334,7 +334,7 @@ cd analysis && cargo run</code></pre>
 
 <p><strong>Mode is a revision of every policy.</strong> Every carried decision is preserved, and the policy set stays the size it was.</p>
 
-<p><strong>Roles come from the token.</strong> The principal entity is built per request from the role claim. The store's role facts are for the corpus; the Gateway has no store to ask.</p>
+<p><strong>Roles are the union of the token and the store.</strong> The principal entity is built per request from both. A first version read the token alone and replaced the store's facts, which denied every delegated request whose actor claim carried no roles, the shape the standard describes; the composition review caught it.</p>
 
 <p><strong>The claims are listed with their status.</strong> Each one assumed until a real token shows it. The list is the gap analysis's input; the identity setup is measured against it.</p>
 

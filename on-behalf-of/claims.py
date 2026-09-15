@@ -13,9 +13,11 @@ principal is always the actor, so:
   no act claim:   principal = User::sub,      direct mode
   act claim:      principal = User::act.sub,  context.actingFor = User::sub
 
-Role membership comes from a `roles` claim on the actor. The principal
-entity is built per request with those roles as parents, so the
-policies' `principal in Role::"support"` reads the token, not a store.
+Role membership is the union of a `roles` claim on the actor and the
+role facts the store holds for that actor. The principal entity is
+built per request with those roles as parents. A delegated token may
+carry no roles at all, since the standard puts only identity claims
+in the actor claim; the store then supplies them.
 
 Every claim this module reads is an assumption about the identity
 setup until confirmed against a real token; the design document lists
@@ -61,20 +63,44 @@ def project(claims: dict) -> Projection:
     act = claims.get("act")
     if act is None:
         actor_sub = claims["sub"]
-        roles = claims.get(ROLE_CLAIM, [])
+        roles = _roles(claims)
         context = {}
-        mode = "employee-direct" if roles else "customer-direct"
     else:
         actor_sub = act["sub"]
-        roles = act.get(ROLE_CLAIM, [])
+        roles = _roles(act)
         context = {"actingFor": _entity_ref(claims["sub"])}
+    # Role facts are the union of what the token says and what the
+    # store says. RFC 8693 puts identity claims in the actor claim and
+    # says nothing about roles there, so a delegated token may carry
+    # none; the store then supplies them. A role the token names that
+    # the store does not is granted for this request.
+    roles = roles | stored_roles(actor_sub)
+    if act is None:
+        mode = "employee-direct" if roles else "customer-direct"
+    else:
         mode = "employee-for-customer"
     principal_entity = {
         "uid": {"type": "User", "id": actor_sub},
         "attrs": {},
-        "parents": [{"type": "Role", "id": role} for role in roles],
+        "parents": [{"type": "Role", "id": role} for role in sorted(roles)],
     }
     return Projection(_user(actor_sub), context, principal_entity, mode)
+
+
+def _roles(claims: dict) -> set:
+    """The role claim as a set of names; any other shape is an error,
+    never a set of one-character roles."""
+    roles = claims.get(ROLE_CLAIM, [])
+    if not isinstance(roles, list) or not all(isinstance(r, str) for r in roles):
+        raise ValueError(f"{ROLE_CLAIM} claim is not a list of strings")
+    return set(roles)
+
+
+def stored_roles(sub: str) -> set:
+    for entity in load_entities():
+        if entity["uid"] == {"type": "User", "id": sub}:
+            return {parent["id"] for parent in entity["parents"] if parent["type"] == "Role"}
+    return set()
 
 
 def load_policies() -> str:

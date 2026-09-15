@@ -180,7 +180,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>gateway</code> folder in this project. Two handlers, <code>request_handler</code> and <code>response_handler</code>, in the interceptor event and result formats the Gateway documents for MCP targets; a tool table mapping MCP tool names to verbs and resources; the bearer token decoded from the forwarded header and projected as in iteration 6; eleven fixture events in those exact shapes; and thirteen tests driving the handlers with them. The policies are iteration 9's and the entities are iteration 7's build output, byte for byte, and a test says so.</p>
+<div class="callout"><p><strong>Built:</strong> the <code>gateway</code> folder in this project. Two handlers, <code>request_handler</code> and <code>response_handler</code>, in the interceptor event and result formats the Gateway documents for MCP targets; a tool table mapping MCP tool names to verbs and resources; the bearer token decoded from the forwarded header and projected as in iteration 6; fifteen fixture events in those exact shapes; and the tests driving the handlers with them, including both legs of one call for every tool in the table. The policies are iteration 9's and the entities are iteration 7's build output, byte for byte, and a test says so.</p>
 <p><strong>Not built:</strong> deployment to an AWS account (a later step), the mask cache from iteration 1's review, streaming responses, and the Rust build. Nothing new is proven, because no policy changed.</p></div>
 
 <h2 id="interception-points">3. The two interception points</h2>
@@ -243,13 +243,13 @@ h2:hover .anchor { opacity: 1; }
 
 <pre><code class="lang-python">TOOLS = {
     "orders___get_order":    {"action": "ReadOrder",   "id": "orderId", "returns": "object"},
-    "orders___update_order": {"action": "UpdateOrder", "id": "orderId", "payload": "changes"},
-    "orders___cancel_order": {"action": "CancelOrder", "id": "orderId"},
-    "orders___refund_order": {"action": "RefundOrder", "id": "orderId"},
+    "orders___update_order": {"action": "UpdateOrder", "id": "orderId", "payload": "changes", "returns": "object"},
+    "orders___cancel_order": {"action": "CancelOrder", "id": "orderId", "returns": "object"},
+    "orders___refund_order": {"action": "RefundOrder", "id": "orderId", "returns": "object"},
     "orders___list_orders":  {"action": "ListOrders",  "collection": "orders", "returns": "list"},
 }</code></pre>
 
-<p>A tool the table does not name is rejected: an ungoverned tool is a gap, and the request leg fails closed on it the way the field round fails closed on an undeclared field. An argument the table does not name is rejected too, and an update must carry its payload object, so a write cannot arrive under another key and skip the field round. Anything the handler cannot evaluate, a malformed event, a header that is not a bearer token, an argument that is not an id, is rejected the same way instead of raising, because what the Gateway does with a failed interceptor is not something the handler should depend on. A method other than <code>tools/call</code>, such as <code>tools/list</code>, passes through untouched. An allowed call is returned as a <code>transformedGatewayRequest</code> with the same body. A denied one becomes a response the Gateway sends instead of calling the target, the short-circuit the documentation describes, carrying a JSON-RPC error so the agent sees a refused call:</p>
+<p>A tool the table does not name is rejected: an ungoverned tool is a gap, and the request leg fails closed on it the way the field round fails closed on an undeclared field. An argument the table does not name is rejected too, and an update must carry its payload object, so a write cannot arrive under another key and skip the field round. The payload round asks one question per leaf, by dotted path, so a value nested under an allowed field is examined and a nested object under <code>shippingAddress</code> is refused leaf by leaf; a list holding objects cannot be named and is refused whole. A body delivered as a JSON string is parsed before any of this. Anything the handler cannot evaluate, a malformed event, a header that is not a bearer token, an argument that is not an id, is rejected the same way instead of raising, because what the Gateway does with a failed interceptor is not something the handler should depend on. A method other than <code>tools/call</code>, such as <code>tools/list</code>, passes through untouched. An allowed call is returned as a <code>transformedGatewayRequest</code> with the same body. A denied one becomes a response the Gateway sends instead of calling the target, the short-circuit the documentation describes, carrying a JSON-RPC error so the agent sees a refused call:</p>
 
 <pre><code class="lang-json">{
   "interceptorOutputVersion": "1.0",
@@ -269,7 +269,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="response-leg">5. The response leg handler</h2>
 
-<p>The response interceptor can rewrite the result body<a class="ref" href="#r3">[3]</a>, which is all the response leg ever needed. The handler finds the tool's payload in the MCP result, in <code>structuredContent</code> when the tool provides it and otherwise in the JSON text of the first text content item<a class="ref" href="#r4">[4]</a>, runs iteration 9's <code>filter_rows</code> for a list tool or the one-row equivalent for an object tool, and writes the filtered payload back into both places so an agent reading either sees the same thing. The status and headers pass through, content items that are not text are kept, and the removals go to the log. A response the handler cannot filter, a payload of the wrong kind or a token it cannot read, is withheld and replaced by an error, so an unexpected response leaves as nothing.</p>
+<p>The response interceptor can rewrite the result body<a class="ref" href="#r3">[3]</a>, which is all the response leg ever needed. The handler finds the tool's payload in the MCP result, in <code>structuredContent</code> when the tool provides it and otherwise in the JSON text of the first text content item<a class="ref" href="#r4">[4]</a>, runs iteration 9's <code>filter_rows</code> for a list tool or the one-row equivalent for an object tool, and writes the filtered payload back into both places so an agent reading either sees the same thing. Every tool in the table declares what it returns, because the write tools echo the order they changed and a refund that returned the order unfiltered would hand finance every field; a tool with no declared result kind has its responses withheld. The field round runs per leaf here too: a nested value under an allowed field is filtered by its dotted path, and a leaf no map names is stripped. The status and headers pass through, content items that are not text are kept, and the removals go to the log. A response the handler cannot filter, a payload of the wrong kind or a token it cannot read, is withheld and replaced by an error, so an unexpected response leaves as nothing.</p>
 
 <p>The three response fixtures are iterations 3, 6, and 9 as Gateway events: alice's order comes back to her with the public and confidential fields; bob's order comes back to carol with the public and internal fields; and the full list comes back to carol acting for alice as alice's two rows with alice's fields, and to dave in finance as an empty list.</p>
 
@@ -292,7 +292,7 @@ h2:hover .anchor { opacity: 1; }
 <li><code>enforce.py</code> holds <code>check_call</code>, <code>filter_fields</code>, <code>filter_rows</code>, and <code>filter_object</code>: the wrappers of iterations 5, 3, and 9, asked with a token's projection. Entities for rows come from the payload, as in iteration 9.</li>
 <li><code>bearer.py</code> is iteration 6's projection plus <code>claims_of</code>, which decodes the bearer token the Gateway forwarded.</li>
 <li><code>policies.cedar</code> and <code>entities.json</code> are iteration 9's policies and iteration 7's build output, byte for byte.</li>
-<li><code>events/*.json</code> are eleven Gateway events in the documented shapes, seven for the request leg and four for the response leg, with tokens encoded from iteration 6's payloads.</li>
+<li><code>events/*.json</code> are fifteen Gateway events in the documented shapes, eight for the request leg and seven for the response leg, one response per tool, with tokens encoded from iteration 6's payloads.</li>
 <li><code>tests/*.json</code> are every prior corpus, carried. <code>test_interceptor.py</code> drives the handlers with the events and pins the results, and pins that the policies and entities are the proven ones.</li>
 </ul>
 
@@ -317,7 +317,9 @@ h2:hover .anchor { opacity: 1; }
 
 <p><strong>The handlers add no governance.</strong> They parse, decode, name the verb, and call the wrappers already tested and proven. A test pins that the policies and entities are the proven ones, byte for byte.</p>
 
-<p><strong>An ungoverned tool is rejected.</strong> Every tool the gateway exposes must be in the table, the same completeness rule the contract build applies to columns.</p>
+<p><strong>An ungoverned tool is rejected.</strong> Every tool the gateway exposes must be in the table, the same completeness rule the contract build applies to columns. A test holds that every tool in the table has a fixture driving both legs of one call.</p>
+
+<p><strong>An unfilterable response is withheld.</strong> Iteration 1's review said the interceptor strips and never refuses a whole response. That held while every response was a flat object the field round understood. A response whose payload the handler cannot place, or a tool whose result kind is undeclared, leaves as an error instead of as everything; stripping remains the rule for every response the handler can read.</p>
 
 <p><strong>The token is decoded once; the Gateway verified it.</strong> The Gateway's authorizer validates it before any interceptor runs. The handler reads the forwarded header only.</p>
 

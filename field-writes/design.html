@@ -278,7 +278,7 @@ permit(
 return RequestDecision(allowed=not denied, denied_fields=denied)</code></pre></li>
 <li><code>tests/bola.json</code>, <code>tests/bola-writes.json</code>, and <code>tests/field-reads.json</code> are the corpora of iterations 1 through 3, byte for byte, the regression gate proving the appended policy changes no earlier decision.</li>
 <li><code>tests/field-writes.json</code> adds eleven <code>UpdateOrderField</code> cases: the owner's one allow, denies for every system field including the price manipulation case, mass assignment failing closed on <code>isAdmin</code>, API1 re-checked at write-field level, support and unknown principals, and the guessed order id.</li>
-<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_gate.py</code> pins the enforcement: a payload with one good and one denied field is rejected as a unit, and the rejection names the denied fields.</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_gate.py</code> pins the enforcement: a payload with one good and one denied field is rejected as a unit, the rejection names the denied fields, and a payload naming no field is rejected.</li>
 </ul>
 
 <h2 id="tdd">6. Growing by tests</h2>

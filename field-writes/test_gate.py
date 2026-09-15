@@ -43,3 +43,9 @@ def test_non_owner_writes_nothing():
     result = check_request('User::"bob"', ORDER, {"shippingAddress": "1 Oak Ln"})
     assert not result.allowed
     assert result.denied_fields == ["shippingAddress"]
+
+
+def test_an_empty_payload_is_rejected():
+    result = check_request('User::"alice"', ORDER, {})
+    assert not result.allowed
+    assert result.denied_fields == ["<no payload>"]

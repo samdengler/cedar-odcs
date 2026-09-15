@@ -151,3 +151,70 @@ def test_non_text_content_items_are_kept():
     out = response_handler(_mutated("response-alice-reads-own-order", mutate))
     content = out["mcp"]["transformedGatewayResponse"]["body"]["result"]["content"]
     assert [c["type"] for c in content] == ["text", "image"]
+
+
+# Both legs of one call, for every tool in the table. The request leg
+# must pass and the response leg must filter; a tool the table names
+# is covered end to end or the test fails.
+BOTH_LEGS = {
+    "orders___get_order": "response-alice-reads-own-order",
+    "orders___update_order": "response-carol-updates-notes",
+    "orders___cancel_order": "response-alice-cancels-own-order",
+    "orders___refund_order": "response-dave-refunds",
+    "orders___list_orders": "response-carol-for-alice-lists",
+}
+
+
+def test_every_tool_has_both_legs_covered():
+    from interceptor import TOOLS
+    assert set(BOTH_LEGS) == set(TOOLS)
+
+
+def test_both_legs_for_every_tool():
+    for name, fixture in BOTH_LEGS.items():
+        ev = event(fixture)
+        assert "transformedGatewayRequest" in request_handler(ev)["mcp"], name
+        out = response_handler(ev)["mcp"]["transformedGatewayResponse"]
+        assert out["statusCode"] == 200, name
+        payload = out["body"]["result"]["structuredContent"]
+        rows = payload if isinstance(payload, list) else [payload]
+        for row in rows:
+            assert "fraudScore" not in row, name
+
+
+def test_write_tools_echoing_the_order_are_filtered():
+    # dave refunds and receives the order back: finance reads nothing of it.
+    out = response_handler(event("response-dave-refunds"))["mcp"]["transformedGatewayResponse"]
+    assert out["body"]["result"]["structuredContent"] == {}
+    # carol's update echoes bob's order: support's fields only.
+    out = response_handler(event("response-carol-updates-notes"))["mcp"]["transformedGatewayResponse"]
+    assert "shippingAddress" not in out["body"]["result"]["structuredContent"]
+    assert "internalNotes" in out["body"]["result"]["structuredContent"]
+
+
+def test_nested_write_payload_is_examined_leaf_by_leaf():
+    def mutate(e):
+        e["mcp"]["gatewayRequest"]["body"]["params"]["arguments"]["changes"] = {
+            "shippingAddress": {"street": "2 Oak Ln", "isAdmin": True}
+        }
+    out = request_handler(_mutated("request-carol-for-alice-updates-address-and-total", mutate))
+    message = out["mcp"]["transformedGatewayResponse"]["body"]["error"]["message"]
+    assert "shippingAddress.street" in message and "shippingAddress.isAdmin" in message
+
+
+def test_nested_response_values_are_examined_leaf_by_leaf():
+    def mutate(e):
+        payload = e["mcp"]["gatewayResponse"]["body"]["result"]["structuredContent"]
+        payload["shippingAddress"] = {"street": "1 Oak Ln", "fraudScore": 0.9}
+        payload["lines"] = [{"sku": "a", "internalNotes": "x"}]
+        e["mcp"]["gatewayResponse"]["body"]["result"]["content"][0]["text"] = json.dumps(payload)
+    out = response_handler(_mutated("response-alice-reads-own-order", mutate))
+    payload = out["mcp"]["transformedGatewayResponse"]["body"]["result"]["structuredContent"]
+    assert "shippingAddress" not in payload and "lines" not in payload
+
+
+def test_string_body_is_parsed_not_passed():
+    ev = _mutated("request-alice-refunds-own-order", lambda e: e["mcp"]["gatewayRequest"].update({"body": json.dumps(e["mcp"]["gatewayRequest"]["body"])}))
+    out = request_handler(ev)
+    assert out["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+    assert "RefundOrder is not permitted" in out["mcp"]["transformedGatewayResponse"]["body"]["error"]["message"]

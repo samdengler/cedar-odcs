@@ -48,12 +48,15 @@ def test_generated_maps_carry_iteration_6():
             assert now[contract_id][field_name] == value, (contract_id, field_name)
 
 
-def test_generated_schema_matches_the_hand_written_one():
+def test_generated_schema_extends_the_hand_written_one():
+    # Iteration 6's hand-written schema is the generated one up to the
+    # verbs added since; the proofs run against the generated file.
     def normalize(text):
         return " ".join(text.split())
     generated = (HERE / "generated/orders.cedarschema").read_text()
     hand_written = (HERE / "../analysis/schemas/on-behalf-of.cedarschema").read_text()
-    assert normalize(generated) == normalize(hand_written)
+    assert normalize(generated).startswith(normalize(hand_written))
+    assert "action ListOrders" in generated
 
 
 def _fixtures():

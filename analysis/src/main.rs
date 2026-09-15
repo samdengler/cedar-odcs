@@ -392,9 +392,16 @@ const PAIRS: &[Pair] = &[
     // policies alone; the pair proves the generated schema decides as
     // the hand-written one did.
     Pair { older: "on-behalf-of", newer: "contract", revisions: &[], restrictions: &[] },
-    // Iteration 9 appends one permit for a new action; the six order
-    // actions are proven untouched.
-    Pair { older: "contract", newer: "row-filtering", revisions: &[], restrictions: &[] },
+    // Iteration 9 appends one permit for the list verb. Both iterations
+    // share the generated schema, which now declares that verb, so the
+    // new permit is a declared revision on it; the six order actions
+    // are proven untouched.
+    Pair {
+        older: "contract",
+        newer: "row-filtering",
+        revisions: &["revisions/row-filtering/anyone-lists-orders.cedar"],
+        restrictions: &[],
+    },
 ];
 
 /// Guardrails that no longer hold against the final set, each with
@@ -415,7 +422,10 @@ const FINAL: &str = "row-filtering";
 
 /// Iterations whose schema is a build output rather than a file in
 /// schemas/: the path is relative to this directory.
-const SCHEMA_OVERRIDES: &[(&str, &str)] = &[("contract", "../contract/generated/orders.cedarschema")];
+const SCHEMA_OVERRIDES: &[(&str, &str)] = &[
+    ("contract", "../contract/generated/orders.cedarschema"),
+    ("row-filtering", "../contract/generated/orders.cedarschema"),
+];
 
 fn schema_path(analysis: &Path, iteration: &str) -> PathBuf {
     match SCHEMA_OVERRIDES.iter().find(|(name, _)| *name == iteration) {

@@ -81,8 +81,12 @@ def check_call(principal: str, action: str, resource: str, body: dict = None) ->
     if not is_allowed(principal, action, resource).allowed:
         return CallDecision(allowed=False, denied_verb=True)
     field_action = FIELD_ACTIONS.get(action)
-    if field_action is None or not body:
+    if field_action is None:
         return CallDecision(allowed=True, denied_verb=False)
+    if not isinstance(body, dict) or not body:
+        # A write naming no field is not forwarded: the payload round is
+        # the only bound on a role-granted update.
+        return CallDecision(allowed=False, denied_verb=False, denied_fields=["<no payload>"])
     denied = [
         name
         for name in body

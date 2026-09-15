@@ -10,7 +10,7 @@ The threats covered, in OWASP API Security Top 10 terms: [API1 broken object lev
 
 ## Approach
 
-The project grows in small iterations, each one test-driven: test cases are added to a JSON corpus first, then the policies that make them pass. Cedar policies and test cases are engine-independent data, so the Python code used for learning and the eventual Rust enforcement build (a Lambda Runtime API proxy extension) run the same policies against the same corpus.
+The project grows in small iterations, each one test-driven: test cases are added to a JSON corpus first, then the policies that make them pass. Cedar policies and test cases are engine-independent data, so the Python code used for learning, the Gateway interceptor handlers, and any later Rust build run the same policies against the same corpus.
 
 Design decisions and the full iteration plan are in the design document.
 
@@ -92,7 +92,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `enforce.py`: the wrappers of iterations 3, 5, and 9, asked with a token's projection.
   - `bearer.py`: iteration 6's projection, plus decoding of the forwarded bearer token.
   - `policies.cedar`, `entities.json`: iteration 9's policies and iteration 7's build output, byte for byte; a test says so.
-  - `events/*.json`: eleven Gateway events in the documented shapes.
+  - `events/*.json`: fifteen Gateway events in the documented shapes, one response per tool.
   - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.
 - `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
 

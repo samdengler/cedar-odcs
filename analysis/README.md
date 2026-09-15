@@ -61,7 +61,8 @@ Current results, all proved:
   (`contract/generated/orders.cedarschema`, named in
   `SCHEMA_OVERRIDES`): the generated schema types the policies and
   admits the same twenty-four properties.
-- `row-filtering`: the list verb never errors; the twelve guardrails
+- `row-filtering`: proven against the same generated schema as
+  `contract`; the list verb never errors; the twelve guardrails
   reproven against the thirteen-policy set, with acting-bounded-by-
   ownership revised to name the six order verbs, because the list
   call has no order to own and is allowed while acting.
@@ -105,12 +106,13 @@ The pairs and their results:
 | field-writes | function-level | support-updates-any-order, support-updates-support-fields | none | ReadOrder, ReadOrderField, UpdateOrder, UpdateOrderField |
 | function-level | on-behalf-of | none | direct-mode | all six |
 | on-behalf-of | contract | none | none | all six |
-| contract | row-filtering | none | none | all six |
+| contract | row-filtering | anyone-lists-orders | none | all seven |
 
 All seven pairs are proven. The contract pair changes no policy; it
 proves that the schema generated from the data contract decides as
-the hand-written one did. The row-filtering pair adds a verb and is
-proven not to touch the six order actions. Without its declared revisions the
+the hand-written one did. The two share that generated schema, which
+declares the list verb, so iteration 9's one permit is a declared
+revision on it and the six order actions are proven untouched. Without its declared revisions the
 field-writes to function-level pair differs under `UpdateOrder`, shown
 as expected.
 
@@ -158,7 +160,7 @@ The runner's output for the composition section:
   PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
   revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
   ...
-141 proved, 0 failed, 3 differences shown as expected
+141 proved, 0 failed, 4 differences shown as expected
 ```
 
 ## Findings
@@ -224,4 +226,5 @@ The runner uses the compiler's `CompiledPolicySet` and `CompiledPolicy`
 API, which validates and compiles a policy set once per request
 environment and reuses it across queries. The schemas in `schemas/`
 are hand-written per iteration through iteration 6; from iteration 7
-on, the schema is the one the contract build writes.
+on, the schema is the one the contract build writes, named in
+`SCHEMA_OVERRIDES`.

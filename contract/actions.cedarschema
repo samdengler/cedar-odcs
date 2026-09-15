@@ -47,3 +47,13 @@ action UpdateOrderField appliesTo {
     field?: String
   }
 };
+
+entity Collection;
+
+action ListOrders appliesTo {
+  principal: [User],
+  resource: [Collection],
+  context: {
+    actingFor?: User
+  }
+};

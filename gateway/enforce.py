@@ -77,6 +77,41 @@ def is_allowed(projection: Projection, action: str, resource: str, context: dict
     return result.decision == cedarpy.Decision.Allow
 
 
+UNNAMEABLE = object()
+
+
+def leaves(value, prefix: str = "") -> dict:
+    """Every leaf of a payload by dotted path: {"shippingAddress.street": ...}.
+
+    The field rounds ask one question per leaf, so a value nested
+    under an allowed field is never carried along unexamined. A list
+    of scalars is one leaf. A list that holds an object cannot be
+    named leaf by leaf and is returned as UNNAMEABLE, which both
+    rounds treat as denied.
+    """
+    out = {}
+    if isinstance(value, dict):
+        for name, child in value.items():
+            path = f"{prefix}.{name}" if prefix else str(name)
+            out.update(leaves(child, path))
+        return out
+    if isinstance(value, list) and any(isinstance(item, (dict, list)) for item in value):
+        return {prefix: UNNAMEABLE}
+    return {prefix: value}
+
+
+def assemble(kept: dict) -> dict:
+    """The inverse of leaves for the leaves that survived."""
+    out = {}
+    for path, value in kept.items():
+        node = out
+        parts = path.split(".")
+        for part in parts[:-1]:
+            node = node.setdefault(part, {})
+        node[parts[-1]] = value
+    return out
+
+
 def check_call(claims: dict, action: str, resource: str, body: dict = None) -> CallDecision:
     """The request leg: verb round, then payload round for an update."""
     projection = project(claims)
@@ -90,8 +125,8 @@ def check_call(claims: dict, action: str, resource: str, body: dict = None) -> C
         # round is the only thing that bounds a role-granted update.
         return CallDecision(allowed=False, denied_verb=False, denied_fields=["<no payload>"])
     denied = [
-        name for name in body
-        if not is_allowed(projection, field_action, resource, {"field": name})
+        path for path, value in leaves(body).items()
+        if value is UNNAMEABLE or not is_allowed(projection, field_action, resource, {"field": path})
     ]
     return CallDecision(allowed=not denied, denied_verb=False, denied_fields=denied)
 
@@ -110,12 +145,14 @@ def filter_fields(projection: Projection, row: dict) -> tuple:
     entity = entity_from_row(row)
     resource = f'Order::"{row["id"]}"'
     kept, removed = {}, []
-    for name, value in row.items():
-        if is_allowed(projection, 'Action::"ReadOrderField"', resource, {"field": name}, [entity]):
-            kept[name] = value
+    for path, value in leaves(row).items():
+        if value is not UNNAMEABLE and is_allowed(
+            projection, 'Action::"ReadOrderField"', resource, {"field": path}, [entity]
+        ):
+            kept[path] = value
         else:
-            removed.append(name)
-    return kept, removed
+            removed.append(path)
+    return assemble(kept), removed
 
 
 def filter_rows(claims: dict, rows: list) -> RowsDecision:

@@ -73,6 +73,10 @@ def check_request(principal: str, resource: str, body: dict) -> RequestDecision:
     Any denied field rejects the whole request; the caller forwards
     the upstream call only when allowed is True.
     """
+    if not isinstance(body, dict) or not body:
+        # A write naming no field is not forwarded: the payload round is
+        # the only bound on what an update may set.
+        return RequestDecision(allowed=False, denied_fields=["<no payload>"])
     denied = [
         name
         for name in body

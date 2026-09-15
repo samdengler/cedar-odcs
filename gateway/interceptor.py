@@ -32,18 +32,32 @@ log = logging.getLogger("cedar-osdc")
 # underscores, operation name.
 TOOLS = {
     "orders___get_order":    {"action": "ReadOrder",   "id": "orderId", "returns": "object"},
-    "orders___update_order": {"action": "UpdateOrder", "id": "orderId", "payload": "changes"},
-    "orders___cancel_order": {"action": "CancelOrder", "id": "orderId"},
-    "orders___refund_order": {"action": "RefundOrder", "id": "orderId"},
+    "orders___update_order": {"action": "UpdateOrder", "id": "orderId", "payload": "changes", "returns": "object"},
+    "orders___cancel_order": {"action": "CancelOrder", "id": "orderId", "returns": "object"},
+    "orders___refund_order": {"action": "RefundOrder", "id": "orderId", "returns": "object"},
     "orders___list_orders":  {"action": "ListOrders",  "collection": "orders", "returns": "list"},
 }
+# Every tool returns something, and the response leg filters every
+# result; a tool without a declared result kind has its responses
+# withheld. Write tools echo the order they changed, so they return an
+# object like a read.
 
 OUTPUT_VERSION = "1.0"
 
 
+def _body(body):
+    """The JSON-RPC body as a dict. The Gateway delivers it parsed; a
+    string is parsed here rather than passed through unread."""
+    if isinstance(body, str):
+        body = json.loads(body)
+    if not isinstance(body, dict):
+        raise ValueError("request body is not a JSON object")
+    return body
+
+
 def _tool_call(body: dict):
     """(tool name, arguments) for a tools/call message, else None."""
-    if not isinstance(body, dict) or body.get("method") != "tools/call":
+    if body.get("method") != "tools/call":
         return None
     params = body.get("params") or {}
     arguments = params.get("arguments")
@@ -73,7 +87,7 @@ def _payload(tool: dict, arguments: dict):
     be the declared payload: an argument the tool table does not name
     is rejected, so a write cannot arrive under another key and skip
     the field round."""
-    expected = {tool["id"]} | ({tool["payload"]} if "payload" in tool else set())
+    expected = ({tool["id"]} if "id" in tool else set()) | ({tool["payload"]} if "payload" in tool else set())
     unexpected = set(arguments) - expected
     if unexpected:
         raise ValueError(f"unexpected arguments: {', '.join(sorted(unexpected))}")
@@ -127,7 +141,7 @@ def request_handler(event: dict, context=None) -> dict:
     """
     try:
         request = event["mcp"]["gatewayRequest"]
-        body = request.get("body")
+        body = _body(request.get("body"))
         call = _tool_call(body)
         if call is None:
             return _pass_request(body)
@@ -189,13 +203,13 @@ def response_handler(event: dict, context=None) -> dict:
     try:
         request = event["mcp"]["gatewayRequest"]
         response = event["mcp"]["gatewayResponse"]
-        call = _tool_call(request.get("body"))
+        call = _tool_call(_body(request.get("body")))
         if call is None or "result" not in (response.get("body") or {}):
             return _pass_response(response)
         name, _ = call
         tool = TOOLS.get(name)
         if tool is None or "returns" not in tool:
-            return _pass_response(response)
+            raise ValueError(f"tool {name} declares no result kind")
         claims = claims_of(_header(request.get("headers"), "Authorization"))
         result = response["body"]["result"]
         payload = _result_payload(result)
