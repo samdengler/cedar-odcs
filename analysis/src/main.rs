@@ -401,16 +401,21 @@ const ITERATIONS: &[Iteration] = &[
         chain: "reservations",
         spec: None,
         guardrails: &[
-            "guardrails/reservations/lookup-requires-pair.cedar",
-            "guardrails/reservations/read-requires-pair.cedar",
+            "guardrails/reservations/lookup-requires-pair-or-specialist.cedar",
+            "guardrails/reservations/read-requires-pair-or-specialist.cedar",
             "guardrails/reservations/possession-names-the-record.cedar",
             "guardrails/reservations/fail-closed.cedar",
             "guardrails/reservations/restricted-unreadable.cedar",
             "guardrails/reservations/possession-reads-customer-levels-only.cedar",
-            "guardrails/reservations/writes-require-pair.cedar",
+            "guardrails/reservations/writes-require-pair-or-specialist.cedar",
             "guardrails/reservations/possession-writes-named-record-only.cedar",
             "guardrails/reservations/possession-writes-owner-paths-only.cedar",
             "guardrails/reservations/mass-assignment-fail-closed.cedar",
+            "guardrails/reservations/specialist-levels-off-with-pair.cedar",
+            "guardrails/reservations/specialist-paths-off-with-pair.cedar",
+            "guardrails/reservations/specialist-writes-specialist-paths-only.cedar",
+            "guardrails/reservations/list-requires-specialist.cedar",
+            "guardrails/reservations/only-employees-acted-for.cedar",
         ],
     },
 ];
@@ -483,6 +488,18 @@ const PAIRS: &[Pair] = &[
 /// the iteration that retired it and why. The runner shows that each
 /// one really does fail.
 const RETIRED: &[(&str, &str)] = &[
+    (
+        "guardrails/reservations/lookup-requires-pair.cedar",
+        "iteration 13 lets a specialist look up without a pair; revised to lookup-requires-pair-or-specialist",
+    ),
+    (
+        "guardrails/reservations/read-requires-pair.cedar",
+        "iteration 13 lets a specialist read without a pair; revised to read-requires-pair-or-specialist",
+    ),
+    (
+        "guardrails/reservations/writes-require-pair.cedar",
+        "iteration 13 lets a specialist write remarks and cancel without a pair; revised to writes-require-pair-or-specialist",
+    ),
     (
         "guardrails/bola-writes/support-never-updates.cedar",
         "iteration 5 granted the support role an object-level update",

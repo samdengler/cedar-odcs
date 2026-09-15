@@ -111,4 +111,60 @@ def test_both_legs_for_every_tool():
         out = response_handler(ev)["mcp"]["transformedGatewayResponse"]
         assert out["statusCode"] == 200, name
         payload = out["body"]["result"]["structuredContent"]
-        assert "remarks" not in payload and all("passportNumber" not in p for p in payload["passengers"]), name
+        rows = payload if isinstance(payload, list) else [payload]
+        for row in rows:
+            assert all("passportNumber" not in p for p in row["passengers"]), name
+
+
+# ---- iteration 13: the specialist's view, the agent as a party, the list
+
+def test_specialist_through_the_agent_reads_any_record_with_remarks():
+    assert "transformedGatewayRequest" in request_handler(event("request-specialist-through-agent-looks-up"))["mcp"]
+    out = response_handler(event("response-specialist-through-agent-reads"))
+    payload = out["mcp"]["transformedGatewayResponse"]["body"]["result"]["structuredContent"]
+    assert payload["remarks"] == "Upgraded at check-in last time"
+    assert "contact" in payload
+    assert all("passportNumber" not in p for p in payload["passengers"])
+
+
+def test_specialist_presenting_a_pair_gets_the_customers_view():
+    out = response_handler(event("response-specialist-with-pair-reads"))
+    payload = out["mcp"]["transformedGatewayResponse"]["body"]["result"]["structuredContent"]
+    assert "remarks" not in payload and "contact" in payload
+
+
+def test_specialist_writes_remarks_and_not_contact():
+    assert "transformedGatewayRequest" in request_handler(event("request-specialist-writes-remarks"))["mcp"]
+    out = request_handler(event("request-specialist-changes-contact-without-pair"))
+    assert "fields not permitted: contact.email" in _error(out)
+
+
+def test_specialist_direct_cancels():
+    assert "transformedGatewayRequest" in request_handler(event("request-specialist-direct-cancels"))["mcp"]
+
+
+def test_specialist_lists_and_the_agent_alone_may_not():
+    assert "transformedGatewayRequest" in request_handler(event("request-specialist-lists"))["mcp"]
+    rows = response_handler(event("response-specialist-lists"))["mcp"]["transformedGatewayResponse"]["body"]["result"]["structuredContent"]
+    assert [r["recordLocator"] for r in rows] == ["ABC123", "XYZ789"]
+    assert request_handler(event("request-agent-alone-lists"))["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+
+
+def test_agent_alone_without_a_pair_is_refused():
+    assert request_handler(event("request-agent-alone-looks-up-without-pair"))["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+
+
+def test_the_agent_is_typed_as_an_agent_and_the_specialist_is_acted_for():
+    from core.claims import project
+    tokens = json.loads((HERE / "tokens.json").read_text())
+    p = project(tokens["agent"], USE_CASE.entities)
+    assert p.principal == 'Agent::"reservations-assistant"' and p.mode == "customer-conversation"
+    p = project(tokens["sam-through-agent"], USE_CASE.entities)
+    assert p.principal == 'Agent::"reservations-assistant"'
+    assert p.context == {"actingFor": {"__entity": {"type": "User", "id": "sam"}}}
+    assert p.acted_for_entity["parents"] == [{"type": "Role", "id": "specialist"}]
+    p = project(tokens["sam"], USE_CASE.entities)
+    assert p.principal == 'User::"sam"' and p.mode == "employee-direct"
+
+
+BOTH_LEGS["reservations___list_reservations"] = "response-specialist-lists"

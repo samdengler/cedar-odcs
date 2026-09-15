@@ -22,6 +22,14 @@
   },
   {
     "uid": {
+      "type": "User",
+      "id": "bob"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
       "type": "Role",
       "id": "specialist"
     },

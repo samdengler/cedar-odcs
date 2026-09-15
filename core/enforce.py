@@ -57,9 +57,12 @@ class Engine:
         return project(claims, self.entities)
 
     def _entities(self, projection: Projection, extra: list) -> str:
-        replaced = [projection.principal_entity["uid"]] + [e["uid"] for e in extra]
+        parties = [projection.principal_entity]
+        if projection.acted_for_entity is not None:
+            parties.append(projection.acted_for_entity)
+        replaced = [e["uid"] for e in parties + extra]
         kept = [e for e in self.entities if e["uid"] not in replaced]
-        return json.dumps(kept + [projection.principal_entity] + extra)
+        return json.dumps(kept + parties + extra)
 
     def is_allowed(self, projection: Projection, action: str, resource: str,
                    context: dict = None, extra: list = None) -> bool:

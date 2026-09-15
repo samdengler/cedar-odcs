@@ -21,6 +21,12 @@ from dataclasses import dataclass
 
 ROLE_CLAIM = "roles"
 PRINCIPAL_TYPE = "User"
+# A workload token names no human: its subject is the client id it was
+# issued to. Assumed claim shape, to confirm against a real token: the
+# token carries client_id and sub equals it. Such an actor is typed
+# Agent; a human actor is a User.
+WORKLOAD_CLAIM = "client_id"
+AGENT_TYPE = "Agent"
 
 
 class TokenError(Exception):
@@ -33,10 +39,17 @@ class Projection:
     context: dict             # actingFor when delegated, else empty
     principal_entity: dict    # the actor with role parents
     mode: str                 # customer-direct, employee-direct, employee-for-customer
+    acted_for_entity: dict = None  # the human acted for, with role parents
 
 
 def _ref(sub: str) -> dict:
     return {"__entity": {"type": PRINCIPAL_TYPE, "id": sub}}
+
+
+def _actor_type(claims: dict) -> str:
+    if claims.get(WORKLOAD_CLAIM) is not None and claims.get(WORKLOAD_CLAIM) == claims.get("sub"):
+        return AGENT_TYPE
+    return PRINCIPAL_TYPE
 
 
 def _roles(claims: dict) -> set:
@@ -46,35 +59,52 @@ def _roles(claims: dict) -> set:
     return set(roles)
 
 
-def stored_roles(entities: list, sub: str) -> set:
+def stored_roles(entities: list, entity_type: str, sub: str) -> set:
     for entity in entities:
-        if entity["uid"] == {"type": PRINCIPAL_TYPE, "id": sub}:
+        if entity["uid"] == {"type": entity_type, "id": sub}:
             return {p["id"] for p in entity["parents"] if p["type"] == "Role"}
     return set()
 
 
-def project(claims: dict, entities: list) -> Projection:
-    """Claims of a decoded, verified token, plus the store, to the parties."""
-    act = claims.get("act")
-    if act is None:
-        actor_sub = claims["sub"]
-        roles = _roles(claims)
-        context = {}
-    else:
-        actor_sub = act["sub"]
-        roles = _roles(act)
-        context = {"actingFor": _ref(claims["sub"])}
-    roles = roles | stored_roles(entities, actor_sub)
-    if act is None:
-        mode = "employee-direct" if roles else "customer-direct"
-    else:
-        mode = "employee-for-customer"
-    principal_entity = {
-        "uid": {"type": PRINCIPAL_TYPE, "id": actor_sub},
+def _entity(entity_type: str, sub: str, roles: set) -> dict:
+    return {
+        "uid": {"type": entity_type, "id": sub},
         "attrs": {},
         "parents": [{"type": "Role", "id": role} for role in sorted(roles)],
     }
-    return Projection(f'{PRINCIPAL_TYPE}::"{actor_sub}"', context, principal_entity, mode)
+
+
+def project(claims: dict, entities: list) -> Projection:
+    """Claims of a decoded, verified token, plus the store, to the parties.
+
+    With an exchanged token the actor is the agent and the human is
+    the subject: the agent becomes the principal, typed Agent, and the
+    human becomes context.actingFor with the roles the token's own
+    role claim and the store give them. A human calling without the
+    agent is the principal, a User.
+    """
+    act = claims.get("act")
+    acted_for = None
+    if act is None:
+        actor_sub = claims["sub"]
+        actor_type = _actor_type(claims)
+        roles = _roles(claims) | stored_roles(entities, actor_type, actor_sub)
+        context = {}
+        if actor_type == AGENT_TYPE:
+            mode = "customer-conversation"
+        else:
+            mode = "employee-direct" if roles else "customer-direct"
+    else:
+        actor_sub = act["sub"]
+        actor_type = _actor_type(act)
+        roles = _roles(act) | stored_roles(entities, actor_type, actor_sub)
+        human = claims["sub"]
+        human_roles = _roles(claims) | stored_roles(entities, PRINCIPAL_TYPE, human)
+        acted_for = _entity(PRINCIPAL_TYPE, human, human_roles)
+        context = {"actingFor": _ref(human)}
+        mode = "employee-for-customer"
+    principal_entity = _entity(actor_type, actor_sub, roles)
+    return Projection(f'{actor_type}::"{actor_sub}"', context, principal_entity, mode, acted_for)
 
 
 def _b64url(segment: str) -> bytes:

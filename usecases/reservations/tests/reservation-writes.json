@@ -5,7 +5,7 @@
   "requests": [
     {
       "description": "the holder updates the reservation by possession",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
@@ -15,7 +15,7 @@
     },
     {
       "description": "a wrong last name updates nothing",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "JONES" } },
@@ -24,18 +24,18 @@
       "errors": []
     },
     {
-      "description": "an update without a pair is refused, whoever asks",
+      "description": "a specialist updates without a pair: revised in iteration 13, which grants the specialist's view (Deny in iteration 12); the paths are bounded to the remarks",
       "principal": { "type": "User", "id": "sam" },
       "action": { "type": "Action", "id": "UpdateReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": {},
-      "decision": "Deny",
-      "reason": [],
+      "decision": "Allow",
+      "reason": ["policy9"],
       "errors": []
     },
     {
       "description": "contact.email is owner-writable: the holder may change it",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "contact.email" },
@@ -45,7 +45,7 @@
     },
     {
       "description": "passengers[].seat is owner-writable: a seat change by path, for any passenger",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].seat" },
@@ -55,7 +55,7 @@
     },
     {
       "description": "fare is a system field: price manipulation by possession is refused",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "fare" },
@@ -65,7 +65,7 @@
     },
     {
       "description": "passengers[].lastName is a system field: the passenger list is not changed by possession",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].lastName" },
@@ -75,7 +75,7 @@
     },
     {
       "description": "remarks are the specialist's to write, never possession's",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "remarks" },
@@ -85,7 +85,7 @@
     },
     {
       "description": "mass assignment fails closed: a path in no writers map, passengers[].loyaltyTier",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].loyaltyTier" },
@@ -95,7 +95,7 @@
     },
     {
       "description": "the holder cancels by possession: anyone with the pair may, as the airline allows",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "CancelReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
@@ -105,7 +105,7 @@
     },
     {
       "description": "a pair valid for one reservation cancels nothing of another",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "CancelReservation" },
       "resource": { "type": "Reservation", "id": "XYZ789" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
@@ -115,7 +115,7 @@
     },
     {
       "description": "a record the store does not know: no write, no evaluation error",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "CancelReservation" },
       "resource": { "type": "Reservation", "id": "QQQ000" },
       "context": { "presented": { "locator": "QQQ000", "lastName": "SMITH" } },

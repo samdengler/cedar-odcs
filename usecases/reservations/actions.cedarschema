@@ -2,53 +2,69 @@ type Presented = {
   locator: String,
   lastName: String
 };
+entity Collection;
 
 action LookupReservation appliesTo {
-  principal: [User],
+  principal: [User, Agent],
   resource: [Reservation],
   context: {
+    actingFor?: User,
     presented?: Presented
   }
 };
 
 action ReadReservation appliesTo {
-  principal: [User],
+  principal: [User, Agent],
   resource: [Reservation],
   context: {
+    actingFor?: User,
     presented?: Presented
   }
 };
 
 action ReadReservationField appliesTo {
-  principal: [User],
+  principal: [User, Agent],
   resource: [Reservation],
   context: {
+    actingFor?: User,
     presented?: Presented,
     field?: String
   }
 };
 
 action UpdateReservation appliesTo {
-  principal: [User],
+  principal: [User, Agent],
   resource: [Reservation],
   context: {
+    actingFor?: User,
     presented?: Presented
   }
 };
 
 action UpdateReservationField appliesTo {
-  principal: [User],
+  principal: [User, Agent],
   resource: [Reservation],
   context: {
+    actingFor?: User,
     presented?: Presented,
     field?: String
   }
 };
 
 action CancelReservation appliesTo {
-  principal: [User],
+  principal: [User, Agent],
   resource: [Reservation],
   context: {
+    actingFor?: User,
+    presented?: Presented
+  }
+};
+
+action ListReservations appliesTo {
+  principal: [User, Agent],
+  resource: [Collection],
+  context: {
+    actingFor?: User,
     presented?: Presented
   }
 };

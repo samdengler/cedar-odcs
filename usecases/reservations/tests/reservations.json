@@ -5,7 +5,7 @@
   "requests": [
     {
       "description": "lookup with a presented pair is attempted: the request leg cannot verify it",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "LookupReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
@@ -15,7 +15,7 @@
     },
     {
       "description": "lookup without a pair is refused: a locator alone is not possession",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "LookupReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": {},
@@ -25,7 +25,7 @@
     },
     {
       "description": "the record is readable when locator and holder last name are the presented ones",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
@@ -35,7 +35,7 @@
     },
     {
       "description": "a wrong last name for the locator reads nothing",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "JONES" } },
@@ -45,7 +45,7 @@
     },
     {
       "description": "a co-traveler's last name is not the holder's: the pair names one person",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "PATEL" } },
@@ -55,7 +55,7 @@
     },
     {
       "description": "a valid pair for one reservation reads nothing of another: the locator is part of the credential",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservation" },
       "resource": { "type": "Reservation", "id": "XYZ789" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
@@ -65,7 +65,7 @@
     },
     {
       "description": "a record the store does not know fails closed with no evaluation error: the guards hold",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservation" },
       "resource": { "type": "Reservation", "id": "QQQ000" },
       "context": { "presented": { "locator": "QQQ000", "lastName": "SMITH" } },
@@ -74,18 +74,18 @@
       "errors": []
     },
     {
-      "description": "a specialist without a pair reads nothing yet: the specialist view is iteration 13's",
+      "description": "a specialist without a pair reads any reservation: revised in iteration 13, which adds the specialist's view (Deny in iterations 11 and 12)",
       "principal": { "type": "User", "id": "sam" },
       "action": { "type": "Action", "id": "ReadReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": {},
-      "decision": "Deny",
-      "reason": [],
+      "decision": "Allow",
+      "reason": ["policy7"],
       "errors": []
     },
     {
       "description": "a nested leaf by path: contact.email is confidential and readable by possession",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "contact.email" },
@@ -95,7 +95,7 @@
     },
     {
       "description": "an index-free path: passengers[].seat is public and readable by possession",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].seat" },
@@ -105,7 +105,7 @@
     },
     {
       "description": "passengers[].passportNumber is restricted: readable by nobody through this path",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].passportNumber" },
@@ -115,7 +115,7 @@
     },
     {
       "description": "passengers[].specialServiceRequests is restricted: medical content stays out",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].specialServiceRequests" },
@@ -125,7 +125,7 @@
     },
     {
       "description": "remarks are internal: not the customer's level",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "remarks" },
@@ -135,7 +135,7 @@
     },
     {
       "description": "a path the contract does not declare fails closed: passengers[].frequentFlyerNumber",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].frequentFlyerNumber" },
@@ -145,7 +145,7 @@
     },
     {
       "description": "a field of a record whose pair does not match is not readable, whatever its level",
-      "principal": { "type": "User", "id": "reservations-assistant" },
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "ReadReservationField" },
       "resource": { "type": "Reservation", "id": "XYZ789" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "status" },

@@ -1,0 +1,167 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "specialist direct: a specialist calling without the agent looks up any reservation without a pair",
+      "principal": { "type": "User", "id": "sam" },
+      "action": { "type": "Action", "id": "LookupReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy6"],
+      "errors": []
+    },
+    {
+      "description": "specialist direct reads any reservation",
+      "principal": { "type": "User", "id": "sam" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy7"],
+      "errors": []
+    },
+    {
+      "description": "specialist through the agent: the agent is the principal, the specialist is the acted-for human, and the human's role decides",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } } },
+      "decision": "Allow",
+      "reason": ["policy7"],
+      "errors": []
+    },
+    {
+      "description": "the specialist reads remarks: internal is the specialist's level",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "field": "remarks" },
+      "decision": "Allow",
+      "reason": ["policy8"],
+      "errors": []
+    },
+    {
+      "description": "the specialist reads contact.email: confidential is within the specialist's levels",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "field": "contact.email" },
+      "decision": "Allow",
+      "reason": ["policy8"],
+      "errors": []
+    },
+    {
+      "description": "the specialist does not read passport numbers: restricted stays nobody's",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "field": "passengers[].passportNumber" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a specialist presenting a pair works in the customer's view: the record by possession, not by role",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+      "decision": "Allow",
+      "reason": ["policy1"],
+      "errors": []
+    },
+    {
+      "description": "a specialist presenting a pair does not read remarks: the specialist's view is off while a pair is presented",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "remarks" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a specialist presenting a wrong pair reads nothing: presenting a pair means being held to it",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "presented": { "locator": "ABC123", "lastName": "JONES" } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the agent alone, no human and no pair, reads nothing",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a human outside the employee role is never acted for: the agent acting for bob is forbidden",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "bob" } }, "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+      "decision": "Deny",
+      "reason": ["policy13"],
+      "errors": []
+    },
+    {
+      "description": "the specialist writes remarks on any reservation",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "UpdateReservationField" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "field": "remarks" },
+      "decision": "Allow",
+      "reason": ["policy10"],
+      "errors": []
+    },
+    {
+      "description": "the specialist does not change contact details without the pair: the customer's paths need possession",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "UpdateReservationField" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } }, "field": "contact.email" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the specialist cancels any reservation",
+      "principal": { "type": "User", "id": "sam" },
+      "action": { "type": "Action", "id": "CancelReservation" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy11"],
+      "errors": []
+    },
+    {
+      "description": "the specialist lists reservations",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ListReservations" },
+      "resource": { "type": "Collection", "id": "reservations" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "sam" } } },
+      "decision": "Allow",
+      "reason": ["policy12"],
+      "errors": []
+    },
+    {
+      "description": "listing has no customer form: the agent alone may not list, with or without a pair",
+      "principal": { "type": "Agent", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ListReservations" },
+      "resource": { "type": "Collection", "id": "reservations" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

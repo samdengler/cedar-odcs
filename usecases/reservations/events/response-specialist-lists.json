@@ -1,0 +1,129 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 17, \"method\": \"tools/call\", \"params\": {\"name\": \"reservations___list_reservations\", \"arguments\": {}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoic2FtIiwiYXVkIjoicmVzZXJ2YXRpb25zLWdhdGV3YXkiLCJyb2xlcyI6WyJzcGVjaWFsaXN0Il0sImFjdCI6eyJzdWIiOiJyZXNlcnZhdGlvbnMtYXNzaXN0YW50IiwiY2xpZW50X2lkIjoicmVzZXJ2YXRpb25zLWFzc2lzdGFudCJ9fQ.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "method": "tools/call",
+        "params": {
+          "name": "reservations___list_reservations",
+          "arguments": {}
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Mcp-Session-Id": "session-1"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[{\"recordLocator\": \"ABC123\", \"holderLastName\": \"SMITH\", \"status\": \"confirmed\", \"passengers\": [{\"firstName\": \"Ann\", \"lastName\": \"SMITH\", \"dateOfBirth\": \"1984-02-11\", \"seat\": \"12A\", \"passportNumber\": \"X1234567\", \"specialServiceRequests\": [\"WCHR\"]}, {\"firstName\": \"Raj\", \"lastName\": \"PATEL\", \"dateOfBirth\": \"1990-07-30\", \"seat\": \"12B\", \"passportNumber\": \"Y7654321\", \"specialServiceRequests\": []}], \"segments\": [{\"flightNumber\": \"DL123\", \"origin\": \"ATL\", \"destination\": \"LHR\", \"departure\": \"2026-10-01T18:30:00Z\"}, {\"flightNumber\": \"DL124\", \"origin\": \"LHR\", \"destination\": \"ATL\", \"departure\": \"2026-10-10T11:00:00Z\"}], \"contact\": {\"email\": \"ann@example.com\", \"phone\": \"+1-404-555-0100\"}, \"fare\": 1840.0, \"paymentLast4\": \"4242\", \"remarks\": \"Upgraded at check-in last time\"}, {\"recordLocator\": \"XYZ789\", \"holderLastName\": \"JONES\", \"status\": \"confirmed\", \"passengers\": [{\"firstName\": \"Lee\", \"lastName\": \"JONES\", \"dateOfBirth\": \"1975-05-05\", \"seat\": \"3C\", \"passportNumber\": \"Z0001111\", \"specialServiceRequests\": []}], \"segments\": [{\"flightNumber\": \"DL123\", \"origin\": \"ATL\", \"destination\": \"LHR\", \"departure\": \"2026-10-01T18:30:00Z\"}, {\"flightNumber\": \"DL124\", \"origin\": \"LHR\", \"destination\": \"ATL\", \"departure\": \"2026-10-10T11:00:00Z\"}], \"contact\": {\"email\": \"ann@example.com\", \"phone\": \"+1-404-555-0100\"}, \"fare\": 1840.0, \"paymentLast4\": \"4242\", \"remarks\": \"Upgraded at check-in last time\"}]"
+            }
+          ],
+          "structuredContent": [
+            {
+              "recordLocator": "ABC123",
+              "holderLastName": "SMITH",
+              "status": "confirmed",
+              "passengers": [
+                {
+                  "firstName": "Ann",
+                  "lastName": "SMITH",
+                  "dateOfBirth": "1984-02-11",
+                  "seat": "12A",
+                  "passportNumber": "X1234567",
+                  "specialServiceRequests": [
+                    "WCHR"
+                  ]
+                },
+                {
+                  "firstName": "Raj",
+                  "lastName": "PATEL",
+                  "dateOfBirth": "1990-07-30",
+                  "seat": "12B",
+                  "passportNumber": "Y7654321",
+                  "specialServiceRequests": []
+                }
+              ],
+              "segments": [
+                {
+                  "flightNumber": "DL123",
+                  "origin": "ATL",
+                  "destination": "LHR",
+                  "departure": "2026-10-01T18:30:00Z"
+                },
+                {
+                  "flightNumber": "DL124",
+                  "origin": "LHR",
+                  "destination": "ATL",
+                  "departure": "2026-10-10T11:00:00Z"
+                }
+              ],
+              "contact": {
+                "email": "ann@example.com",
+                "phone": "+1-404-555-0100"
+              },
+              "fare": 1840.0,
+              "paymentLast4": "4242",
+              "remarks": "Upgraded at check-in last time"
+            },
+            {
+              "recordLocator": "XYZ789",
+              "holderLastName": "JONES",
+              "status": "confirmed",
+              "passengers": [
+                {
+                  "firstName": "Lee",
+                  "lastName": "JONES",
+                  "dateOfBirth": "1975-05-05",
+                  "seat": "3C",
+                  "passportNumber": "Z0001111",
+                  "specialServiceRequests": []
+                }
+              ],
+              "segments": [
+                {
+                  "flightNumber": "DL123",
+                  "origin": "ATL",
+                  "destination": "LHR",
+                  "departure": "2026-10-01T18:30:00Z"
+                },
+                {
+                  "flightNumber": "DL124",
+                  "origin": "LHR",
+                  "destination": "ATL",
+                  "departure": "2026-10-10T11:00:00Z"
+                }
+              ],
+              "contact": {
+                "email": "ann@example.com",
+                "phone": "+1-404-555-0100"
+              },
+              "fare": 1840.0,
+              "paymentLast4": "4242",
+              "remarks": "Upgraded at check-in last time"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

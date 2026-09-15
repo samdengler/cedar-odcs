@@ -76,6 +76,12 @@ Current results, all proved:
   and confidential leaves only. Iteration 12 adds the writes: no write
   without a pair; possession writes only the record it names and only
   owner paths; mass assignment fails closed, nested paths included.
+  Iteration 13 adds the specialist's view: lookup, read, and writes
+  require a pair or a specialist (three guardrails revised, the bare
+  ones retired and shown to fail); internal leaves and specialist paths
+  are off while a pair is presented; without a pair a specialist
+  writes specialist paths only; listing requires a specialist; a human
+  outside the employee role is granted nothing on any verb.
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
   restrictions; every guardrail ever written has a checked status
@@ -173,7 +179,7 @@ The runner's output for the composition section:
   PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
   revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
   ...
-190 proved, 0 failed, 4 differences shown as expected
+208 proved, 0 failed, 7 differences shown as expected
 ```
 
 ## Findings
@@ -209,6 +215,13 @@ The runner's output for the composition section:
    `revisions/function-level/support-updates-support-fields.cedar`,
    and the pair is proven with both. The corpus checks the map that
    exists; the proof checks every map.
+
+6. A guardrail over two verbs with a disjunction is two guardrails.
+   Iteration 13's "specialist view off with a pair" joined the read
+   condition (an internal leaf) and the write condition (a specialist
+   path) in one forbid over both field verbs; the prover refused it,
+   because the disjunction also forbade a possession read of a public
+   leaf whose writer is the specialist. Split per verb, both hold.
 
 ## Running
 

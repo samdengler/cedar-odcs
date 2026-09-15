@@ -110,17 +110,27 @@ class Handlers:
         return self.engine.resource_ref(value)
 
     def _context(self, tool: dict, arguments: dict) -> dict:
+        """The presented facts, when the call presents them. A tool
+        that declares them accepts a call without them: the policies
+        then decide on the caller's own grants, a specialist's view,
+        and a customer's call falls to the lookup's default deny. A
+        partial pair is an error."""
         if "presented" not in tool:
             return {}
-        presented = {}
-        for argument, name in tool["presented"].items():
-            value = arguments.get(argument)
-            if not isinstance(value, str) or not value:
-                raise ValueError(f"argument {argument} must be presented")
-            # Presented facts are compared upper-cased; the contract
-            # states the record holds them that way.
-            presented[name] = value.upper()
-        return {"presented": presented}
+        values = {name: arguments.get(argument) for argument, name in tool["presented"].items()}
+        given = {name: v for name, v in values.items() if isinstance(v, str) and v}
+        # The resource id can double as one half of the pair; the pair
+        # is presented when the other half is. A locator alone is a
+        # call without a pair.
+        id_names = {name for argument, name in tool["presented"].items() if argument == tool.get("id")}
+        if not (set(given) - id_names):
+            return {}
+        if len(given) != len(values):
+            missing = sorted(set(values) - set(given))
+            raise ValueError(f"presented facts incomplete: {', '.join(missing)} missing")
+        # Presented facts are compared upper-cased; the contract states
+        # the record holds them that way.
+        return {"presented": {name: v.upper() for name, v in given.items()}}
 
     def _payload(self, tool: dict, arguments: dict):
         expected = set()

@@ -22,6 +22,10 @@ TOOLS = {
         "action": 'Action::"CancelReservation"',
         "id": "recordLocator", "presented": PRESENTED, "returns": "object",
     },
+    "reservations___list_reservations": {
+        "action": 'Action::"ListReservations"',
+        "collection": "reservations", "returns": "list",
+    },
 }
 
 RECORDS = json.loads((ROOT / "records.json").read_text())
