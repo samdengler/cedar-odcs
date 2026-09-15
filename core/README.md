@@ -26,3 +26,7 @@ A use case directory (`usecases/<name>/`) holds `usecase.py`,
 `actions.cedarschema`, `unity/` fixtures, the build's committed
 outputs, `tests/` corpora, `events/` Gateway fixtures, and its tests.
 `uv run python usecases/<name>/build.py` rebuilds the artifacts.
+
+`what-reservations-changed.html` is the writeup of what core had to
+change to admit the reservation use case, taken from the diffs of
+iterations 11 through 13.

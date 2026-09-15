@@ -94,7 +94,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `policies.cedar`, `entities.json`: iteration 9's policies and iteration 7's build output, byte for byte; a test says so.
   - `events/*.json`: fifteen Gateway events in the documented shapes, one response per tool.
   - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.
-- `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules.
+- `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules; `what-reservations-changed.html` is the writeup of what the reservation use case changed in it.
 - `usecases/orders/`: iteration 9's policies and iteration 7's contract sources on core, every corpus and Gateway fixture carried, at parity with the numbered iterations.
 - `usecases/reservations/`: iteration 11. A reservation is held by whoever presents its record locator and the holder's last name.
   - `iteration-11.html`: the design narrative. Possession in context, two legs with one credential, nested records by path, and the core split.
