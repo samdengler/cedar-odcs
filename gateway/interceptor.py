@@ -21,7 +21,7 @@ documentation, that test_interceptor.py drives the handlers with.
 import json
 import logging
 
-from claims import claims_of, project
+from bearer import claims_of, project
 from enforce import check_call, filter_object, filter_rows
 
 log = logging.getLogger("cedar-osdc")

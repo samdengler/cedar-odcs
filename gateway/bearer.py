@@ -1,8 +1,11 @@
 """The projection from token claims to a Cedar request, from iteration 6.
 
-Two additions for the interceptor: claims_of decodes the bearer token
+Two changes for the interceptor: claims_of decodes the bearer token
 the Gateway forwards, and the authorization question itself moved to
-enforce.py, which asks it with the projection's parties.
+enforce.py, which asks it with the projection's parties. The module
+is named bearer rather than claims because the root test run imports
+every iteration's modules into one process, and iteration 6 already
+owns the name claims.
 
 The bearer token that reaches the Gateway names the parties; this
 module turns its claims into the principal, the mode, and the entity

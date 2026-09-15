@@ -290,7 +290,7 @@ h2:hover .anchor { opacity: 1; }
 <ul>
 <li><code>interceptor.py</code> holds the two handlers, the tool table, and the Gateway output formats: pass-through, short-circuit rejection, and transformed response.</li>
 <li><code>enforce.py</code> holds <code>check_call</code>, <code>filter_fields</code>, <code>filter_rows</code>, and <code>filter_object</code>: the wrappers of iterations 5, 3, and 9, asked with a token's projection. Entities for rows come from the payload, as in iteration 9.</li>
-<li><code>claims.py</code> is iteration 6's projection plus <code>claims_of</code>, which decodes the bearer token the Gateway forwarded.</li>
+<li><code>bearer.py</code> is iteration 6's projection plus <code>claims_of</code>, which decodes the bearer token the Gateway forwarded.</li>
 <li><code>policies.cedar</code> and <code>entities.json</code> are iteration 9's policies and iteration 7's build output, byte for byte.</li>
 <li><code>events/*.json</code> are eleven Gateway events in the documented shapes, seven for the request leg and four for the response leg, with tokens encoded from iteration 6's payloads.</li>
 <li><code>tests/*.json</code> are every prior corpus, carried. <code>test_interceptor.py</code> drives the handlers with the events and pins the results, and pins that the policies and entities are the proven ones.</li>

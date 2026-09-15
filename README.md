@@ -90,7 +90,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `design.html`: the design narrative. The two interception points, the handlers, where the native policy engine fits, and the Lambda extension decision revisited.
   - `interceptor.py`: `request_handler` and `response_handler`, the Gateway's event and result formats for MCP targets, and the tool table.
   - `enforce.py`: the wrappers of iterations 3, 5, and 9, asked with a token's projection.
-  - `claims.py`: iteration 6's projection, plus decoding of the forwarded bearer token.
+  - `bearer.py`: iteration 6's projection, plus decoding of the forwarded bearer token.
   - `policies.cedar`, `entities.json`: iteration 9's policies and iteration 7's build output, byte for byte; a test says so.
   - `events/*.json`: eleven Gateway events in the documented shapes.
   - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.

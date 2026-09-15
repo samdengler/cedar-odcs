@@ -24,7 +24,7 @@ from pathlib import Path
 
 import cedarpy
 
-from claims import Projection, load_entities, load_policies, project
+from bearer import Projection, load_entities, load_policies, project
 
 HERE = Path(__file__).parent
 
