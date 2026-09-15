@@ -327,6 +327,8 @@ return CallDecision(allowed=not denied, denied_verb=False, denied_fields=denied)
 <li><strong>The finance role grants no read.</strong> A finance member reads an order only by owning it or through another role that holds the verb.</li>
 </ul>
 
+<p>Iteration 8's preservation proof later showed that this iteration widened two earlier decisions, where this document first declared one. Granting support the object-level update is the declared one. The support field policy, P11, is the other: it widens <code>UpdateOrderField</code>, an action iteration 4 already had, for any writers map that names <code>support</code>, and iteration 4's map never did, so no carried case sampled it. Both are recorded as declared revisions in <code>analysis/revisions/</code>.</p>
+
 <p>The last one was falsified on its first try. Written as "finance reads only as owner", the prover produced a principal who is in both the finance and support roles and reads through support. Role membership is not exclusive, the same lesson the support-never-updates guardrail taught in iteration 2, and the invariant that holds is about the role, not the person. Two guardrails from earlier iterations are retired: support-never-updates and writes-require-ownership no longer hold, by design. The five that still apply are carried and reproven against the eleven-policy set. Findings and instructions are in <code>analysis/README.md</code>.</p>
 
 <h2 id="running">8. Running it</h2>

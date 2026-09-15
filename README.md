@@ -79,7 +79,7 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `policies.cedar`: iteration 6's file, unchanged.
   - `tests/*.json`: iterations 1 through 6's corpora, byte for byte, plus `tests/contract.json`: five cases about the generated maps.
   - `test_build.py`: committed artifacts are current; the contract validates; iteration 6's map entries are carried; the generated schema equals the hand-written one; an incomplete catalog fails the build.
-- `analysis/`: symbolic proofs over each iteration's policies, using Cedar's symbolic compiler and the cvc5 SMT solver. Spec equivalence, guardrail no-ops, and never-errors, proven over every possible request; findings and instructions in `analysis/README.md`.
+- `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
 
 ## Running
 
@@ -99,6 +99,12 @@ The symbolic proofs run separately; they need Rust and the cvc5 solver (see `ana
 
 ```sh
 cd analysis && cargo run
+```
+
+Both together, every test and every proof, from the repository root:
+
+```sh
+./check.sh
 ```
 
 ## Onboarding questions
@@ -123,6 +129,6 @@ The identity questions double as a gap analysis. On behalf of access is in place
 5. Function level (API5), done: verbs held by roles; a verb held implies no other; the first role-granted write path.
 6. On behalf of access modes, done: customer direct, employee direct, employee acting for a customer; the principal is the actor and the context carries the acted-for party.
 7. ODCS as source of truth, done: Unity Catalog column tags to an ODCS contract to the tag maps and the Cedar schema, generated at build time and committed.
-8. Provable composition: prove that combined policy sets preserve each iteration's guarantees, with equivalence and non-interference checks in CI. Per-iteration proofs already run in `analysis/`.
+8. Provable composition, done: each iteration proven to preserve its predecessor's decisions, revisions declared as data, every guardrail's status checked against the final set; `./check.sh` runs every test and proof.
 9. Row filtering for list endpoints.
 10. Enforcement placement: move the checks into the Gateway interceptors.

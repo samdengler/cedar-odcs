@@ -1,7 +1,8 @@
 # analysis
 
-Symbolic proofs over each iteration's policy set, in isolation, using
-Cedar's symbolic compiler ([cedar-policy-symcc](https://crates.io/crates/cedar-policy-symcc))
+Symbolic proofs over each iteration's policy set, and over the
+composition of the iterations, using Cedar's symbolic compiler
+([cedar-policy-symcc](https://crates.io/crates/cedar-policy-symcc))
 and the cvc5 SMT solver. The corpus samples decisions by example; these
 checks prove properties over every possible request. The compiler
 itself is verified in Lean ([cedar-spec](https://github.com/cedar-policy/cedar-spec)),
@@ -55,6 +56,99 @@ Current results, all proved:
   only owner fields. Four earlier guardrails that mention ownership or
   a role are revised for mode (`guardrails/on-behalf-of/`); the five
   mode-free ones are carried unchanged and reproven.
+- `contract`: iteration 6's policies, unchanged, proven again against
+  the schema iteration 7's build wrote from the data contract
+  (`contract/generated/orders.cedarschema`, named in
+  `SCHEMA_OVERRIDES`): the generated schema types the policies and
+  admits the same twenty-four properties.
+- Composition (iteration 8): each consecutive pair of iterations is
+  preserved, given the declared revisions and within the declared
+  restrictions; every guardrail ever written has a checked status
+  against the final set. 90 proofs, 3 expected differences shown.
+
+## Composition
+
+The corpora carry each iteration's cases forward and rerun them; the
+composition proofs state the same thing over every possible request.
+Three kinds of check, all in `src/main.rs`:
+
+- Preservation between consecutive iterations. Under the newer
+  iteration's schema, for every request environment whose action the
+  older iteration already had, the older and the newer policy sets
+  are proven to decide identically. New actions have environments of
+  their own and are left out, which is where non-interference comes
+  for free: a policy for `RefundOrder` cannot change a `ReadOrder`
+  decision because the two are proven in separate environments.
+- Declared revisions. An iteration that changes an earlier decision
+  on purpose declares the change as a policy file in `revisions/`.
+  It is added to the older set before comparing, so the proof reads:
+  the older iteration plus exactly these widenings equals the newer
+  one. The runner also compares without the revisions and shows the
+  difference, so a declared revision is visible rather than assumed.
+- Restrictions. A forbid in `restrictions/` added to both sides
+  confines the comparison to a region of the request space. Iteration
+  6 promised no change in direct mode; `restrictions/direct-mode.cedar`
+  forbids every request that carries `actingFor`, and the pair is
+  proven equivalent over what remains.
+
+The pairs and their results:
+
+| Older | Newer | Declared revisions | Restriction | Actions compared |
+|---|---|---|---|---|
+| bola-reads | bola-writes | none | none | ReadOrder |
+| bola-writes | field-reads | none | none | ReadOrder, UpdateOrder |
+| field-reads | field-writes | none | none | ReadOrder, ReadOrderField, UpdateOrder |
+| field-writes | function-level | support-updates-any-order, support-updates-support-fields | none | ReadOrder, ReadOrderField, UpdateOrder, UpdateOrderField |
+| function-level | on-behalf-of | none | direct-mode | all six |
+| on-behalf-of | contract | none | none | all six |
+
+All six pairs are proven. The last pair changes no policy; it proves
+that the schema generated from the data contract decides as the
+hand-written one did. Without its declared revisions the
+field-writes to function-level pair differs under `UpdateOrder`, shown
+as expected.
+
+The second pass puts every file under `guardrails/` against the final
+policy set (`on-behalf-of`) and prints a status for each:
+
+- carried: proven a no-op against the final set (twelve files, the
+  five mode-free ones and the seven under `guardrails/on-behalf-of/`).
+- revised: superseded by a file of the same name under a later
+  iteration's guardrail directory, which is the one proven (four files:
+  support-confidential, cancel-requires-owner-or-support,
+  role-writes-only-role-fields, refund-implies-no-read).
+- retired: listed in `RETIRED` with the iteration and reason, and shown
+  to fail against the final set, so the retirement is a checked fact
+  rather than a note (two files: support-never-updates and
+  writes-require-ownership, both retired by iteration 5's role-granted
+  update).
+
+The runner's output for the composition section:
+
+```
+=== composition: preservation between iterations ===
+  PASS  bola-reads preserved in bola-writes
+        actions compared: Action::"ReadOrder"
+  PASS  bola-writes preserved in field-reads
+        actions compared: Action::"ReadOrder", Action::"UpdateOrder"
+  PASS  field-reads preserved in field-writes
+        actions compared: Action::"ReadOrder", Action::"ReadOrderField", Action::"UpdateOrder"
+  PASS  field-writes preserved in function-level given the declared revision support-updates-any-order, support-updates-support-fields
+        actions compared: Action::"ReadOrder", Action::"ReadOrderField", Action::"UpdateOrder", Action::"UpdateOrderField"
+  SHOWN without the declared revision, field-writes and function-level differ: differs under Action::"UpdateOrder", as expected
+  PASS  function-level preserved in on-behalf-of within direct-mode
+        actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
+  PASS  on-behalf-of preserved in contract
+        actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
+
+=== composition: every guardrail against the final set (on-behalf-of) ===
+  SHOWN retired  guardrails/bola-writes/support-never-updates.cedar: iteration 5 granted the support role an object-level update: differs under Action::"UpdateOrder", as expected
+  PASS  carried  guardrails/field-reads/fail-closed.cedar
+  PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
+  revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
+  ...
+115 proved, 0 failed, 3 differences shown as expected
+```
 
 ## Findings
 
@@ -79,6 +173,16 @@ Current results, all proved:
    compiler, which was this prototype's open fact-finding question. The
    tag proofs hold for every possible tag map, not just the one in
    `entities.json`.
+5. Iteration 5 widened earlier decisions in two places, and its design
+   document declared one. The preservation proof with only the
+   declared object-level update failed under `UpdateOrderField`, an
+   action iteration 4 already had: the support field policy widens it
+   for any writers map that names `support` as a writer. Iteration 4's
+   map never did, so the carried corpus never sampled the change. The
+   second widening is now declared in
+   `revisions/function-level/support-updates-support-fields.cedar`,
+   and the pair is proven with both. The corpus checks the map that
+   exists; the proof checks every map.
 
 ## Running
 
@@ -98,8 +202,15 @@ Then:
 cargo run
 ```
 
-The schemas in `schemas/` are hand-written per iteration until the
-ODCS iteration generates them from the data contract. The planned
-provable-composition iteration builds on this: proving that combined
-policy sets preserve each iteration's guarantees (non-interference),
-and that refactorings preserve behavior (equivalence of old and new).
+Or, from the repository root, every check the repository has in one
+command, tests first and then the proofs:
+
+```sh
+./check.sh
+```
+
+The runner uses the compiler's `CompiledPolicySet` and `CompiledPolicy`
+API, which validates and compiles a policy set once per request
+environment and reuses it across queries. The schemas in `schemas/`
+are hand-written per iteration through iteration 6; from iteration 7
+on, the schema is the one the contract build writes.
