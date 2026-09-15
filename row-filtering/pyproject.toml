@@ -1,0 +1,13 @@
+[project]
+name = "row-filtering"
+version = "0.1.0"
+description = "Cedar row filtering for list endpoints, iteration 9"
+requires-python = ">=3.10"
+dependencies = [
+    "cedarpy>=4.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]

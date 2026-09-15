@@ -61,6 +61,10 @@ Current results, all proved:
   (`contract/generated/orders.cedarschema`, named in
   `SCHEMA_OVERRIDES`): the generated schema types the policies and
   admits the same twenty-four properties.
+- `row-filtering`: the list verb never errors; the twelve guardrails
+  reproven against the thirteen-policy set, with acting-bounded-by-
+  ownership revised to name the six order verbs, because the list
+  call has no order to own and is allowed while acting.
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
   restrictions; every guardrail ever written has a checked status
@@ -101,22 +105,27 @@ The pairs and their results:
 | field-writes | function-level | support-updates-any-order, support-updates-support-fields | none | ReadOrder, ReadOrderField, UpdateOrder, UpdateOrderField |
 | function-level | on-behalf-of | none | direct-mode | all six |
 | on-behalf-of | contract | none | none | all six |
+| contract | row-filtering | none | none | all six |
 
-All six pairs are proven. The last pair changes no policy; it proves
-that the schema generated from the data contract decides as the
-hand-written one did. Without its declared revisions the
+All seven pairs are proven. The contract pair changes no policy; it
+proves that the schema generated from the data contract decides as
+the hand-written one did. The row-filtering pair adds a verb and is
+proven not to touch the six order actions. Without its declared revisions the
 field-writes to function-level pair differs under `UpdateOrder`, shown
 as expected.
 
 The second pass puts every file under `guardrails/` against the final
-policy set (`on-behalf-of`) and prints a status for each:
+policy set (`row-filtering`) and prints a status for each:
 
 - carried: proven a no-op against the final set (twelve files, the
-  five mode-free ones and the seven under `guardrails/on-behalf-of/`).
+  five mode-free ones, six under `guardrails/on-behalf-of/`, and the
+  one under `guardrails/row-filtering/`).
 - revised: superseded by a file of the same name under a later
-  iteration's guardrail directory, which is the one proven (four files:
+  iteration's guardrail directory, which is the one proven (five files:
   support-confidential, cancel-requires-owner-or-support,
-  role-writes-only-role-fields, refund-implies-no-read).
+  role-writes-only-role-fields, refund-implies-no-read, and iteration
+  6's acting-bounded-by-ownership, revised by iteration 9 to name the
+  order verbs).
 - retired: listed in `RETIRED` with the iteration and reason, and shown
   to fail against the final set, so the retirement is a checked fact
   rather than a note (two files: support-never-updates and
@@ -140,14 +149,16 @@ The runner's output for the composition section:
         actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
   PASS  on-behalf-of preserved in contract
         actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
+  PASS  contract preserved in row-filtering
+        actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
 
-=== composition: every guardrail against the final set (on-behalf-of) ===
+=== composition: every guardrail against the final set (row-filtering) ===
   SHOWN retired  guardrails/bola-writes/support-never-updates.cedar: iteration 5 granted the support role an object-level update: differs under Action::"UpdateOrder", as expected
   PASS  carried  guardrails/field-reads/fail-closed.cedar
   PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
   revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
   ...
-115 proved, 0 failed, 3 differences shown as expected
+141 proved, 0 failed, 3 differences shown as expected
 ```
 
 ## Findings

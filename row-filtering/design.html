@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cedar authorization for MCP tools, iteration 9: row filtering for list endpoints</title>
+<style>
+/* dg core styles — copy verbatim into a <style> tag */
+[data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
+[data-sequence] { --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
+.dg-grid { display: grid; gap: 64px 56px; justify-content: center; align-items: center; justify-items: center; padding: 12px; }
+.dg-node { border: 1.5px solid #546170; border-radius: 8px; background: #eef2f7; padding: 10px 18px;
+           font-size: 13px; font-weight: 600; text-align: center; min-width: 110px; box-sizing: border-box; }
+.dg-node small { display: block; font-weight: 400; color: #5b6a7a; margin-top: 2px; font-size: 11px; }
+.dg-diamond { border: none; background: none; padding: 24px 20px; position: relative; min-width: 130px; }
+.dg-diamond::before { content: ''; position: absolute; inset: 0; background: #fdf3dc; border: 1.5px solid #b9985a;
+                      clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); z-index: -1; }
+.dg-group { border: 1.5px dashed #8a97a5; border-radius: 10px; padding: 30px 20px 20px; position: relative; }
+.dg-group-label { position: absolute; top: 8px; left: 12px; font-size: 11px; font-weight: 700;
+                  text-transform: uppercase; letter-spacing: .06em; color: #6b7887; }
+
+/* ---- document theme ---- */
+:root {
+  --navy: #003366;
+  --navy-deep: #00274D;
+  --red: #C01933;
+  --red-bright: #E3132C;
+  --ink: #26313c;
+  --muted: #5b6a7a;
+  --light: #E9EEF5;
+  --rule: #d8e0ea;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+       color: var(--ink); background: #f6f8fb; line-height: 1.65; }
+
+/* layout: sticky sidebar + page */
+.shell { display: grid; grid-template-columns: 232px minmax(0, 960px); gap: 28px;
+         justify-content: center; align-items: start; padding: 0 20px; }
+nav.toc { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; padding: 28px 0 40px; }
+nav.toc .toc-title { font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+                     color: var(--muted); margin: 0 0 10px 12px; }
+nav.toc a { display: block; padding: 5px 12px; font-size: 13px; line-height: 1.35; color: var(--muted);
+            text-decoration: none; border-left: 2px solid transparent; }
+nav.toc a:hover { color: var(--navy); background: #eef2f7; }
+nav.toc a.active { color: var(--navy-deep); font-weight: 600; border-left-color: var(--red-bright); background: #eef2f7; }
+nav.toc a.tail { color: #8494a5; }
+
+.page { background: #fff; box-shadow: 0 1px 8px rgba(0,38,77,.08); }
+header.doc { background: linear-gradient(135deg, var(--navy-deep), var(--navy)); color: #fff;
+             padding: 42px 48px 34px; border-bottom: 5px solid var(--red-bright); }
+header.doc .kicker { font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+                     color: #9fb6d1; margin-bottom: 10px; }
+header.doc h1 { margin: 0 0 12px; font-size: 32px; line-height: 1.18; font-weight: 700; }
+header.doc p { margin: 0; color: #c9d6e6; font-size: 15.5px; max-width: 46em; }
+main { padding: 34px 48px 56px; }
+h2 { color: var(--navy); font-size: 21px; margin: 46px 0 12px; padding-bottom: 6px;
+     border-bottom: 2px solid var(--rule); scroll-margin-top: 20px; }
+h3 { color: var(--navy); font-size: 16px; margin: 28px 0 8px; }
+p { margin: 11px 0; }
+a { color: var(--navy); }
+strong { color: var(--navy-deep); }
+code { background: var(--light); color: var(--navy-deep); padding: 1px 5px; border-radius: 4px;
+       font-size: .88em; font-family: ui-monospace, "SF Mono", Consolas, monospace; }
+pre { background: #f2f5f9; border: 1px solid var(--rule); border-radius: 8px; padding: 13px 15px;
+      overflow-x: auto; font-size: 12.5px; line-height: 1.55; }
+pre code { background: none; color: var(--ink); padding: 0; }
+pre .hl-key  { color: var(--navy); font-weight: 600; }
+pre .hl-str  { color: #2f6f44; }
+pre .hl-num  { color: #8a5a00; }
+pre .hl-kw   { color: var(--red); }
+pre .hl-com  { color: #8494a5; font-style: italic; }
+pre .hl-type { color: var(--navy); font-weight: 600; }
+pre .hl-ann  { color: #7b2d8b; }
+pre .hl-fn   { color: #1f6f6f; }
+ul, ol { margin: 11px 0; padding-left: 24px; }
+li { margin: 7px 0; }
+ol > li { padding-left: 4px; }
+table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+th { background: var(--light); color: var(--navy-deep); text-align: left; padding: 8px 10px; border: 1px solid var(--rule); }
+td { padding: 8px 10px; border: 1px solid var(--rule); vertical-align: top; }
+.callout { background: var(--light); border-left: 4px solid var(--navy); padding: 15px 20px;
+           border-radius: 0 8px 8px 0; margin: 22px 0; }
+.callout p { margin: 0; }
+.callout.red { border-left-color: var(--red); background: #FBEDEF; }
+.figure { margin: 28px 0; padding: 18px 8px 10px; border: 1px solid var(--rule); border-radius: 10px; background: #fff; }
+.figure figcaption { text-align: center; font-size: 12.5px; color: var(--muted); margin-top: 12px;
+                     font-weight: 600; letter-spacing: .02em; }
+footer.doc { padding: 20px 48px; background: var(--navy-deep); color: #9fb6d1; font-size: 12.5px;
+             border-top: 4px solid var(--red-bright); }
+.sources { font-size: 14px; }
+.sources li { font-size: 14px; }
+a.ref { font-size: .72em; vertical-align: super; text-decoration: none; color: var(--red);
+        font-weight: 600; padding: 0 1px; }
+a.ref:hover { text-decoration: underline; }
+.sources li:target { background: #FBEDEF; outline: 3px solid #FBEDEF; border-radius: 3px; }
+.toc-top { margin: 22px 0 6px; padding: 18px 22px 16px; border: 1px solid var(--rule);
+           border-radius: 10px; background: #fbfcfe; }
+.toc-top .toc-title { font-size: 11px; font-weight: 700; letter-spacing: .12em;
+                      text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.toc-top ol { list-style: none; margin: 0; padding: 0;
+              columns: 2; column-gap: 40px; }
+.toc-top li { margin: 0 0 6px; break-inside: avoid; font-size: 14px; }
+.toc-top a { text-decoration: none; }
+.toc-top a:hover { text-decoration: underline; }
+.toc-top .num { display: inline-block; min-width: 1.6em; color: var(--muted); }
+.toc-top .back { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--rule);
+                 font-size: 13px; color: var(--muted); }
+.toc-top .back a { color: var(--muted); margin-right: 14px; }
+@media (max-width: 640px) { .toc-top ol { columns: 1; } }
+h2 .anchor { opacity: 0; text-decoration: none; color: var(--rule); font-weight: 400; margin-left: 8px; }
+h2:hover .anchor { opacity: 1; }
+
+/* diagram palette */
+[data-diagram] { --dg-stroke: #4a5d74; }
+[data-sequence] { --dg-stroke: #4a5d74; --dg-accent: #E9EEF5; }
+.dg-node { border-color: var(--navy); background: var(--light); color: var(--navy-deep); }
+.dg-node small { color: #4a5d74; }
+.dg-node.red { border-color: var(--red); background: #FBEDEF; color: #7c0f22; }
+.dg-node.red small { color: #962b3b; }
+
+@media (max-width: 1180px) { .shell { grid-template-columns: minmax(0, 960px); } nav.toc { display: none; } }
+@media print { body { background: #fff; } .page { box-shadow: none; } nav.toc { display: none; }
+               .shell { grid-template-columns: 1fr; padding: 0; } h2 { page-break-after: avoid; }
+               .figure, table, pre { page-break-inside: avoid; } }
+
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="toc">
+  <p class="toc-title">Contents</p>
+  <a href="#problem">1. The problem</a>
+  <a href="#scope">2. Scope of this iteration</a>
+  <a href="#rows">3. Rows are authorized one by one</a>
+  <a href="#payload-entities">4. Entities from the payload</a>
+  <a href="#the-iteration">5. The iteration, file by file</a>
+  <a href="#tdd">6. Growing by tests</a>
+  <a href="#proofs">7. Proved as well as tested</a>
+  <a href="#running">8. Running it</a>
+  <a href="#decisions">9. Decisions made in this iteration</a>
+  <a href="#open-questions">10. Open questions</a>
+  <a href="#glossary" class="tail">Glossary</a>
+  <a href="#references" class="tail">References</a>
+</nav>
+<div class="page">
+<header class="doc">
+  <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
+  <h1>Cedar authorization for MCP tools, iteration 9: row filtering for list endpoints</h1>
+  <p>A list call returns many orders. The verb is granted to everyone, because it decides nothing: each row is authorized with the question iteration 1 asked of a single order, and each surviving row is reduced to the fields the caller may read. The rows themselves become the entities.</p>
+</header>
+<main>
+
+<div class="toc-top">
+  <p class="toc-title">Contents</p>
+  <ol>
+    <li><span class="num">1.</span><a href="#problem">The problem</a></li>
+    <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
+    <li><span class="num">3.</span><a href="#rows">Rows are authorized one by one</a></li>
+    <li><span class="num">4.</span><a href="#payload-entities">Entities from the payload</a></li>
+    <li><span class="num">5.</span><a href="#the-iteration">The iteration, file by file</a></li>
+    <li><span class="num">6.</span><a href="#tdd">Growing by tests</a></li>
+    <li><span class="num">7.</span><a href="#proofs">Proved as well as tested</a></li>
+    <li><span class="num">8.</span><a href="#running">Running it</a></li>
+    <li><span class="num">9.</span><a href="#decisions">Decisions made in this iteration</a></li>
+    <li><span class="num">10.</span><a href="#open-questions">Open questions</a></li>
+  </ol>
+  <p class="back"><a href="../index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
+</div>
+
+<h2 id="problem">1. The problem</h2>
+
+<p>Every case so far names one order. A tool that lists orders returns many, and the upstream API, authenticated with a service credential, returns all of them: alice's, bob's, everyone's. That is broken object level authorization<a class="ref" href="#r1">[1]</a> over a collection, and the request leg cannot prevent it, because the rows do not exist until the API has answered. The defense is the response leg's, like field filtering was in iteration 3.</p>
+
+<p>Two things are new. The list verb needs a decision of its own, and the answer is that it needs almost none. And for the first time the objects being decided on are not in <code>entities.json</code>: they are in the payload, which is where the enforcement point will always find them.</p>
+
+<h2 id="scope">2. Scope of this iteration</h2>
+
+<div class="callout"><p><strong>Built:</strong> the <code>row-filtering</code> folder in this project. Iteration 6's twelve policies plus one list verb, a <code>filter_rows</code> wrapper that asks <code>ReadOrder</code> per row and the per-field round per surviving row, resource entities built from the rows, six new corpus cases with all sixty-nine prior cases carried, and twenty-five properties proven in <code>analysis/</code>, with one guardrail revised to name the order verbs.</p>
+<p><strong>Not built:</strong> pushing the row condition down into the upstream query, pagination and cursors, list verbs for other collections, and Gateway integration. The entities are iteration 7's build output, unchanged.</p></div>
+
+<h2 id="rows">3. Rows are authorized one by one</h2>
+
+<p>The list verb is held by every principal, in either mode:</p>
+
+<pre><code class="lang-cedar">@id("anyone-lists-orders")
+permit(
+  principal,
+  action == Action::"ListOrders",
+  resource == Collection::"orders"
+);</code></pre>
+
+<p>That reads as a wide grant and is not one. Listing decides nothing about what comes back. Dave in finance may call the list and receives no rows, because the finance role grants no read and the rows are decided by <code>ReadOrder</code>. The forbid from iteration 6 still applies: bob claiming to act for alice is refused the list call, and the corpus pins <code>policy11</code> as the reason.</p>
+
+<p>On the response leg, the wrapper asks per row exactly what iteration 1 asked of one order, drops the rows that come back Deny, and then runs iteration 3's per-field round on each row that stays:</p>
+
+<figure class="figure">
+<div data-sequence>
+<script class="dg-seq" type="application/json">
+{
+  "participants": [
+    {"id": "agent", "label": "Agent"},
+    {"id": "pep", "label": "Interceptor (PEP)"},
+    {"id": "pdp", "label": "Cedar (PDP)"},
+    {"id": "api", "label": "Upstream API"}
+  ],
+  "messages": [
+    {"from": "agent", "to": "pep", "label": "ListOrders as alice"},
+    {"from": "pep", "to": "pdp", "label": "may alice ListOrders orders?"},
+    {"from": "pdp", "to": "pep", "label": "Allow", "style": "return"},
+    {"from": "pep", "to": "api", "label": "forward the call"},
+    {"from": "api", "to": "pep", "label": "every order, every field", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "ReadOrder? one per row, entity from the row"},
+    {"from": "pdp", "to": "pep", "label": "1001 Allow, 2002 Deny, 3003 Allow", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "ReadOrderField? per field of each kept row"},
+    {"from": "pdp", "to": "pep", "label": "Allow or Deny per field", "style": "return"},
+    {"from": "pep", "to": "agent", "label": "alice's rows, customer fields", "style": "return"}
+  ]
+}
+</script>
+</div>
+<figcaption>The response leg for a list: the row round, then the field round on each surviving row. The removals are reported, as the field filter's were in iteration 3.</figcaption>
+</figure>
+
+<p>What each caller receives from the same three-row response, as <code>test_rows.py</code> pins it:</p>
+
+<table>
+<tr><th>Caller</th><th>Rows</th><th>Fields on each row</th></tr>
+<tr><td>alice, direct</td><td>1001 and 3003, her own</td><td>public and confidential</td></tr>
+<tr><td>carol (support), direct</td><td>all three</td><td>public and internal</td></tr>
+<tr><td>dave (finance), direct</td><td>none</td><td></td></tr>
+<tr><td>carol acting for alice</td><td>1001 and 3003, alice's</td><td>public and confidential, as for alice</td></tr>
+</table>
+
+<h2 id="payload-entities">4. Entities from the payload</h2>
+
+<p>The ownership policies read <code>resource.owner</code>. In every earlier iteration the order entities and their owners sat in <code>entities.json</code>, a stand-in for a store the enforcement point does not have. On the response leg the store is unnecessary: the row carries the owner. The wrapper builds the resource entity from the row and asks about that:</p>
+
+<pre><code class="lang-python">ATTRIBUTES = {"owner": "User"}
+
+def entity_from_row(row: dict) -> dict:
+    attrs = {
+        name: {"__entity": {"type": entity_type, "id": row[name]}}
+        for name, entity_type in ATTRIBUTES.items()
+        if name in row
+    }
+    return {"uid": {"type": "Order", "id": row["id"]}, "attrs": attrs, "parents": []}</code></pre>
+
+<p>Which payload field becomes an attribute, and of what type, is what iteration 7's contract says: the <code>customer_id</code> column carries the tag <code>cedar_entity_type: User</code>, the build wrote <code>entity Order { owner: User }</code>, and <code>ATTRIBUTES</code> is that declaration. Every other field stays a field, looked up in the tag maps by the field policies and never made an attribute.</p>
+
+<p>A row is the fact about the order it describes, so it replaces any stored entity of the same id, and an order no store has ever heard of is decided the same way. Two rows cannot be placed at all and fail closed: a row with no <code>id</code> cannot be an entity and is dropped before any question is asked; a row with no <code>owner</code> is an entity without the attribute, the unguarded ownership policy from iteration 1 raises an evaluation error on it, the decision is Deny, and the row is dropped. Both removals are reported.</p>
+
+<h2 id="the-iteration">5. The iteration, file by file</h2>
+
+<ul>
+<li><code>policies.cedar</code> carries iteration 6's twelve policies verbatim and appends P13, the list verb.</li>
+<li><code>entities.json</code> is iteration 7's build output, unchanged. The collection entity is not in it: the permit names <code>Collection::"orders"</code> by id and needs no facts about it.</li>
+<li><code>row_filter.py</code> holds <code>filter_rows(principal, rows, context)</code>: the row round with entities built from the rows, then the field round, returning the surviving rows, the ids dropped, and the fields stripped per row.</li>
+<li><code>tests/bola.json</code> through <code>tests/contract.json</code> are carried byte for byte. <code>tests/row-filtering.json</code> adds six cases for the list verb: each role, the acting mode, the forbid, and another collection.</li>
+<li><code>test_corpus.py</code> is the same runner, unchanged. <code>test_rows.py</code> pins the response leg: the rows and fields each caller and mode receives, an order no store knows decided from its row, and the two fail-closed drops.</li>
+</ul>
+
+<h2 id="tdd">6. Growing by tests</h2>
+
+<p>The corpus cases came first and were short work: the verb is one permit. The response-leg tests were the substance. The first draft of <code>filter_rows</code> asked <code>ReadOrder</code> against <code>entities.json</code>, and the test for an order the store never heard of failed, which is the point the iteration exists to make: at the Gateway there is no store, and the row is the fact. The fail-closed tests came from asking what the wrapper should do with a row it cannot place, and the answer for the ownerless row fell out of iteration 1's unguarded policy rather than any new code.</p>
+
+<h2 id="proofs">7. Proved as well as tested</h2>
+
+<p>The new permit never errors, and the twelve carried guardrails are reproven against the thirteen-policy set. One needed revising. Iteration 6's guardrail that acting mode is bounded by ownership was written over every action, and the list call is the one verb with no order to own; against the new set it forbade every list call made while acting, which the corpus allows. The revised guardrail names the six order verbs explicitly, and the composition run marks the old one revised and proves the new one. The preservation proof shows the six order actions decide exactly as in iteration 7. Findings and instructions are in <code>analysis/README.md</code>.</p>
+
+<h2 id="running">8. Running it</h2>
+
+<p>From the repository root, every iteration's tests run in one command, and every test and proof together in another:</p>
+
+<pre><code>uv run pytest -v
+./check.sh</code></pre>
+
+<p>The iteration also runs standalone:</p>
+
+<pre><code>uv run --project row-filtering pytest -v</code></pre>
+
+<h2 id="decisions">9. Decisions made in this iteration</h2>
+
+<p><strong>Listing is a verb everyone holds; rows are the authorization.</strong> A list permit scoped to roles would have to restate who may read what, which the row round already knows. Granting the verb to everyone keeps one source for the read rule.</p>
+
+<p><strong>Resource entities come from the payload.</strong> The response leg has the data, so no store is consulted for the objects being decided. This is the design the interceptor needs; the corpus keeps its stored orders because a corpus case has no payload.</p>
+
+<p><strong>The contract says which field is an attribute.</strong> The entity reference tag from iteration 7 is the only source of <code>ATTRIBUTES</code>. No field becomes an attribute by convention.</p>
+
+<p><strong>Rows the wrapper cannot place are dropped and reported.</strong> Fail closed, in the same way undeclared fields are stripped.</p>
+
+<h2 id="open-questions">10. Open questions</h2>
+
+<ol>
+<li>Pushing the row condition down. Filtering after the fetch costs a fetch of every row. Cedar's partial evaluation can reduce the read policies for a known principal to a condition on the unknown row, which is a query predicate on <code>owner</code>: the same idea as Unity Catalog's row filters, applied at the API. That moves governance into the query and is the only path to lists that scale; it needs the upstream API to accept a filter.</li>
+<li>Per-row cost. Iteration 1's review bounded the field round by caching the mask per caller and contract version. The row round asks one <code>ReadOrder</code> per row, whose only variable is the owner, so the same caching applies: one decision per distinct owner in the page.</li>
+<li>Pagination. A page whose rows were all dropped is an empty page the client cannot distinguish from the end of the list. Whether the interceptor fetches the next page itself or returns a cursor is a Gateway question.</li>
+<li>Collections other than orders, and what the list verb's resource should be when a tool lists a nested collection, such as the shipments of one order.</li>
+</ol>
+
+<h2 id="glossary">Glossary</h2>
+
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Row round</td><td>One <code>ReadOrder</code> question per row of a list response, with the row as the resource entity.</td></tr>
+<tr><td>Field round</td><td>Iteration 3's per-field questions, run on each row the row round kept.</td></tr>
+<tr><td>Collection</td><td>The resource of a list verb: <code>Collection::"orders"</code>. It has no facts and needs none.</td></tr>
+<tr><td>Entity from the payload</td><td>A resource entity built from a response row rather than a store, with attributes the contract marked as entity references.</td></tr>
+<tr><td>Push-down</td><td>Turning the read policies into a query predicate so the upstream API returns only permitted rows. Not built.</td></tr>
+</table>
+
+<h2 id="references">References</h2>
+
+<ol class="sources">
+<li id="r1"><a href="https://owasp.org/API-Security/editions/2023/en/0xa1-broken-object-level-authorization/">OWASP API1:2023, Broken Object Level Authorization</a></li>
+<li id="r2"><a href="../contract/design.html#generated">Iteration 7, what is generated</a>: the entity declaration the row entities follow</li>
+<li id="r3"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
+<li id="r4"><a href="https://docs.databricks.com/aws/en/data-governance/unity-catalog/filters-and-masks/">Unity Catalog row filters and column masks</a>, the query-time analog of the row round</li>
+<li id="r5"><a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>, the Cedar project's engine-independent test corpus format</li>
+</ol>
+
+</main>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+</div>
+
+</div>
+<script>
+/* dg-runtime v1 — declarative diagram runtime.
+ * Nodes are HTML elements laid out by CSS grid; this script draws orthogonal
+ * SVG connectors, arrowheads, and haloed labels from MEASURED positions.
+ * It never requires hand-computed coordinates.
+ * Emits warnings to window.__diagramWarnings + console.warn on geometry violations.
+ */
+(function () {
+  'use strict';
+  const CLEAR = 12;          // min clearance between an edge segment and unrelated node
+  const STUB = 18;           // perpendicular stub leaving/entering a node
+  const ARROW = 7;           // arrowhead length
+  const LABEL_PAD = 3;       // halo padding
+  window.__diagramWarnings = window.__diagramWarnings || [];
+  function warn(msg) { window.__diagramWarnings.push(msg); console.warn('[diagram] ' + msg); }
+
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs) {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function rectsOverlap(a, b, pad) {
+    pad = pad || 0;
+    return a.x < b.x + b.w + pad && a.x + a.w + pad > b.x &&
+           a.y < b.y + b.h + pad && a.y + a.h + pad > b.y;
+  }
+  function segHitsRect(x1, y1, x2, y2, r, pad) {
+    // axis-aligned segment vs rect (inflated by pad); tolerant of float noise
+    const rx = r.x - pad, ry = r.y - pad, rw = r.w + 2 * pad, rh = r.h + 2 * pad;
+    if (Math.abs(x1 - x2) < 0.5) { // vertical
+      if (x1 <= rx || x1 >= rx + rw) return false;
+      const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+      return hi > ry && lo < ry + rh;
+    } else { // horizontal
+      if (y1 <= ry || y1 >= ry + rh) return false;
+      const lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+      return hi > rx && lo < rx + rw;
+    }
+  }
+
+  function renderDiagram(container) {
+    const nodes = {};
+    container.querySelectorAll('.dg-node').forEach(n => {
+      if (!n.id) { warn('node missing id: "' + n.textContent.trim().slice(0, 30) + '"'); return; }
+      nodes[n.id] = n;
+    });
+    const edgeScript = container.querySelector('script.dg-edges');
+    if (!edgeScript) return;
+    let edges;
+    try { edges = JSON.parse(edgeScript.textContent); }
+    catch (e) { warn('bad edge JSON: ' + e.message); return; }
+
+    const cRect = container.getBoundingClientRect();
+    const R = {}; // measured rects, container-relative
+    for (const id in nodes) {
+      const b = nodes[id].getBoundingClientRect();
+      R[id] = { x: b.left - cRect.left, y: b.top - cRect.top, w: b.width, h: b.height,
+                cx: b.left - cRect.left + b.width / 2, cy: b.top - cRect.top + b.height / 2,
+                diamond: nodes[id].classList.contains('dg-diamond') };
+    }
+    // node-node overlap check
+    const ids = Object.keys(R);
+    for (let i = 0; i < ids.length; i++)
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = nodes[ids[i]], b = nodes[ids[j]];
+        if (a.contains(b) || b.contains(a)) continue;
+        if (rectsOverlap(R[ids[i]], R[ids[j]], 0)) warn('nodes overlap: ' + ids[i] + ' & ' + ids[j]);
+      }
+
+    // ---- choose sides ----
+    edges.forEach(e => {
+      if (!R[e.from] || !R[e.to]) { e._skip = true; warn('edge references missing node: ' + e.from + '->' + e.to); return; }
+      const s = R[e.from], t = R[e.to];
+      if (!e.fromSide || !e.toSide) {
+        const dx = t.cx - s.cx, dy = t.cy - s.cy;
+        const differentRows = t.y >= s.y + s.h || s.y >= t.y + t.h;
+        const differentCols = t.x >= s.x + s.w || s.x >= t.x + t.w;
+        // Flowchart convention: branches leave a decision diamond sideways when
+        // the target sits in another column, keeping branch labels apart.
+        if (s.diamond && differentRows && differentCols) {
+          e.fromSide = dx > 0 ? 'right' : 'left';
+          e.toSide = e.toSide || (dy > 0 ? 'top' : 'bottom');
+          return;
+        }
+        // Prefer vertical routing whenever the nodes occupy different rows:
+        // the gap between grid rows is a guaranteed-clear channel, while a
+        // horizontal route across rows must pass through other columns.
+        if (differentRows || Math.abs(dy) >= Math.abs(dx)) {
+          e.fromSide = e.fromSide || (dy > 0 ? 'bottom' : 'top');
+          e.toSide = e.toSide || (dy > 0 ? 'top' : 'bottom');
+        } else {
+          e.fromSide = e.fromSide || (dx > 0 ? 'right' : 'left');
+          e.toSide = e.toSide || (dx > 0 ? 'left' : 'right');
+        }
+      }
+    });
+
+    // ---- assign ports (fan out multiple edges on the same side) ----
+    const sideGroups = {};
+    edges.forEach(e => {
+      if (e._skip) return;
+      [['from', e.fromSide], ['to', e.toSide]].forEach(([end, side]) => {
+        const id = e[end], key = id + ':' + side;
+        (sideGroups[key] = sideGroups[key] || []).push({ e, end });
+      });
+    });
+    // Ports project toward the counterpart node (straight lines when aligned),
+    // clamped to the side and spread apart when several edges share a side.
+    for (const key in sideGroups) {
+      const g = sideGroups[key];
+      const [id, side] = key.split(':');
+      const r = R[id];
+      const vertSide = side === 'top' || side === 'bottom';
+      const lo = vertSide ? r.x + 14 : r.y + 12;
+      const hi = vertSide ? r.x + r.w - 14 : r.y + r.h - 12;
+      g.forEach(entry => {
+        const other = R[entry.end === 'from' ? entry.e.to : entry.e.from];
+        entry._want = Math.max(lo, Math.min(vertSide ? other.cx : other.cy, hi));
+      });
+      g.sort((a, b) => a._want - b._want);
+      const MIN = 20;
+      for (let i = 1; i < g.length; i++)
+        if (g[i]._want - g[i - 1]._want < MIN) g[i]._want = g[i - 1]._want + MIN;
+      for (let i = g.length - 1; i >= 0; i--) {
+        const cap = hi - (g.length - 1 - i) * MIN;
+        if (g[i]._want > cap) g[i]._want = cap;
+      }
+      g.forEach(entry => {
+        const w = r.diamond ? (vertSide ? r.x + r.w / 2 : r.y + r.h / 2) : entry._want;
+        entry.e['_' + entry.end] = vertSide
+          ? { x: w, y: side === 'top' ? r.y : r.y + r.h }
+          : { x: side === 'left' ? r.x : r.x + r.w, y: w };
+      });
+    }
+
+    // ---- route ----
+    const obstacles = ids.map(id => R[id]);
+    function clearMid(fixedLo, fixedHi, tryVal, axis, exclude, lo, hi) {
+      // find a value for the cross segment that avoids obstacles; scan outward
+      for (let off = 0; off <= 120; off += 8) {
+        for (const cand of off === 0 ? [tryVal] : [tryVal - off, tryVal + off]) {
+          if (cand < lo || cand > hi) continue;
+          let ok = true;
+          for (const r of obstacles) {
+            if (exclude.indexOf(r) !== -1) continue;
+            const hit = axis === 'y'
+              ? segHitsRect(fixedLo, cand, fixedHi, cand, r, CLEAR)
+              : segHitsRect(cand, fixedLo, cand, fixedHi, r, CLEAR);
+            if (hit) { ok = false; break; }
+          }
+          if (ok) return cand;
+        }
+      }
+      return tryVal;
+    }
+    function segsClear(pts, exclude) {
+      for (let i = 0; i < pts.length - 1; i++)
+        for (const r of obstacles) {
+          if (exclude.indexOf(r) !== -1) continue;
+          if (segHitsRect(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, r, 4)) return false;
+        }
+      return true;
+    }
+    function route(e) {
+      const p = e._from, q = e._to, s = R[e.from], t = R[e.to];
+      const fs = e.fromSide, ts = e.toSide;
+      const dir = { top: [0, -1], bottom: [0, 1], left: [-1, 0], right: [1, 0] };
+      const p2 = { x: p.x + dir[fs][0] * STUB, y: p.y + dir[fs][1] * STUB };
+      const q2 = { x: q.x + dir[ts][0] * STUB, y: q.y + dir[ts][1] * STUB };
+      const vertical = fs === 'top' || fs === 'bottom';
+      const tVertical = ts === 'top' || ts === 'bottom';
+      const X = [s, t];
+      let pts = [ { x: p.x, y: p.y } ];
+      if (vertical && tVertical) {
+        if ((fs === 'bottom') !== (ts === 'bottom')) { // opposing sides
+          if (Math.abs(p.x - q.x) < 1 && segsClear([p, q], X)) { pts.push({ x: q.x, y: q.y }); return pts; }
+          let midY = (p2.y + q2.y) / 2;
+          midY = clearMid(Math.min(p.x, q.x), Math.max(p.x, q.x), midY, 'y', X,
+                          Math.min(p2.y, q2.y), Math.max(p2.y, q2.y));
+          const z = [pts[0], { x: p.x, y: midY }, { x: q.x, y: midY }, { x: q.x, y: q.y }];
+          if (segsClear(z, X)) return z;
+          // detour: sidestep around whatever blocks the direct channel
+          const y1 = p2.y, y2 = q2.y;
+          for (let off = 0; off <= 400; off += 12) {
+            for (const cand of off === 0 ? [(p.x + q.x) / 2] : [(p.x + q.x) / 2 - off, (p.x + q.x) / 2 + off]) {
+              const d = [pts[0], { x: p.x, y: y1 }, { x: cand, y: y1 }, { x: cand, y: y2 }, { x: q.x, y: y2 }, { x: q.x, y: q.y }];
+              if (segsClear(d, X)) return d;
+            }
+          }
+          return z;
+        } else { // same side: U route
+          const extY = fs === 'bottom' ? Math.max(p2.y, q2.y) : Math.min(p2.y, q2.y);
+          pts.push({ x: p.x, y: extY }, { x: q.x, y: extY }, { x: q.x, y: q.y });
+        }
+      } else if (!vertical && !tVertical) {
+        if ((fs === 'right') !== (ts === 'right')) {
+          if (Math.abs(p.y - q.y) < 1 && segsClear([p, q], X)) { pts.push({ x: q.x, y: q.y }); return pts; }
+          let midX = (p2.x + q2.x) / 2;
+          midX = clearMid(Math.min(p.y, q.y), Math.max(p.y, q.y), midX, 'x', X,
+                          Math.min(p2.x, q2.x), Math.max(p2.x, q2.x));
+          const z = [pts[0], { x: midX, y: p.y }, { x: midX, y: q.y }, { x: q.x, y: q.y }];
+          if (segsClear(z, X)) return z;
+          const x1 = p2.x, x2 = q2.x;
+          for (let off = 0; off <= 400; off += 12) {
+            for (const cand of off === 0 ? [(p.y + q.y) / 2] : [(p.y + q.y) / 2 - off, (p.y + q.y) / 2 + off]) {
+              const d = [pts[0], { x: x1, y: p.y }, { x: x1, y: cand }, { x: x2, y: cand }, { x: x2, y: q.y }, { x: q.x, y: q.y }];
+              if (segsClear(d, X)) return d;
+            }
+          }
+          return z;
+        } else {
+          const extX = fs === 'right' ? Math.max(p2.x, q2.x) : Math.min(p2.x, q2.x);
+          pts.push({ x: extX, y: p.y }, { x: extX, y: q.y }, { x: q.x, y: q.y });
+        }
+      } else { // L route (one vertical, one horizontal), with elbow fallback
+        const L = vertical
+          ? [pts[0], { x: p.x, y: q.y }, { x: q.x, y: q.y }]
+          : [pts[0], { x: q.x, y: p.y }, { x: q.x, y: q.y }];
+        if (segsClear(L, X)) return L;
+        const alt = vertical
+          ? [pts[0], { x: p.x, y: p2.y }, { x: q2.x, y: p2.y }, { x: q2.x, y: q.y }, { x: q.x, y: q.y }]
+          : [pts[0], { x: p2.x, y: p.y }, { x: p2.x, y: q2.y }, { x: q.x, y: q2.y }, { x: q.x, y: q.y }];
+        return segsClear(alt, X) ? alt : L;
+      }
+      return pts;
+    }
+
+    // ---- draw ----
+    let svg = container.querySelector('svg.dg-overlay');
+    if (svg) svg.remove();
+    svg = el('svg', { class: 'dg-overlay', width: cRect.width, height: cRect.height,
+                      style: 'position:absolute;left:0;top:0;pointer-events:none;overflow:visible' });
+    container.style.position = container.style.position || 'relative';
+    container.appendChild(svg);
+    const stroke = getComputedStyle(container).getPropertyValue('--dg-stroke').trim() || '#546170';
+    const halo = getComputedStyle(container).getPropertyValue('--dg-bg').trim() || '#ffffff';
+
+    let placedLabels = [], labelJobs = [];
+    edges.forEach(e => {
+      if (e._skip) return;
+      const raw = route(e);
+      const pts = raw.map(pt => ({ x: pt.x, y: pt.y }));
+      // pull endpoint back so the arrowhead tip, not the line, touches the border
+      const last = pts[pts.length - 1], prev = pts[pts.length - 2];
+      const ang = Math.atan2(last.y - prev.y, last.x - prev.x);
+      const tip = { x: last.x, y: last.y };
+      last.x -= Math.cos(ang) * ARROW; last.y -= Math.sin(ang) * ARROW;
+
+      const color = e.color || stroke;
+      const path = el('path', {
+        d: pts.map((p, i) => (i ? 'L' : 'M') + p.x.toFixed(1) + ' ' + p.y.toFixed(1)).join(' '),
+        fill: 'none', stroke: color, 'stroke-width': 1.6,
+        'stroke-dasharray': e.style === 'dashed' ? '6 4' : 'none'
+      });
+      svg.appendChild(path);
+      // arrowhead
+      const a1 = ang + 2.6, a2 = ang - 2.6, AL = ARROW + 3;
+      svg.appendChild(el('path', {
+        d: 'M' + tip.x + ' ' + tip.y +
+           ' L' + (tip.x + Math.cos(a1) * AL) + ' ' + (tip.y + Math.sin(a1) * AL) +
+           ' L' + (tip.x + Math.cos(a2) * AL) + ' ' + (tip.y + Math.sin(a2) * AL) + ' Z',
+        fill: color
+      }));
+
+      // segment-vs-node violation check (on the un-shortened route)
+      for (let i = 0; i < raw.length - 1; i++) {
+        for (const id2 of ids) {
+          if (id2 === e.from || id2 === e.to) continue;
+          if (nodes[id2].querySelector('.dg-node')) continue; // skip group containers
+          if (segHitsRect(raw[i].x, raw[i].y, raw[i + 1].x, raw[i + 1].y, R[id2], 2))
+            warn('edge ' + e.from + '->' + e.to + ' crosses node ' + id2);
+        }
+      }
+
+      // defer labels so they always paint on top of every edge line
+      if (e.label) labelJobs.push({ e, pts, color });
+    });
+
+    labelJobs.forEach(({ e, pts, color }) => {
+      let bi = 0, bl = -1;
+      for (let i = 0; i < pts.length - 1; i++) {
+        const L = Math.abs(pts[i + 1].x - pts[i].x) + Math.abs(pts[i + 1].y - pts[i].y);
+        if (L > bl) { bl = L; bi = i; }
+      }
+      if (e.labelAt === 'start') bi = 0;
+      const A = pts[bi], B = pts[bi + 1];
+      const horizontal = Math.abs(B.y - A.y) < 1;
+      const t = el('text', {
+        'text-anchor': 'middle', 'dominant-baseline': horizontal ? 'auto' : 'middle',
+        'font-size': 12, fill: color,
+        stroke: halo, 'stroke-width': 4, 'paint-order': 'stroke fill',
+        'stroke-linejoin': 'round', 'font-family': 'inherit'
+      });
+      t.textContent = e.label;
+      svg.appendChild(t);
+      const place = (f, dy) => {
+        const nx = A.x + (B.x - A.x) * f, ny = A.y + (B.y - A.y) * f;
+        t.setAttribute('x', nx);
+        t.setAttribute('y', horizontal ? ny + dy : ny);
+      };
+      const collides = () => {
+        const bb = t.getBBox();
+        const lr = { x: bb.x - LABEL_PAD, y: bb.y - LABEL_PAD, w: bb.width + 2 * LABEL_PAD, h: bb.height + 2 * LABEL_PAD };
+        for (const id2 of ids)
+          if (rectsOverlap(lr, R[id2], 0) && !nodes[id2].querySelector('.dg-node')) return true;
+        for (const pl of placedLabels) if (rectsOverlap(lr, pl, 2)) return true;
+        return false;
+      };
+      // candidate spots: midpoint above the line, then slide along it, then below it
+      const spots = e.labelAt === 'start'
+        ? [[0.35, -7], [0.35, 16], [0.5, -7], [0.5, 16]]
+        : [[0.5, -7], [0.7, -7], [0.3, -7], [0.5, 16], [0.7, 16], [0.3, 16], [0.8, -7], [0.2, -7]];
+      let ok = false;
+      for (const [f, dy] of spots) { place(f, dy); if (!collides()) { ok = true; break; } }
+      if (!ok) { place(spots[0][0], spots[0][1]); warn('label "' + e.label + '" overlaps another element'); }
+      const fb = t.getBBox();
+      placedLabels.push({ x: fb.x, y: fb.y, w: fb.width, h: fb.height });
+    });
+  }
+
+  /* ---------------- sequence diagrams ---------------- */
+  function renderSequence(container) {
+    const spec = JSON.parse(container.querySelector('script.dg-seq').textContent);
+    const font = '13px ' + (getComputedStyle(container).fontFamily || 'system-ui, sans-serif');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.font = font;
+    const tw = s => ctx.measureText(s).width;
+
+    const P = spec.participants, M = spec.messages;
+    const idx = {}; P.forEach((p, i) => idx[p.id] = i);
+    const boxW = P.map(p => Math.max(96, tw(p.label) + 28));
+    const boxH = 34, ROW = 40, TOP = 14, MARGIN = 16, BAR = 10;
+
+    // lifeline x positions: gap driven by the widest label between adjacent pairs
+    const gapNeed = new Array(P.length - 1).fill(120);
+    M.forEach(m => {
+      if (m.type === 'note' || m.from === m.to) return;
+      const a = Math.min(idx[m.from], idx[m.to]), b = Math.max(idx[m.from], idx[m.to]);
+      const per = (tw(m.label || '') + 50) / (b - a);
+      for (let i = a; i < b; i++) gapNeed[i] = Math.max(gapNeed[i], per);
+    });
+    const X = [MARGIN + boxW[0] / 2];
+    for (let i = 1; i < P.length; i++)
+      X[i] = X[i - 1] + Math.max(gapNeed[i - 1], boxW[i - 1] / 2 + boxW[i] / 2 + 40);
+
+    // rows
+    let y = TOP + boxH + 24;
+    const rows = M.map(m => {
+      const r = y;
+      y += (m.from === m.to) ? ROW * 1.4 : (m.type === 'note' ? ROW * 1.1 : ROW);
+      return r;
+    });
+    const H = y + 30 + boxH;
+    // canvas must also fit right-hanging self-message and note labels
+    let W = X[P.length - 1] + boxW[P.length - 1] / 2 + MARGIN + 40;
+    M.forEach(m => {
+      if (m.type === 'note') W = Math.max(W, X[idx[m.at]] + 16 + tw(m.label) + 20 + MARGIN);
+      else if (m.from === m.to) W = Math.max(W, X[idx[m.from]] + BAR / 2 + 42 + tw(m.label) + MARGIN);
+    });
+
+    const stroke = getComputedStyle(container).getPropertyValue('--dg-stroke').trim() || '#546170';
+    const accent = getComputedStyle(container).getPropertyValue('--dg-accent').trim() || '#eef2f7';
+    const halo = getComputedStyle(container).getPropertyValue('--dg-bg').trim() || '#ffffff';
+    const svg = el('svg', { width: W, height: H, viewBox: '0 0 ' + W + ' ' + H,
+                            style: 'max-width:100%;height:auto;display:block', 'font-family': 'inherit' });
+    container.appendChild(svg);
+
+    // activation tracking: open bar on callee at call, close on matching return
+    const bars = []; const open = {};
+    M.forEach((m, i) => {
+      if (m.type === 'note') return;
+      if (m.style === 'return') {
+        const k = m.from; // returning participant closes its bar
+        if (open[k] !== undefined) { bars.push({ p: k, y1: open[k], y2: rows[i] }); delete open[k]; }
+      } else if (m.from !== m.to && open[m.to] === undefined) open[m.to] = rows[i];
+    });
+    for (const k in open) bars.push({ p: k, y1: open[k], y2: rows[rows.length - 1] + 20 });
+
+    // lifelines + participant boxes (top and bottom)
+    P.forEach((p, i) => {
+      svg.appendChild(el('line', { x1: X[i], y1: TOP + boxH, x2: X[i], y2: H - boxH - 6,
+                                   stroke: stroke, 'stroke-dasharray': '4 4', 'stroke-width': 1 }));
+      [TOP, H - boxH].forEach(by => {
+        svg.appendChild(el('rect', { x: X[i] - boxW[i] / 2, y: by, width: boxW[i], height: boxH,
+                                     rx: 6, fill: accent, stroke: stroke, 'stroke-width': 1.2 }));
+        const t = el('text', { x: X[i], y: by + boxH / 2, 'text-anchor': 'middle',
+                               'dominant-baseline': 'central', 'font-size': 13, 'font-weight': 600, fill: '#26313c' });
+        t.textContent = p.label; svg.appendChild(t);
+      });
+    });
+    bars.forEach(b => {
+      const i = idx[b.p];
+      svg.appendChild(el('rect', { x: X[i] - BAR / 2, y: b.y1 - 6, width: BAR, height: b.y2 - b.y1 + 12,
+                                   fill: accent, stroke: stroke, 'stroke-width': 1 }));
+    });
+
+    function arrowhead(x, y, dirRight, color) {
+      const s = dirRight ? -1 : 1;
+      svg.appendChild(el('path', { d: 'M' + x + ' ' + y + ' l' + (9 * s) + ' -4.5 l0 9 Z', fill: color }));
+    }
+    M.forEach((m, i) => {
+      const yy = rows[i];
+      if (m.type === 'note') {
+        const i0 = idx[m.at], w = tw(m.label) + 20;
+        svg.appendChild(el('rect', { x: X[i0] + 16, y: yy - 12, width: w, height: 24, fill: '#fff8dc', stroke: '#c8b464', 'stroke-width': 1 }));
+        const t = el('text', { x: X[i0] + 16 + w / 2, y: yy, 'text-anchor': 'middle', 'dominant-baseline': 'central', 'font-size': 12, fill: '#5a4d1a' });
+        t.textContent = m.label; svg.appendChild(t);
+        return;
+      }
+      const from = idx[m.from], to = idx[m.to];
+      const dashed = m.style === 'return' || m.style === 'dashed';
+      if (from === to) { // self message
+        const x0 = X[from] + BAR / 2;
+        svg.appendChild(el('path', { d: 'M' + x0 + ' ' + yy + ' h 34 v 22 h -34',
+          fill: 'none', stroke: stroke, 'stroke-width': 1.4, 'stroke-dasharray': dashed ? '5 4' : 'none' }));
+        arrowhead(x0 + 1, yy + 22, false, stroke);
+        const t = el('text', { x: x0 + 42, y: yy + 11, 'font-size': 12, fill: '#3a4653', 'dominant-baseline': 'central',
+                               stroke: halo, 'stroke-width': 4, 'paint-order': 'stroke fill', 'stroke-linejoin': 'round' });
+        t.textContent = m.label; svg.appendChild(t);
+        return;
+      }
+      const right = to > from;
+      const barAdj = p => bars.some(b => idx[b.p] === p && yy >= b.y1 - 6 && yy <= b.y2 + 6) ? BAR / 2 : 0;
+      const x1 = X[from] + (right ? barAdj(from) : -barAdj(from));
+      const x2 = X[to] + (right ? -(barAdj(to) + 10) : (barAdj(to) + 10));
+      svg.appendChild(el('line', { x1: x1, y1: yy, x2: x2, y2: yy, stroke: stroke, 'stroke-width': 1.4,
+                                   'stroke-dasharray': dashed ? '5 4' : 'none' }));
+      arrowhead(x2 + (right ? 10 : -10) * 0 + (right ? 1 : -1), yy, right, stroke);
+      const t = el('text', { x: (x1 + x2) / 2, y: yy - 8, 'text-anchor': 'middle', 'font-size': 12, fill: '#3a4653',
+                             stroke: halo, 'stroke-width': 4, 'paint-order': 'stroke fill', 'stroke-linejoin': 'round' });
+      t.textContent = m.label; svg.appendChild(t);
+    });
+  }
+
+  function renderAll() {
+    document.querySelectorAll('[data-diagram]').forEach(renderDiagram);
+    document.querySelectorAll('[data-sequence]').forEach(c => {
+      if (!c.querySelector('svg')) renderSequence(c);
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderAll);
+  else renderAll();
+  let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => {
+    document.querySelectorAll('[data-diagram]').forEach(renderDiagram); }, 150); });
+})();
+
+</script>
+<script>
+
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var heads = links.map(function (a) { return document.getElementById(a.getAttribute('href').slice(1)); });
+  function sync() {
+    var best = 0;
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i] && heads[i].getBoundingClientRect().top <= 120) best = i;
+    }
+    links.forEach(function (a, i) { a.classList.toggle('active', i === best); });
+  }
+  document.addEventListener('scroll', sync, { passive: true });
+  sync();
+  document.querySelectorAll('main h2[id]').forEach(function (h) {
+    var a = document.createElement('a');
+    a.className = 'anchor'; a.href = '#' + h.id; a.textContent = '#';
+    h.appendChild(a);
+  });
+})();
+
+</script>
+<script>
+/* Inline syntax colors for pre code.lang-* blocks (json, cedar, python).
+ * Token classes for Cedar follow the scopes in the vscode-cedar
+ * TextMate grammar (syntaxes/cedar.tmLanguage.json). */
+(function () {
+  function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function span(cls, text) { return '<span class="' + cls + '">' + text + '</span>'; }
+  var langs = {
+    json: {
+      re: /("(?:[^"\\]|\\.)*")(\s*:)|("(?:[^"\\]|\\.)*")|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+      tok: function (m, key, colon, str, kw, num) {
+        if (key) return span('hl-key', key) + colon;
+        if (str) return span('hl-str', str);
+        if (kw) return span('hl-kw', kw);
+        return span('hl-num', num);
+      }
+    },
+    cedar: {
+      re: /(\/\/[^\n]*)|("(?:[^"\\]|\\.)*")|(@\w+)|([A-Z]\w*)(?=::)|\b(permit|forbid|when|unless|principal|action|resource|context|has|in|is|like|if|then|else|true|false)\b|\b(hasTag|getTag|contains|containsAll|containsAny|isEmpty)\b(?=\()|(\d+)/g,
+      tok: function (m, com, str, ann, type, kw, fn, num) {
+        if (com) return span('hl-com', com);
+        if (str) return span('hl-str', str);
+        if (ann) return span('hl-ann', ann);
+        if (type) return span('hl-type', type);
+        if (kw) return span('hl-kw', kw);
+        if (fn) return span('hl-fn', fn);
+        return span('hl-num', num);
+      }
+    },
+    python: {
+      re: /(#[^\n]*)|([fFrRbB]?"(?:[^"\\]|\\.)*"|[fFrRbB]?'(?:[^'\\]|\\.)*')|\b(for|in|if|elif|else|def|return|not|and|or|None|True|False|import|from|class|while|with|as|try|except|finally|lambda|pass|break|continue|yield)\b|(\d+(?:\.\d+)?)/g,
+      tok: function (m, com, str, kw, num) {
+        if (com) return span('hl-com', com);
+        if (str) return span('hl-str', str);
+        if (kw) return span('hl-kw', kw);
+        return span('hl-num', num);
+      }
+    }
+  };
+  document.querySelectorAll('pre code[class*="lang-"]').forEach(function (block) {
+    var m = block.className.match(/lang-(\w+)/);
+    var lang = m && langs[m[1]];
+    if (!lang) return;
+    block.innerHTML = esc(block.textContent).replace(lang.re, lang.tok);
+  });
+})();
+</script>
+</body>
+</html>

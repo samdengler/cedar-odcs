@@ -1,0 +1,157 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "customer direct: owner reads own order, unchanged from iteration 1",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy0"],
+      "errors": []
+    },
+    {
+      "description": "employee direct: support reads any order, unchanged from iteration 1",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy1"],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: support acting for alice reads alice's order through alice's ownership",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["policy0"],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: support acting for alice may not read bob's order; the role is off while acting",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: confidential field of alice's order is readable, as it is for alice",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "shippingAddress" },
+      "decision": "Allow",
+      "reason": ["policy3"],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: internal field of alice's order is not readable; support's own grant is off while acting",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "internalNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: support acting for alice updates alice's shipping address",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "UpdateOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "shippingAddress" },
+      "decision": "Allow",
+      "reason": ["policy5"],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: support acting for alice may not write internalNotes; the role's field is off while acting",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "UpdateOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "internalNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: support acting for alice cancels alice's order through alice's ownership",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["policy6"],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: finance acting for alice may not refund; a refund is the employee's own act, done in direct mode",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "RefundOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: finance acting for alice reads alice's order; the mode grants the customer's access to any employee",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["policy0"],
+      "errors": []
+    },
+    {
+      "description": "a customer may not act for another customer: bob claiming to act for alice is forbidden",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": ["policy11"],
+      "errors": []
+    },
+    {
+      "description": "an unknown principal may not act for anyone",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": ["policy11"],
+      "errors": []
+    },
+    {
+      "description": "acting for oneself is on behalf of mode: support acting for carol reads through carol's ownership only, and carol owns nothing",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "carol" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "guessed order id while acting: the unguarded read policy errors, as in iteration 1, and the decision is still Deny",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-9999" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": ["policy0"]
+    }
+  ]
+}

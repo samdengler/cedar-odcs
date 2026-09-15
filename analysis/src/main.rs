@@ -327,6 +327,27 @@ const ITERATIONS: &[Iteration] = &[
             "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
         ],
     },
+    // Iteration 9 adds the list verb, which has no order to own. The
+    // guardrail that bounds acting mode by ownership names the order
+    // verbs explicitly, so the list call stays outside it.
+    Iteration {
+        name: "row-filtering",
+        spec: None,
+        guardrails: &[
+            "guardrails/field-reads/fail-closed.cedar",
+            "guardrails/field-reads/restricted-unreadable.cedar",
+            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
+            "guardrails/field-writes/system-fields-unwritable.cedar",
+            "guardrails/function-level/refund-requires-finance.cedar",
+            "guardrails/on-behalf-of/support-confidential.cedar",
+            "guardrails/on-behalf-of/cancel-requires-owner-or-support.cedar",
+            "guardrails/on-behalf-of/role-writes-only-role-fields.cedar",
+            "guardrails/on-behalf-of/refund-implies-no-read.cedar",
+            "guardrails/row-filtering/acting-bounded-by-ownership.cedar",
+            "guardrails/on-behalf-of/acting-reads-customer-levels-only.cedar",
+            "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
+        ],
+    },
 ];
 
 /// A consecutive pair of iterations whose composition is proven.
@@ -371,6 +392,9 @@ const PAIRS: &[Pair] = &[
     // policies alone; the pair proves the generated schema decides as
     // the hand-written one did.
     Pair { older: "on-behalf-of", newer: "contract", revisions: &[], restrictions: &[] },
+    // Iteration 9 appends one permit for a new action; the six order
+    // actions are proven untouched.
+    Pair { older: "contract", newer: "row-filtering", revisions: &[], restrictions: &[] },
 ];
 
 /// Guardrails that no longer hold against the final set, each with
@@ -387,7 +411,7 @@ const RETIRED: &[(&str, &str)] = &[
     ),
 ];
 
-const FINAL: &str = "on-behalf-of";
+const FINAL: &str = "row-filtering";
 
 /// Iterations whose schema is a build output rather than a file in
 /// schemas/: the path is relative to this directory.

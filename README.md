@@ -79,6 +79,13 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `policies.cedar`: iteration 6's file, unchanged.
   - `tests/*.json`: iterations 1 through 6's corpora, byte for byte, plus `tests/contract.json`: five cases about the generated maps.
   - `test_build.py`: committed artifacts are current; the contract validates; iteration 6's map entries are carried; the generated schema equals the hand-written one; an incomplete catalog fails the build.
+- `row-filtering/`: iteration 9. Row filtering for list endpoints on top of iterations 1 through 7.
+  - `design.html`: the design narrative. Listing decides nothing, rows are authorized one by one, and resource entities come from the payload.
+  - `policies.cedar`: iteration 6's twelve policies, plus one list verb anyone may call.
+  - `entities.json`: iteration 7's build output, unchanged.
+  - `tests/*.json`: iterations 1 through 7's corpora, byte for byte, plus `tests/row-filtering.json`: six list verb cases.
+  - `row_filter.py`: `filter_rows`, the response leg for a list: one `ReadOrder` per row built from the row itself, then the per-field round on each surviving row.
+  - `test_rows.py`: the rows and fields each caller and mode receives; rows without an id or an owner dropped.
 - `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
 
 ## Running
@@ -130,5 +137,5 @@ The identity questions double as a gap analysis. On behalf of access is in place
 6. On behalf of access modes, done: customer direct, employee direct, employee acting for a customer; the principal is the actor and the context carries the acted-for party.
 7. ODCS as source of truth, done: Unity Catalog column tags to an ODCS contract to the tag maps and the Cedar schema, generated at build time and committed.
 8. Provable composition, done: each iteration proven to preserve its predecessor's decisions, revisions declared as data, every guardrail's status checked against the final set; `./check.sh` runs every test and proof.
-9. Row filtering for list endpoints.
+9. Row filtering, done: list endpoints return only the rows the caller may read, each reduced to the fields they may read.
 10. Enforcement placement: move the checks into the Gateway interceptors.
