@@ -51,6 +51,15 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `test_corpus.py`: the same runner.
   - `write_gate.py`: `check_request`, which rejects a payload whole when any field is denied and names the denied fields.
   - `test_gate.py`: whole-call rejection pinned end to end.
+- `function-level/`: iteration 5. Function level authorization (API5) on top of iterations 1 through 4.
+  - `design.html`: the design narrative. Roles hold verbs, the role-granted write path, and the first revised corpus case.
+  - `policies.cedar`: the six prior policies carried forward, plus five verb and role policies.
+  - `entities.json`: the prior facts, plus a finance role and a member of it; the writer of `internalNotes` becomes `support`.
+  - `tests/bola.json`, `tests/field-reads.json`, `tests/field-writes.json`: carried byte for byte. `tests/bola-writes.json`: carried with one case revised, support's object-level update, now Allow.
+  - `tests/function-level.json`: fourteen verb cases, including every cross-verb attempt.
+  - `test_corpus.py`: the same runner.
+  - `request_gate.py`: `check_call`, the whole request leg: the verb round, then the payload round for updates.
+  - `test_gate.py`: verb rejection before the payload is read; role-granted updates bounded by the writers map.
 - `analysis/`: symbolic proofs over each iteration's policies, using Cedar's symbolic compiler and the cvc5 SMT solver. Spec equivalence, guardrail no-ops, and never-errors, proven over every possible request; findings and instructions in `analysis/README.md`.
 
 ## Running
@@ -92,7 +101,7 @@ The identity questions double as a gap analysis. On behalf of access is in place
 2. BOLA on writes, done: the same ownership rule gated on the request leg; a denied write rejects the whole call.
 3. Broken object property level authorization (API3) on reads, done: per-field decisions, strip denied fields from responses.
 4. API3 on writes (mass assignment), done: per-field checks on write payloads; any denied field rejects the call whole.
-5. Function level (API5): actions permitted only to roles.
+5. Function level (API5), done: verbs held by roles; a verb held implies no other; the first role-granted write path.
 6. On behalf of access modes: customer direct, employee direct, employee acting for a customer.
 7. ODCS as source of truth: generate the Cedar schema and field classifications from a data contract.
 8. Provable composition: prove that combined policy sets preserve each iteration's guarantees, with equivalence and non-interference checks in CI. Per-iteration proofs already run in `analysis/`.

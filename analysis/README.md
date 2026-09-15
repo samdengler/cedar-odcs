@@ -37,6 +37,17 @@ Current results, all proved:
   undeclared or unnamed fields fail closed; restricted fields are
   readable by nobody; support reaches confidential fields only through
   ownership, never through the role.
+- `field-writes`: never errors; mass assignment fails closed for every
+  field name; system fields are writable by nobody; writes require
+  ownership (no role-granted write path); the four applicable earlier
+  guardrails reproven.
+- `function-level`: never errors; refund requires the finance role;
+  cancel requires the owner or support; through the support role only
+  fields whose writer is `support` are writable; the finance role
+  grants no read. Two earlier guardrails are retired knowingly, because
+  this iteration grants support an object-level update:
+  support-never-updates and writes-require-ownership. The five that
+  still apply are reproven.
 
 ## Findings
 
@@ -51,7 +62,13 @@ Current results, all proved:
    De Morgan twin `!(context has field) || !...hasTag(context.field)`
    is rejected, because the typechecker's `has`-capability tracking
    follows `&&` but not `||`.
-3. Entity tags (`hasTag`/`getTag`) are fully supported by the symbolic
+3. Role membership is not exclusive, again. Iteration 5's guardrail
+   "finance reads only as owner" was falsified by a principal in both
+   the finance and support roles, who reads through support. The
+   invariant that holds is that the finance role grants no read; the
+   forbid now excludes the support role too. Same lesson as finding 1,
+   caught at build time.
+4. Entity tags (`hasTag`/`getTag`) are fully supported by the symbolic
    compiler, which was this prototype's open fact-finding question. The
    tag proofs hold for every possible tag map, not just the one in
    `entities.json`.

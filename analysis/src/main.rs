@@ -195,6 +195,26 @@ const ITERATIONS: &[Iteration] = &[
             "guardrails/field-writes/writes-require-ownership.cedar",
         ],
     },
+    // Iteration 5 grants the support role an object-level update, so
+    // two earlier guardrails are retired knowingly: support-never-
+    // updates and writes-require-ownership no longer hold, and
+    // role-writes-only-role-fields bounds the path that replaced them.
+    Iteration {
+        name: "function-level",
+        schema: "schemas/function-level.cedarschema",
+        spec: None,
+        guardrails: &[
+            "guardrails/field-reads/fail-closed.cedar",
+            "guardrails/field-reads/restricted-unreadable.cedar",
+            "guardrails/field-reads/support-confidential.cedar",
+            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
+            "guardrails/field-writes/system-fields-unwritable.cedar",
+            "guardrails/function-level/refund-requires-finance.cedar",
+            "guardrails/function-level/cancel-requires-owner-or-support.cedar",
+            "guardrails/function-level/role-writes-only-role-fields.cedar",
+            "guardrails/function-level/refund-implies-no-read.cedar",
+        ],
+    },
 ];
 
 /// Spawn cvc5 from $CVC5, PATH, or the copy bundled in .tools.
