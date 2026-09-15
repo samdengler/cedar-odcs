@@ -1,0 +1,80 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 10, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___list_orders\", \"arguments\": {}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiZGF2ZSIsImF1ZCI6Im9yZGVycy1nYXRld2F5Iiwicm9sZXMiOlsiZmluYW5jZSJdfQ.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "method": "tools/call",
+        "params": {
+          "name": "orders___list_orders",
+          "arguments": {}
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Mcp-Session-Id": "session-1"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 10,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[{\"id\": \"order-1001\", \"owner\": \"alice\", \"status\": \"shipped\", \"total\": 120.0, \"shippingAddress\": \"1 Oak Ln\", \"cardLast4\": \"4242\", \"internalNotes\": \"called back\", \"fraudScore\": 0.02, \"estimatedDelivery\": \"2026-09-20\"}, {\"id\": \"order-2002\", \"owner\": \"bob\", \"status\": \"processing\", \"total\": 45.5, \"shippingAddress\": \"9 Elm St\", \"cardLast4\": \"1111\", \"internalNotes\": \"\", \"fraudScore\": 0.4, \"estimatedDelivery\": \"2026-09-22\"}, {\"id\": \"order-3003\", \"owner\": \"alice\", \"status\": \"processing\", \"total\": 8.0, \"shippingAddress\": \"1 Oak Ln\", \"cardLast4\": \"4242\", \"internalNotes\": \"gift\", \"fraudScore\": 0.01, \"estimatedDelivery\": \"2026-09-25\"}]"
+            }
+          ],
+          "structuredContent": [
+            {
+              "id": "order-1001",
+              "owner": "alice",
+              "status": "shipped",
+              "total": 120.0,
+              "shippingAddress": "1 Oak Ln",
+              "cardLast4": "4242",
+              "internalNotes": "called back",
+              "fraudScore": 0.02,
+              "estimatedDelivery": "2026-09-20"
+            },
+            {
+              "id": "order-2002",
+              "owner": "bob",
+              "status": "processing",
+              "total": 45.5,
+              "shippingAddress": "9 Elm St",
+              "cardLast4": "1111",
+              "internalNotes": "",
+              "fraudScore": 0.4,
+              "estimatedDelivery": "2026-09-22"
+            },
+            {
+              "id": "order-3003",
+              "owner": "alice",
+              "status": "processing",
+              "total": 8.0,
+              "shippingAddress": "1 Oak Ln",
+              "cardLast4": "4242",
+              "internalNotes": "gift",
+              "fraudScore": 0.01,
+              "estimatedDelivery": "2026-09-25"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

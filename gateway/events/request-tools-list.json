@@ -1,0 +1,20 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2UiLCJhdWQiOiJvcmRlcnMtZ2F0ZXdheSIsInJvbGVzIjpbXX0.signature-checked-by-the-gateway"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/list"
+      }
+    }
+  }
+}

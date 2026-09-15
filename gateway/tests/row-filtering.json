@@ -1,0 +1,67 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "a customer may list orders; which rows come back is decided per row",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ListOrders" },
+      "resource": { "type": "Collection", "id": "orders" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy12"],
+      "errors": []
+    },
+    {
+      "description": "support may list orders",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ListOrders" },
+      "resource": { "type": "Collection", "id": "orders" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy12"],
+      "errors": []
+    },
+    {
+      "description": "finance may list orders and will see none: the finance role grants no read, so every row is dropped",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "ListOrders" },
+      "resource": { "type": "Collection", "id": "orders" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy12"],
+      "errors": []
+    },
+    {
+      "description": "support acting for alice may list; the rows are alice's",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ListOrders" },
+      "resource": { "type": "Collection", "id": "orders" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["policy12"],
+      "errors": []
+    },
+    {
+      "description": "a customer claiming to act for another may not list: the forbid from iteration 6 covers the new verb",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ListOrders" },
+      "resource": { "type": "Collection", "id": "orders" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": ["policy11"],
+      "errors": []
+    },
+    {
+      "description": "listing another collection matches nothing",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ListOrders" },
+      "resource": { "type": "Collection", "id": "refunds" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

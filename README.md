@@ -86,6 +86,14 @@ Each iteration lives in its own directory with its policies, entities, test corp
   - `tests/*.json`: iterations 1 through 7's corpora, byte for byte, plus `tests/row-filtering.json`: six list verb cases.
   - `row_filter.py`: `filter_rows`, the response leg for a list: one `ReadOrder` per row built from the row itself, then the per-field round on each surviving row.
   - `test_rows.py`: the rows and fields each caller and mode receives; rows without an id or an owner dropped.
+- `gateway/`: iteration 10. Enforcement in AgentCore Gateway interceptors.
+  - `design.html`: the design narrative. The two interception points, the handlers, where the native policy engine fits, and the Lambda extension decision revisited.
+  - `interceptor.py`: `request_handler` and `response_handler`, the Gateway's event and result formats for MCP targets, and the tool table.
+  - `enforce.py`: the wrappers of iterations 3, 5, and 9, asked with a token's projection.
+  - `claims.py`: iteration 6's projection, plus decoding of the forwarded bearer token.
+  - `policies.cedar`, `entities.json`: iteration 9's policies and iteration 7's build output, byte for byte; a test says so.
+  - `events/*.json`: eleven Gateway events in the documented shapes.
+  - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.
 - `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
 
 ## Running
@@ -138,4 +146,4 @@ The identity questions double as a gap analysis. On behalf of access is in place
 7. ODCS as source of truth, done: Unity Catalog column tags to an ODCS contract to the tag maps and the Cedar schema, generated at build time and committed.
 8. Provable composition, done: each iteration proven to preserve its predecessor's decisions, revisions declared as data, every guardrail's status checked against the final set; `./check.sh` runs every test and proof.
 9. Row filtering, done: list endpoints return only the rows the caller may read, each reduced to the fields they may read.
-10. Enforcement placement: move the checks into the Gateway interceptors.
+10. Enforcement placement, done: the request and response legs as Gateway interceptor handlers, tested against the documented event shapes; deployment to an account is a later step.
