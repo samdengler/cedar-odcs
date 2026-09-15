@@ -50,8 +50,9 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
   <div class="kicker">Design notes</div>
   <h1>cedar-osdc</h1>
   <p>Data governance for agent tool calls, enforced with Cedar policies derived from
-     Open Data Contract Standard documents. One design document per iteration; each
-     iteration lives in its own directory with its policies, entities, and test corpus.</p>
+     Open Data Contract Standard documents. One design document per iteration. Iterations 1 through 10
+     live in their own directories with policies, entities, and test corpus; from iteration 11
+     the mechanism lives in <code>core/</code> and each use case in <code>usecases/</code>.</p>
 </header>
 <main>
   <p>Start with the <a href="bola-reads/design.html">iteration 1 design narrative</a>. It covers
@@ -118,6 +119,11 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
     <li>
       <span class="name"><a href="gateway/design.html">Enforcement placement</a>
         <span class="desc">The request and response legs as AgentCore Gateway interceptor handlers, driven by the documented event shapes. Code in <code>gateway/</code>.</span></span>
+      <span class="status done">Done</span>
+    </li>
+    <li>
+      <span class="name"><a href="usecases/reservations/iteration-11.html">Reservations by locator and last name</a>
+        <span class="desc">A second use case with no customer identity: possession presented in context, decided on the response leg, nested records by path, and the mechanism extracted into <code>core/</code>. Code in <code>usecases/reservations/</code>.</span></span>
       <span class="status done">Done</span>
     </li>
   </ol>

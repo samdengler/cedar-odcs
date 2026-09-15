@@ -1,0 +1,157 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "lookup with a presented pair is attempted: the request leg cannot verify it",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "LookupReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+      "decision": "Allow",
+      "reason": ["policy0"],
+      "errors": []
+    },
+    {
+      "description": "lookup without a pair is refused: a locator alone is not possession",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "LookupReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the record is readable when locator and holder last name are the presented ones",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+      "decision": "Allow",
+      "reason": ["policy1"],
+      "errors": []
+    },
+    {
+      "description": "a wrong last name for the locator reads nothing",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "JONES" } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a co-traveler's last name is not the holder's: the pair names one person",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "PATEL" } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a valid pair for one reservation reads nothing of another: the locator is part of the credential",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a record the store does not know fails closed with no evaluation error: the guards hold",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "QQQ000" },
+      "context": { "presented": { "locator": "QQQ000", "lastName": "SMITH" } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a specialist without a pair reads nothing yet: the specialist view is iteration 13's",
+      "principal": { "type": "User", "id": "sam" },
+      "action": { "type": "Action", "id": "ReadReservation" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a nested leaf by path: contact.email is confidential and readable by possession",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "contact.email" },
+      "decision": "Allow",
+      "reason": ["policy2"],
+      "errors": []
+    },
+    {
+      "description": "an index-free path: passengers[].seat is public and readable by possession",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].seat" },
+      "decision": "Allow",
+      "reason": ["policy2"],
+      "errors": []
+    },
+    {
+      "description": "passengers[].passportNumber is restricted: readable by nobody through this path",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].passportNumber" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "passengers[].specialServiceRequests is restricted: medical content stays out",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].specialServiceRequests" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "remarks are internal: not the customer's level",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "remarks" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a path the contract does not declare fails closed: passengers[].frequentFlyerNumber",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "ABC123" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].frequentFlyerNumber" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a field of a record whose pair does not match is not readable, whatever its level",
+      "principal": { "type": "User", "id": "reservations-assistant" },
+      "action": { "type": "Action", "id": "ReadReservationField" },
+      "resource": { "type": "Reservation", "id": "XYZ789" },
+      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "status" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

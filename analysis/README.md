@@ -66,6 +66,14 @@ Current results, all proved:
   reproven against the thirteen-policy set, with acting-bounded-by-
   ownership revised to name the six order verbs, because the list
   call has no order to own and is allowed while acting.
+- `orders` (the use case on core, iteration 11): iteration 9's
+  policies under the schema core's build wrote; preserved from
+  `row-filtering` with no revision; the twelve guardrails reproven.
+- `reservations` (iteration 11): three possession policies never
+  error; a lookup and a read require a presented pair; a pair reaches
+  only the record it names; undeclared paths fail closed, nested ones
+  included; restricted leaves are unreadable; possession reads public
+  and confidential leaves only.
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
   restrictions; every guardrail ever written has a checked status
@@ -107,8 +115,11 @@ The pairs and their results:
 | function-level | on-behalf-of | none | direct-mode | all six |
 | on-behalf-of | contract | none | none | all six |
 | contract | row-filtering | anyone-lists-orders | none | all seven |
+| row-filtering | orders | none | none | all seven |
 
-All seven pairs are proven. The contract pair changes no policy; it
+All eight pairs are proven. Iterations belong to chains (`orders`,
+`reservations`); pairs and the guardrail status pass run per chain,
+each against that chain's final set. The contract pair changes no policy; it
 proves that the schema generated from the data contract decides as
 the hand-written one did. The two share that generated schema, which
 declares the list verb, so iteration 9's one permit is a declared
@@ -160,7 +171,7 @@ The runner's output for the composition section:
   PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
   revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
   ...
-141 proved, 0 failed, 4 differences shown as expected
+180 proved, 0 failed, 4 differences shown as expected
 ```
 
 ## Findings

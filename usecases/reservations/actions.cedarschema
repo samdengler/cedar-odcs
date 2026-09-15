@@ -1,0 +1,29 @@
+type Presented = {
+  locator: String,
+  lastName: String
+};
+
+action LookupReservation appliesTo {
+  principal: [User],
+  resource: [Reservation],
+  context: {
+    presented?: Presented
+  }
+};
+
+action ReadReservation appliesTo {
+  principal: [User],
+  resource: [Reservation],
+  context: {
+    presented?: Presented
+  }
+};
+
+action ReadReservationField appliesTo {
+  principal: [User],
+  resource: [Reservation],
+  context: {
+    presented?: Presented,
+    field?: String
+  }
+};

@@ -1,0 +1,4 @@
+entity Order {
+  owner: User
+};
+entity Contract tags String;

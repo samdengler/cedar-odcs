@@ -1,0 +1,59 @@
+action ReadOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User
+  }
+};
+
+action UpdateOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User
+  }
+};
+
+action CancelOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User
+  }
+};
+
+action RefundOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User
+  }
+};
+
+action ReadOrderField appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User,
+    field?: String
+  }
+};
+
+action UpdateOrderField appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User,
+    field?: String
+  }
+};
+
+entity Collection;
+
+action ListOrders appliesTo {
+  principal: [User],
+  resource: [Collection],
+  context: {
+    actingFor?: User
+  }
+};

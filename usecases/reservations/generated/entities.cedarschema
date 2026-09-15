@@ -1,0 +1,5 @@
+entity Reservation {
+  recordLocator: String,
+  holderLastName: String
+};
+entity Contract tags String;

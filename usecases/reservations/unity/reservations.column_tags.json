@@ -1,0 +1,166 @@
+{
+  "tag_assignments": [
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.record_locator",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.record_locator",
+      "tag_key": "field_name",
+      "tag_value": "recordLocator",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.record_locator",
+      "tag_key": "cedar_attribute_type",
+      "tag_value": "String",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.holder_last_name",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.holder_last_name",
+      "tag_key": "cedar_attribute_type",
+      "tag_value": "String",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.status",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.passengers",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.passengers",
+      "tag_key": "classification__date_of_birth",
+      "tag_value": "confidential",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.passengers",
+      "tag_key": "classification__passport_number",
+      "tag_value": "restricted",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.passengers",
+      "tag_key": "classification__special_service_requests",
+      "tag_value": "restricted",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.passengers",
+      "tag_key": "writer__seat",
+      "tag_value": "owner",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.segments",
+      "tag_key": "classification",
+      "tag_value": "public",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.contact",
+      "tag_key": "classification",
+      "tag_value": "confidential",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.contact",
+      "tag_key": "writer",
+      "tag_value": "owner",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.fare",
+      "tag_key": "classification",
+      "tag_value": "confidential",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.payment_last4",
+      "tag_key": "classification",
+      "tag_value": "confidential",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.remarks",
+      "tag_key": "classification",
+      "tag_value": "internal",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    },
+    {
+      "entity_type": "columns",
+      "entity_name": "travel.bookings.reservations.remarks",
+      "tag_key": "writer",
+      "tag_value": "specialist",
+      "update_time": "2026-09-15T12:00:00Z",
+      "updated_by": "reservations-data-owners",
+      "source_type": "MANUAL"
+    }
+  ]
+}

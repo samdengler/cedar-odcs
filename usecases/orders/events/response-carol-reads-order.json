@@ -1,0 +1,58 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 8, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___get_order\", \"arguments\": {\"orderId\": \"order-2002\"}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiY2Fyb2wiLCJhdWQiOiJvcmRlcnMtZ2F0ZXdheSIsInJvbGVzIjpbInN1cHBvcnQiXX0.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "method": "tools/call",
+        "params": {
+          "name": "orders___get_order",
+          "arguments": {
+            "orderId": "order-2002"
+          }
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Mcp-Session-Id": "session-1"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 8,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"order-2002\", \"owner\": \"bob\", \"status\": \"processing\", \"total\": 45.5, \"shippingAddress\": \"9 Elm St\", \"cardLast4\": \"1111\", \"internalNotes\": \"\", \"fraudScore\": 0.4, \"estimatedDelivery\": \"2026-09-22\"}"
+            }
+          ],
+          "structuredContent": {
+            "id": "order-2002",
+            "owner": "bob",
+            "status": "processing",
+            "total": 45.5,
+            "shippingAddress": "9 Elm St",
+            "cardLast4": "1111",
+            "internalNotes": "",
+            "fraudScore": 0.4,
+            "estimatedDelivery": "2026-09-22"
+          }
+        }
+      }
+    }
+  }
+}

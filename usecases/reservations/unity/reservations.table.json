@@ -1,0 +1,87 @@
+{
+  "name": "reservations",
+  "catalog_name": "travel",
+  "schema_name": "bookings",
+  "full_name": "travel.bookings.reservations",
+  "table_type": "MANAGED",
+  "data_source_format": "DELTA",
+  "comment": "Reservations as served by the reservations API",
+  "owner": "reservations-data-owners",
+  "columns": [
+    {
+      "name": "record_locator",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 0,
+      "nullable": false,
+      "comment": "Six-character reservation number"
+    },
+    {
+      "name": "holder_last_name",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 1,
+      "nullable": false,
+      "comment": "Last name on the reservation, upper case"
+    },
+    {
+      "name": "status",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 2,
+      "nullable": false,
+      "comment": "Reservation status"
+    },
+    {
+      "name": "passengers",
+      "type_text": "array<struct<...>>",
+      "type_name": "ARRAY",
+      "position": 3,
+      "nullable": false,
+      "comment": "Passengers on the reservation",
+      "type_json": "{\"name\": \"passengers\", \"type\": {\"type\": \"array\", \"elementType\": {\"type\": \"struct\", \"fields\": [{\"name\": \"first_name\", \"type\": \"string\", \"nullable\": false, \"metadata\": {}}, {\"name\": \"last_name\", \"type\": \"string\", \"nullable\": false, \"metadata\": {}}, {\"name\": \"date_of_birth\", \"type\": \"date\", \"nullable\": true, \"metadata\": {}}, {\"name\": \"seat\", \"type\": \"string\", \"nullable\": true, \"metadata\": {}}, {\"name\": \"passport_number\", \"type\": \"string\", \"nullable\": true, \"metadata\": {}}, {\"name\": \"special_service_requests\", \"type\": {\"type\": \"array\", \"elementType\": \"string\", \"containsNull\": false}, \"nullable\": true, \"metadata\": {}}]}, \"containsNull\": false}, \"nullable\": false, \"metadata\": {}}"
+    },
+    {
+      "name": "segments",
+      "type_text": "array<struct<...>>",
+      "type_name": "ARRAY",
+      "position": 4,
+      "nullable": false,
+      "comment": "Flight segments",
+      "type_json": "{\"name\": \"segments\", \"type\": {\"type\": \"array\", \"elementType\": {\"type\": \"struct\", \"fields\": [{\"name\": \"flight_number\", \"type\": \"string\", \"nullable\": false, \"metadata\": {}}, {\"name\": \"origin\", \"type\": \"string\", \"nullable\": false, \"metadata\": {}}, {\"name\": \"destination\", \"type\": \"string\", \"nullable\": false, \"metadata\": {}}, {\"name\": \"departure\", \"type\": \"timestamp\", \"nullable\": false, \"metadata\": {}}]}, \"containsNull\": false}, \"nullable\": false, \"metadata\": {}}"
+    },
+    {
+      "name": "contact",
+      "type_text": "struct<...>",
+      "type_name": "STRUCT",
+      "position": 5,
+      "nullable": true,
+      "comment": "Contact details for the reservation",
+      "type_json": "{\"name\": \"contact\", \"type\": {\"type\": \"struct\", \"fields\": [{\"name\": \"email\", \"type\": \"string\", \"nullable\": true, \"metadata\": {}}, {\"name\": \"phone\", \"type\": \"string\", \"nullable\": true, \"metadata\": {}}]}, \"nullable\": true, \"metadata\": {}}"
+    },
+    {
+      "name": "fare",
+      "type_text": "decimal(12,2)",
+      "type_name": "DECIMAL",
+      "position": 6,
+      "nullable": false,
+      "comment": "Total fare"
+    },
+    {
+      "name": "payment_last4",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 7,
+      "nullable": true,
+      "comment": "Last four digits of the payment card"
+    },
+    {
+      "name": "remarks",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 8,
+      "nullable": true,
+      "comment": "Specialist remarks"
+    }
+  ]
+}

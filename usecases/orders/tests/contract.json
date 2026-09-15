@@ -1,0 +1,57 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "a field added in the catalog is on without a policy change: owner reads estimatedDelivery, public",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": "estimatedDelivery" },
+      "decision": "Allow",
+      "reason": ["policy3"],
+      "errors": []
+    },
+    {
+      "description": "support reads estimatedDelivery on any order, public",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "field": "estimatedDelivery" },
+      "decision": "Allow",
+      "reason": ["policy4"],
+      "errors": []
+    },
+    {
+      "description": "the owner column is declared and public, so it survives filtering of the owner's own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": "owner" },
+      "decision": "Allow",
+      "reason": ["policy3"],
+      "errors": []
+    },
+    {
+      "description": "estimatedDelivery carries no writer tag, so its writer defaulted to system: the owner may not set it",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": "estimatedDelivery" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a field the catalog does not declare is stripped: promoCode is in no map",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "ReadOrderField" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "field": "promoCode" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

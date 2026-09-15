@@ -1,0 +1,147 @@
+{
+  "policies": "policies.cedar",
+  "entities": "entities.json",
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "owner cancels own order",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy6"],
+      "errors": []
+    },
+    {
+      "description": "customer may not cancel someone else's order: API1 holds for the new verb",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "support agent cancels any order: the role holds the verb",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy7"],
+      "errors": []
+    },
+    {
+      "description": "finance may not cancel: the role does not hold the verb",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "finance refunds any order",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "RefundOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy8"],
+      "errors": []
+    },
+    {
+      "description": "owner may not refund own order: ownership grants no refund (BFLA)",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "RefundOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "support agent may not refund: read-anything and cancel-anything do not imply refund (BFLA)",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "RefundOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "finance may not read an order: holding refund does not imply read",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "ReadOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "support agent may update any order at object level: the role-granted write permit",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "UpdateOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["policy9"],
+      "errors": []
+    },
+    {
+      "description": "support agent updates internalNotes on any order: the writer value names the role",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "UpdateOrderField" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "field": "internalNotes" },
+      "decision": "Allow",
+      "reason": ["policy10"],
+      "errors": []
+    },
+    {
+      "description": "support agent may not update total: a system field stays unwritable through the role",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "UpdateOrderField" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "field": "total" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "finance may not update internalNotes: the writer value names support, not finance",
+      "principal": { "type": "User", "id": "dave" },
+      "action": { "type": "Action", "id": "UpdateOrderField" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "field": "internalNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "unknown principal gets default deny on the new verb",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "RefundOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "guessed order id on cancel: the new object-level policy is guarded, so no evaluation error",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-9999" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

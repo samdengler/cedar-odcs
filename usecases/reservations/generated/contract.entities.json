@@ -1,0 +1,58 @@
+[
+  {
+    "uid": {
+      "type": "Contract",
+      "id": "Reservation"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "recordLocator": "public",
+      "holderLastName": "public",
+      "status": "public",
+      "passengers[].firstName": "public",
+      "passengers[].lastName": "public",
+      "passengers[].dateOfBirth": "confidential",
+      "passengers[].seat": "public",
+      "passengers[].passportNumber": "restricted",
+      "passengers[].specialServiceRequests": "restricted",
+      "segments[].flightNumber": "public",
+      "segments[].origin": "public",
+      "segments[].destination": "public",
+      "segments[].departure": "public",
+      "contact.email": "confidential",
+      "contact.phone": "confidential",
+      "fare": "confidential",
+      "paymentLast4": "confidential",
+      "remarks": "internal"
+    }
+  },
+  {
+    "uid": {
+      "type": "Contract",
+      "id": "Reservation/writers"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "recordLocator": "system",
+      "holderLastName": "system",
+      "status": "system",
+      "passengers[].firstName": "system",
+      "passengers[].lastName": "system",
+      "passengers[].dateOfBirth": "system",
+      "passengers[].seat": "owner",
+      "passengers[].passportNumber": "system",
+      "passengers[].specialServiceRequests": "system",
+      "segments[].flightNumber": "system",
+      "segments[].origin": "system",
+      "segments[].destination": "system",
+      "segments[].departure": "system",
+      "contact.email": "owner",
+      "contact.phone": "owner",
+      "fare": "system",
+      "paymentLast4": "system",
+      "remarks": "specialist"
+    }
+  }
+]

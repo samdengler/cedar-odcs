@@ -1,0 +1,84 @@
+{
+  "name": "orders",
+  "catalog_name": "commerce",
+  "schema_name": "sales",
+  "full_name": "commerce.sales.orders",
+  "table_type": "MANAGED",
+  "data_source_format": "DELTA",
+  "comment": "Customer orders as served by the orders API",
+  "owner": "orders-data-owners",
+  "columns": [
+    {
+      "name": "order_id",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 0,
+      "nullable": false,
+      "comment": "Order identifier"
+    },
+    {
+      "name": "customer_id",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 1,
+      "nullable": false,
+      "comment": "Customer who placed the order"
+    },
+    {
+      "name": "status",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 2,
+      "nullable": false,
+      "comment": "Fulfillment status"
+    },
+    {
+      "name": "total",
+      "type_text": "decimal(12,2)",
+      "type_name": "DECIMAL",
+      "position": 3,
+      "nullable": false,
+      "comment": "Order total in the order currency"
+    },
+    {
+      "name": "shipping_address",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 4,
+      "nullable": true,
+      "comment": "Delivery address"
+    },
+    {
+      "name": "card_last4",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 5,
+      "nullable": true,
+      "comment": "Last four digits of the payment card"
+    },
+    {
+      "name": "internal_notes",
+      "type_text": "string",
+      "type_name": "STRING",
+      "position": 6,
+      "nullable": true,
+      "comment": "Support desk notes"
+    },
+    {
+      "name": "fraud_score",
+      "type_text": "double",
+      "type_name": "DOUBLE",
+      "position": 7,
+      "nullable": true,
+      "comment": "Risk model output"
+    },
+    {
+      "name": "estimated_delivery",
+      "type_text": "date",
+      "type_name": "DATE",
+      "position": 8,
+      "nullable": true,
+      "comment": "Estimated delivery date"
+    }
+  ]
+}

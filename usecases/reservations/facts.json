@@ -1,0 +1,66 @@
+[
+  {
+    "uid": {
+      "type": "User",
+      "id": "reservations-assistant"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "sam"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "specialist"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "specialist"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "employee"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Reservation",
+      "id": "ABC123"
+    },
+    "attrs": {
+      "recordLocator": "ABC123",
+      "holderLastName": "SMITH"
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Reservation",
+      "id": "XYZ789"
+    },
+    "attrs": {
+      "recordLocator": "XYZ789",
+      "holderLastName": "JONES"
+    },
+    "parents": []
+  }
+]

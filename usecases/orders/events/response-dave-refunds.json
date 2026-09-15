@@ -1,0 +1,58 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 3, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___refund_order\", \"arguments\": {\"orderId\": \"order-1001\"}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiZGF2ZSIsImF1ZCI6Im9yZGVycy1nYXRld2F5Iiwicm9sZXMiOlsiZmluYW5jZSJdfQ.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+          "name": "orders___refund_order",
+          "arguments": {
+            "orderId": "order-1001"
+          }
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Mcp-Session-Id": "session-1"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"id\": \"order-1001\", \"owner\": \"alice\", \"status\": \"shipped\", \"total\": 120.0, \"shippingAddress\": \"1 Oak Ln\", \"cardLast4\": \"4242\", \"internalNotes\": \"called back\", \"fraudScore\": 0.02, \"estimatedDelivery\": \"2026-09-20\"}"
+            }
+          ],
+          "structuredContent": {
+            "id": "order-1001",
+            "owner": "alice",
+            "status": "shipped",
+            "total": 120.0,
+            "shippingAddress": "1 Oak Ln",
+            "cardLast4": "4242",
+            "internalNotes": "called back",
+            "fraudScore": 0.02,
+            "estimatedDelivery": "2026-09-20"
+          }
+        }
+      }
+    }
+  }
+}
