@@ -200,6 +200,7 @@ forbid(
 <tr><th>Proof</th><th>Sets compared</th><th>Where it runs</th></tr>
 <tr><td>never-errors</td><td>each policy against the schema</td><td>every use case, every snapshot</td></tr>
 <tr><td>guardrail no-op</td><td>policies, and policies plus the forbid</td><td>every use case, every snapshot</td></tr>
+<tr><td>vacuity, reported only</td><td>permit-everything, and permit-everything plus the forbid</td><td>every use case</td></tr>
 <tr><td>spec equivalence</td><td>policies, and a two-policy spec</td><td>the first two snapshots</td></tr>
 <tr><td>preservation</td><td>the previous snapshot plus declared revisions, and this one, on the earlier actions</td><td>each pair of snapshots</td></tr>
 <tr><td>the reveal</td><td>the early policies under a schema that admits a missing owner</td><td>the history chain</td></tr>
@@ -220,7 +221,7 @@ uv run cedar-osdc prove                    # the history chain</code></pre>
 
 <p><strong>They assume the schema.</strong> Every proof runs under a schema that says, for instance, that an order always has an owner. The engine builds entities from payloads that may lack one. The runner's reveal shows what happens when the schema admits a missing owner: the validator rejects the unguarded policies of iterations 1 and 2. The guarded ones pass. Write policies with <code>has</code> guards for this reason.</p>
 
-<p><strong>A guardrail can be vacuous.</strong> A no-op proof shows the base set never allows what the forbid names. The policies grant levels from allowlists, so a forbid naming a level outside every allowlist passes trivially. A guardrail with a misspelled level, <code>"restricetd"</code>, would pass and prove nothing. There is no automatic check for this yet; read a new guardrail against the test case it is meant to generalize before trusting it.</p>
+<p><strong>A guardrail can be vacuous.</strong> A no-op proof shows the base set never allows what the forbid names. A forbid that names nothing at all passes it for that reason. <code>prove DIR</code> prints a vacuity line per guardrail: it compares permit-everything against permit-everything plus the forbid and reports how many request environments the two differ in. <code>VACUOUS</code> means none, so no request the schema admits satisfies the forbid. All twenty-seven live guardrails are non-vacuous. The line reports and never fails the run, and it catches only the emptiest case. A misspelled level, <code>"restricetd"</code>, still reports as non-vacuous: the schema types a contract tag as a string, so the solver may pick a tag map that holds the misspelling. Read a new guardrail against the test case it is meant to generalize before trusting it.</p>
 
 <p><strong>Declared revisions can absorb a mistake.</strong> The process is: the preservation proof fails, and the author writes a revision file. That makes every change visible; it does not make every change right. The revision file is where a reviewer should look.</p>
 

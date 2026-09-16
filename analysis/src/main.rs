@@ -12,6 +12,11 @@
 //!     adding it changes no decision, which proves the invariant
 //!     already held. Whatever is in the directory applies; there is no
 //!     manifest.
+//!   - vacuity, reported and never failed: the same guardrail against
+//!     `permit(principal, action, resource);` alone. A forbid that
+//!     changes nothing even against permit-everything forbids nothing
+//!     the schema can express, and its no-op proof holds for that
+//!     reason rather than for the one the author meant.
 //!
 //! `prove-history ROOT` proves the chain of iterations that built the
 //! orders use case, and the reservations use case's own short chain.
@@ -78,7 +83,9 @@ fn shown(root: &Path, path: &Path) -> String {
 struct Tally {
     pass: usize,
     fail: usize,
-    shown: usize, // differences the runner expected and displayed
+    shown: usize,       // differences the runner expected and displayed
+    non_vacuous: usize, // guardrails that forbid something the schema can express
+    vacuous: usize,     // guardrails that forbid nothing it can express
 }
 
 type Compiler = CedarSymCompiler<LocalSolver>;
@@ -228,6 +235,72 @@ async fn prove_guardrails(
     Ok(())
 }
 
+/// The policy set the vacuity report compares a guardrail against:
+/// everything the schema can express is allowed, so the only decisions
+/// the guardrail can change are the ones it forbids.
+const PERMIT_EVERYTHING: &str = "permit(principal, action, resource);";
+
+/// How many of the given request environments policy sets `a` and `b`
+/// decide differently in. The same difference check the revisions and
+/// the retired guardrails use, run one environment at a time so the
+/// count is the number of environments rather than the first one.
+async fn count_differing_envs(
+    compiler: &mut Compiler,
+    schema: &Schema,
+    a: &PolicySet,
+    b: &PolicySet,
+    envs: &[RequestEnv],
+) -> Result<usize> {
+    let mut differing = 0;
+    for env in envs {
+        if same_decisions(compiler, schema, a, b, std::slice::from_ref(env))
+            .await?
+            .is_some()
+        {
+            differing += 1;
+        }
+    }
+    Ok(differing)
+}
+
+/// Report each guardrail's vacuity: whether it forbids anything the
+/// schema can express at all. For every request environment,
+/// `permit(principal, action, resource);` alone is compared against
+/// the same permit plus the guardrail, and the report is the number of
+/// environments where the two differ. Zero means no request of the
+/// schema satisfies the forbid at all, so its no-op proof against the
+/// real policies holds for that reason: a condition on a context
+/// attribute the action does not declare, a condition that folds to
+/// false, a principal or resource type the action never pairs with. A
+/// misspelled tag value is not one of these, because the schema types
+/// tags as strings and the proof runs over every tag map. This reports
+/// and never fails: a vacuous guardrail is a reading task rather than
+/// a broken build.
+async fn report_vacuity(
+    compiler: &mut Compiler,
+    schema: &Schema,
+    dir: &Path,
+    files: &[PathBuf],
+    tally: &mut Tally,
+) -> Result<()> {
+    let envs: Vec<RequestEnv> = schema.request_envs().collect();
+    let permit_everything = PolicySet::from_str(PERMIT_EVERYTHING)?;
+    for file in files {
+        let guarded = joined(PERMIT_EVERYTHING, &[read(file)])
+            .with_context(|| format!("reading {}", file.display()))?;
+        let label = shown(dir, file);
+        let n = count_differing_envs(compiler, schema, &permit_everything, &guarded, &envs).await?;
+        if n == 0 {
+            println!("  VACUOUS  {label}: changes nothing against permit-everything");
+            tally.vacuous += 1;
+        } else {
+            println!("  VACUITY  {label}: forbids something in {n} environment(s)");
+            tally.non_vacuous += 1;
+        }
+    }
+    Ok(())
+}
+
 /// The reveal: retype each policy under a schema where `owner` is
 /// optional, modeling an entity store that may not know an order.
 /// Policies with bare `resource.owner` access fail validation; the
@@ -314,6 +387,7 @@ async fn prove_use_case(compiler: &mut Compiler, dir: &Path, tally: &mut Tally) 
     prove_never_errors(compiler, &schema, &pset, tally).await?;
     let files = guardrail_files(dir);
     prove_guardrails(compiler, &schema, &policy_text, &pset, &files, tally).await?;
+    report_vacuity(compiler, &schema, dir, &files, tally).await?;
     Ok(())
 }
 
@@ -815,7 +889,7 @@ fn solver() -> Result<LocalSolver> {
 async fn main() -> Result<()> {
     let mode = mode()?;
     let mut compiler = CedarSymCompiler::new(solver()?)?;
-    let mut tally = Tally { pass: 0, fail: 0, shown: 0 };
+    let mut tally = Tally { pass: 0, fail: 0, shown: 0, non_vacuous: 0, vacuous: 0 };
 
     match mode {
         Mode::UseCase(dir) => {
@@ -828,10 +902,17 @@ async fn main() -> Result<()> {
         }
     }
 
-    println!(
+    let mut summary = format!(
         "\n{} proved, {} failed, {} differences shown as expected",
         tally.pass, tally.fail, tally.shown
     );
+    if tally.non_vacuous + tally.vacuous > 0 {
+        summary.push_str(&format!(
+            ", {} guardrails non-vacuous, {} vacuous",
+            tally.non_vacuous, tally.vacuous
+        ));
+    }
+    println!("{summary}");
     if tally.fail > 0 {
         std::process::exit(1);
     }

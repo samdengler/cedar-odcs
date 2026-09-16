@@ -20,9 +20,10 @@ cargo run -- prove-history ..
 `prove DIR` is one use case: never-errors for every policy in
 `DIR/policies.cedar`, and every `*.cedar` under `DIR/guardrails/`
 proven a no-op against them, under the schema `DIR`'s build wrote
-(`contract/generated/`, or `generated/` in the shape before it).
-Whatever is in `guardrails/` applies; there is no manifest, and
-retiring a guardrail is deleting the file, which git records.
+(`contract/generated/`, or `generated/` in the shape before it), plus
+one vacuity line per guardrail, described below. Whatever is in
+`guardrails/` applies; there is no manifest, and retiring a guardrail
+is deleting the file, which git records.
 
 `prove-history ROOT` is the chain of iterations that built the orders
 use case, and the reservations use case's own short chain: the same
@@ -121,6 +122,46 @@ Current results, all proved:
 A whole `prove-history` run is 211 proofs and 7 expected differences.
 `prove usecases/orders` alone is 25 and `prove usecases/reservations`
 29, each a subset of the run above.
+
+## The vacuity line
+
+A guardrail no-op is an equivalence: the policies allow nothing the
+forbid names. A forbid that names nothing at all passes it for the
+wrong reason. `prove DIR` prints one more line per guardrail, after
+the no-op proofs, to separate the two cases. It compares
+`permit(principal, action, resource);` alone against the same permit
+plus the guardrail, in every request environment of the built schema,
+and counts the environments where the two differ:
+
+```
+  VACUITY  guardrails/restricted-unreadable.cedar: forbids something in 1 environment(s)
+  VACUOUS  guardrails/never-true.cedar: changes nothing against permit-everything
+```
+
+The count is environments, not requests: orders has seven (seven
+actions, one principal type), reservations fourteen (seven actions,
+`User` and `Agent`). All twelve orders guardrails and all fifteen
+reservations guardrails are non-vacuous; hello has none. The report
+never fails a run. `VACUOUS` does not count as a failure, the exit
+status is unchanged, and the summary line carries the two counts after
+the proof counts.
+
+What a `VACUITY` line establishes: against permit-everything the
+forbid changes a decision, so some request the schema admits satisfies
+its scope and its condition. What it does not establish: that the
+request it fires on is the one the author meant, or that the forbid
+states the invariant the guardrail's name claims. Only reading it
+against the corpus case it generalizes does that.
+
+`VACUOUS` means no request of the schema satisfies the forbid at all:
+a condition on a context attribute the action does not declare, a
+condition that constant-folds to false, a principal or resource type
+the action never pairs with. It does not catch a misspelled tag value.
+The schema types `Contract` tags as `String`, so the proof runs over
+every possible tag map, including one that maps a field to
+`"restricetd"`; the misspelled copy of `restricted-unreadable` prints
+`VACUITY  ... in 1 environment(s)` like the correct one. Level names
+are checked by the contract build and the corpus, not here.
 
 ## Composition
 
@@ -248,9 +289,10 @@ them:
    beside a green proof run.
 
 Two limits of the method itself. A guardrail no-op proves the base set
-never allows what the forbid names, so a forbid naming a level outside
-every allowlist, a misspelled one say, passes trivially; there is no
-vacuity check yet, and a new guardrail should be read against the
+never allows what the forbid names, so a forbid naming nothing passes
+trivially. The vacuity line above catches the forbid that no request
+of the schema can satisfy; it leaves the forbid that fires on the
+wrong request, and a new guardrail should still be read against the
 corpus case it generalizes. And a declared revision makes a change
 visible rather than right; the revision file is where a reviewer
 should look.
@@ -295,6 +337,13 @@ should look.
    path) in one forbid over both field verbs; the prover refused it,
    because the disjunction also forbade a possession read of a public
    leaf whose writer is the specialist. Split per verb, both hold.
+7. A misspelled level is not vacuous. The vacuity check was expected to
+   catch a guardrail naming a level outside every allowlist, and it
+   does not: `entity Contract tags String` lets the solver pick a tag
+   map holding the misspelling, so the forbid fires on a request the
+   schema admits. What the check catches is the forbid no request can
+   satisfy under the schema's types. Every one of the twenty-seven
+   live guardrails came out non-vacuous on the first run.
 
 ## Running
 
