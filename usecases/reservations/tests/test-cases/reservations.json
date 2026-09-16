@@ -10,7 +10,7 @@
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
       "decision": "Allow",
-      "reason": ["policy0"],
+      "reason": ["lookup-with-presented-pair"],
       "errors": []
     },
     {
@@ -30,7 +30,7 @@
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
       "decision": "Allow",
-      "reason": ["policy1"],
+      "reason": ["read-by-possession"],
       "errors": []
     },
     {
@@ -80,7 +80,7 @@
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy7"],
+      "reason": ["specialist-reads-any-reservation"],
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "contact.email" },
       "decision": "Allow",
-      "reason": ["policy2"],
+      "reason": ["fields-by-possession"],
       "errors": []
     },
     {
@@ -100,7 +100,7 @@
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" }, "field": "passengers[].seat" },
       "decision": "Allow",
-      "reason": ["policy2"],
+      "reason": ["fields-by-possession"],
       "errors": []
     },
     {

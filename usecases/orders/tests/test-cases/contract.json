@@ -10,7 +10,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "estimatedDelivery" },
       "decision": "Allow",
-      "reason": ["policy3"],
+      "reason": ["customer-fields-on-own-order"],
       "errors": []
     },
     {
@@ -20,7 +20,7 @@
       "resource": { "type": "Order", "id": "order-2002" },
       "context": { "field": "estimatedDelivery" },
       "decision": "Allow",
-      "reason": ["policy4"],
+      "reason": ["support-fields-on-any-order"],
       "errors": []
     },
     {
@@ -30,7 +30,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "owner" },
       "decision": "Allow",
-      "reason": ["policy3"],
+      "reason": ["customer-fields-on-own-order"],
       "errors": []
     },
     {

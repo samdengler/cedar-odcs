@@ -10,7 +10,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy6"],
+      "reason": ["customer-cancels-own-order"],
       "errors": []
     },
     {
@@ -30,7 +30,7 @@
       "resource": { "type": "Order", "id": "order-2002" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy7"],
+      "reason": ["support-cancels-any-order"],
       "errors": []
     },
     {
@@ -50,7 +50,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy8"],
+      "reason": ["finance-refunds-any-order"],
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "resource": { "type": "Order", "id": "order-2002" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy9"],
+      "reason": ["support-updates-any-order"],
       "errors": []
     },
     {
@@ -100,7 +100,7 @@
       "resource": { "type": "Order", "id": "order-2002" },
       "context": { "field": "internalNotes" },
       "decision": "Allow",
-      "reason": ["policy10"],
+      "reason": ["support-updates-support-fields"],
       "errors": []
     },
     {

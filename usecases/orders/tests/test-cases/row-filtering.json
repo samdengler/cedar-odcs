@@ -10,7 +10,7 @@
       "resource": { "type": "Collection", "id": "orders" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy12"],
+      "reason": ["anyone-lists-orders"],
       "errors": []
     },
     {
@@ -20,7 +20,7 @@
       "resource": { "type": "Collection", "id": "orders" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy12"],
+      "reason": ["anyone-lists-orders"],
       "errors": []
     },
     {
@@ -30,7 +30,7 @@
       "resource": { "type": "Collection", "id": "orders" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy12"],
+      "reason": ["anyone-lists-orders"],
       "errors": []
     },
     {
@@ -40,7 +40,7 @@
       "resource": { "type": "Collection", "id": "orders" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Allow",
-      "reason": ["policy12"],
+      "reason": ["anyone-lists-orders"],
       "errors": []
     },
     {
@@ -50,7 +50,7 @@
       "resource": { "type": "Collection", "id": "orders" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Deny",
-      "reason": ["policy11"],
+      "reason": ["only-employees-act-for-others"],
       "errors": []
     },
     {

@@ -10,7 +10,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "status" },
       "decision": "Allow",
-      "reason": ["policy3"],
+      "reason": ["customer-fields-on-own-order"],
       "errors": []
     },
     {
@@ -20,7 +20,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "shippingAddress" },
       "decision": "Allow",
-      "reason": ["policy3"],
+      "reason": ["customer-fields-on-own-order"],
       "errors": []
     },
     {
@@ -30,7 +30,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "cardLast4" },
       "decision": "Allow",
-      "reason": ["policy3"],
+      "reason": ["customer-fields-on-own-order"],
       "errors": []
     },
     {
@@ -70,7 +70,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "internalNotes" },
       "decision": "Allow",
-      "reason": ["policy4"],
+      "reason": ["support-fields-on-any-order"],
       "errors": []
     },
     {
@@ -80,7 +80,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "status" },
       "decision": "Allow",
-      "reason": ["policy4"],
+      "reason": ["support-fields-on-any-order"],
       "errors": []
     },
     {

@@ -10,7 +10,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy0"],
+      "reason": ["customer-reads-own-order"],
       "errors": []
     },
     {
@@ -20,7 +20,7 @@
       "resource": { "type": "Order", "id": "order-2002" },
       "context": {},
       "decision": "Allow",
-      "reason": ["policy1"],
+      "reason": ["support-reads-any-order"],
       "errors": []
     },
     {
@@ -30,7 +30,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Allow",
-      "reason": ["policy0"],
+      "reason": ["customer-reads-own-order"],
       "errors": []
     },
     {
@@ -50,7 +50,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "shippingAddress" },
       "decision": "Allow",
-      "reason": ["policy3"],
+      "reason": ["customer-fields-on-own-order"],
       "errors": []
     },
     {
@@ -70,7 +70,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "shippingAddress" },
       "decision": "Allow",
-      "reason": ["policy5"],
+      "reason": ["customer-updates-own-order-fields"],
       "errors": []
     },
     {
@@ -90,7 +90,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Allow",
-      "reason": ["policy6"],
+      "reason": ["customer-cancels-own-order"],
       "errors": []
     },
     {
@@ -110,7 +110,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Allow",
-      "reason": ["policy0"],
+      "reason": ["customer-reads-own-order"],
       "errors": []
     },
     {
@@ -120,7 +120,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Deny",
-      "reason": ["policy11"],
+      "reason": ["only-employees-act-for-others"],
       "errors": []
     },
     {
@@ -130,7 +130,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Deny",
-      "reason": ["policy11"],
+      "reason": ["only-employees-act-for-others"],
       "errors": []
     },
     {
@@ -151,7 +151,7 @@
       "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
       "decision": "Deny",
       "reason": [],
-      "errors": ["policy0"]
+      "errors": ["customer-reads-own-order"]
     }
   ]
 }

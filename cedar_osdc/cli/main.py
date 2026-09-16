@@ -38,7 +38,7 @@ from pathlib import Path
 import cedarpy
 
 from cedar_osdc.engine import calls
-from cedar_osdc.engine.corpus import case_files
+from cedar_osdc.engine.corpus import case_files, name_of, policy_names, run_case
 from cedar_osdc.engine.enforce import Engine, explain
 from cedar_osdc.engine.usecase import paths
 
@@ -61,16 +61,6 @@ def load_use_case(directory: str):
     sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
-
-
-def policy_names(policies: str) -> dict:
-    """policyN -> the @id annotation, from the file's order."""
-    ids = re.findall(r'@id\("([^"]+)"\)', policies)
-    return {f"policy{i}": name for i, name in enumerate(ids)}
-
-
-def name_of(policy_id: str, names: dict) -> str:
-    return f"{policy_id} ({names[policy_id]})" if policy_id in names else policy_id
 
 
 def _ref(value):
@@ -138,25 +128,18 @@ def cmd_run_tests(args):
         print(f"\n{spec_file.relative_to(root)}")
         for case in spec["requests"]:
             total += 1
-            request = {
-                "principal": _ref(case["principal"]), "action": _ref(case["action"]),
-                "resource": _ref(case["resource"]), "context": case.get("context", {}),
-            }
-            result = cedarpy.is_authorized(request, policies, entities)
-            actual = "Allow" if result.decision == cedarpy.Decision.Allow else "Deny"
-            reasons = sorted(result.diagnostics.reasons)
-            expected_reasons = sorted(case.get("reason", []))
-            expected_errors = case.get("errors", [])
-            ok = (actual == case["decision"] and reasons == expected_reasons
-                  and len(result.diagnostics.errors) == len(expected_errors))
-            if ok:
+            outcome = run_case(policies, entities, case)
+            if outcome.ok:
                 print(f"  PASS  {case['description']}")
             else:
                 failures += 1
                 print(f"  FAIL  {case['description']}")
-                print(f"        expected {case['decision']} by {expected_reasons or 'no policy'}, "
-                      f"got {actual} by {[name_of(r, names) for r in reasons] or 'no policy'}")
-                for error in result.diagnostics.errors:
+                print(f"        expected {case['decision']} by {case.get('reason') or 'no policy'}, "
+                      f"got {outcome.actual} by "
+                      f"{[name_of(r, names) for r in outcome.reasons] or 'no policy'}")
+                print(f"        {_ref(case['principal'])} {_ref(case['action'])} {_ref(case['resource'])} "
+                      f"{json.dumps(case.get('context', {}))}")
+                for error in outcome.result.diagnostics.errors:
                     print(f"        error: {error}")
             exported.append({
                 "name": case["description"],
@@ -164,8 +147,8 @@ def cmd_run_tests(args):
                             "resource": case["resource"], "context": case.get("context", {})},
                 "entities": json.loads(entities),
                 "decision": case["decision"].lower(),
-                "reason": case.get("reason", []),
-                "num_errors": len(expected_errors),
+                "reason": outcome.expected_reasons,
+                "num_errors": len(outcome.expected_errors),
             })
     print(f"\n{total - failures} passed, {failures} failed")
     if args.cedar_tests:

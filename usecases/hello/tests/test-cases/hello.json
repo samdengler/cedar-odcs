@@ -20,7 +20,7 @@
       "context": {},
       "decision": "Allow",
       "reason": [
-        "policy0"
+        "owner-reads-own-note"
       ],
       "errors": []
     },
@@ -60,7 +60,7 @@
       "context": {},
       "decision": "Allow",
       "reason": [
-        "policy1"
+        "reviewer-reads-any-note"
       ],
       "errors": []
     },
@@ -83,7 +83,7 @@
       },
       "decision": "Allow",
       "reason": [
-        "policy2"
+        "owner-fields-on-own-note"
       ],
       "errors": []
     },
@@ -127,7 +127,7 @@
       },
       "decision": "Allow",
       "reason": [
-        "policy3"
+        "reviewer-fields-on-any-note"
       ],
       "errors": []
     },

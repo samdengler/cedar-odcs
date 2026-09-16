@@ -10,7 +10,7 @@
       "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "shippingAddress" },
       "decision": "Allow",
-      "reason": ["policy5"],
+      "reason": ["customer-updates-own-order-fields"],
       "errors": []
     },
     {
