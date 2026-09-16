@@ -1,7 +1,10 @@
 """Runner for the engine-independent test corpus (cedar-integration-tests format).
 
 A use case's test_corpus.py is three lines: collect cases from its
-tests/ directory and hand each to check().
+test case directory and hand each to check(). The directory is
+tests/test-cases/ in the new shape and tests/ in the old; each file's
+header names its policies and entities relative to the use case root
+in both.
 """
 
 import json
@@ -10,6 +13,8 @@ from pathlib import Path
 import cedarpy
 import pytest
 
+from cedar_osdc.engine.usecase import paths
+
 
 def _ref(value):
     if isinstance(value, dict):
@@ -17,8 +22,13 @@ def _ref(value):
     return value
 
 
+def case_files(root: Path) -> list:
+    """Every test case file of a use case, in a stable order."""
+    return sorted(paths(root).test_cases.glob("*.json"))
+
+
 def cases(root: Path):
-    for spec_file in sorted((root / "tests").glob("*.json")):
+    for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
         policies = (root / spec["policies"]).read_text()
         entities = (root / spec["entities"]).read_text()

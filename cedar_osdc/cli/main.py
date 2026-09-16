@@ -16,7 +16,7 @@
 Verbs match the official cedar command where the meaning is the same
 (authorize, validate, run-tests, new) and add the two ideas Cedar has
 no word for: a dry run of one tool call through both legs, and a
-report of what a caller may do. Files are Cedar's own formats:
+report of what an identity may do. Files are Cedar's own formats:
 policies.cedar, entities.json, .cedarschema, the corpus in the
 cedar-integration-tests form.
 
@@ -38,7 +38,9 @@ from pathlib import Path
 import cedarpy
 
 from cedar_osdc.engine import calls
+from cedar_osdc.engine.corpus import case_files
 from cedar_osdc.engine.enforce import Engine, explain
+from cedar_osdc.engine.usecase import paths
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -94,17 +96,17 @@ def _pairs(items) -> dict:
     return out
 
 
-def _caller(path: str) -> dict:
-    """A caller file: the claims of the caller's credential, the JWT the
-    Gateway verified, as one JSON object with at least a sub."""
+def _identity(path: str) -> dict:
+    """An identity file: the claims of one caller's credential, the JWT
+    the Gateway verified, as one JSON object with at least a sub."""
     claims = json.loads(Path(path).read_text())
     if not isinstance(claims, dict) or "sub" not in claims:
-        raise Usage(f"{path} is not a caller file: a JSON object of claims with a sub")
+        raise Usage(f"{path} is not an identity file: a JSON object of claims with a sub")
     return claims
 
 
 def _schema_text(use_case) -> str:
-    generated = use_case.root / "generated"
+    generated = paths(use_case.root).generated
     files = sorted(generated.glob("*.cedarschema")) if generated.exists() else []
     files = [f for f in files if f.name != "entities.cedarschema"]
     if not files:
@@ -128,7 +130,7 @@ def cmd_run_tests(args):
     root = module.USE_CASE.root
     failures = total = 0
     exported = []
-    for spec_file in sorted((root / "tests").glob("*.json")):
+    for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
         policies = (root / spec["policies"]).read_text()
         entities = (root / spec["entities"]).read_text()
@@ -209,14 +211,14 @@ def cmd_authorize(args):
 def cmd_dry_run(args):
     module = load_use_case(args.directory)
     use_case = module.USE_CASE
-    claims = _caller(args.caller)
+    claims = _identity(args.caller)
     tool = use_case.tools.get(args.tool)
     if tool is None:
         raise Usage(f"tool {args.tool} is not in the use case's tool table: {', '.join(use_case.tools)}")
     arguments = _pairs(args.arg)
     engine = Engine(use_case)
     projection = engine.projection(claims)
-    print(f"Caller     {projection.principal}, {projection.mode}"
+    print(f"Identity   {projection.principal}, {projection.mode}"
           + (f", acting for {projection.context['actingFor']['__entity']['id']}" if projection.context else ""))
     print(f"Tool       {args.tool}  {json.dumps(arguments)}")
     # A call the engine cannot make sense of is rejected in the same
@@ -258,7 +260,7 @@ def cmd_dry_run(args):
 def cmd_check_access(args):
     module = load_use_case(args.directory)
     use_case = module.USE_CASE
-    claims = _caller(args.caller)
+    claims = _identity(args.caller)
     engine = Engine(use_case)
     projection = engine.projection(claims)
     context = {}
@@ -368,7 +370,7 @@ def cmd_share(args):
         label = args.request_json
     elif args.case:
         found = []
-        for spec_file in sorted((root / "tests").glob("*.json")):
+        for spec_file in case_files(root):
             for case in json.loads(spec_file.read_text())["requests"]:
                 if args.case.lower() in case["description"].lower():
                     found.append(case)
@@ -404,7 +406,8 @@ def cmd_build(args):
 def cmd_validate(args):
     module = load_use_case(args.directory)
     use_case = module.USE_CASE
-    schema_files = [f for f in sorted((use_case.root / "generated").glob("*.cedarschema")) if f.name != "entities.cedarschema"]
+    generated = paths(use_case.root).generated
+    schema_files = [f for f in sorted(generated.glob("*.cedarschema")) if f.name != "entities.cedarschema"]
     if not schema_files:
         raise Usage("no generated schema; run build first")
     cedar = shutil.which("cedar")
@@ -451,14 +454,14 @@ def main(argv=None) -> int:
     p.set_defaults(func=cmd_authorize)
 
     p = with_dir(sub.add_parser("dry-run", help="one tool call through both legs, without calling the tool"))
-    p.add_argument("--caller", required=True, metavar="FILE", help="a caller file: the claims of the caller's credential")
+    p.add_argument("--caller", required=True, metavar="FILE", help="an identity file: the claims of one caller's credential")
     p.add_argument("--tool", required=True, help="an MCP tool name from the use case's tool table")
     p.add_argument("--arg", action="append", metavar="KEY=VALUE", help="a tool argument (JSON values allowed)")
     p.add_argument("--response", metavar="FILE", help="the tool's response payload, to run the response leg")
     p.set_defaults(func=cmd_dry_run)
 
-    p = with_dir(sub.add_parser("check-access", help="what a caller may do: verbs, readable paths, writable paths"))
-    p.add_argument("--caller", required=True, metavar="FILE", help="a caller file: the claims of the caller's credential")
+    p = with_dir(sub.add_parser("check-access", help="what an identity may do: verbs, readable paths, writable paths"))
+    p.add_argument("--caller", required=True, metavar="FILE", help="an identity file: the claims of one caller's credential")
     p.add_argument("--presented", action="append", metavar="KEY=VALUE", help="a presented fact, e.g. lastName=SMITH")
     p.add_argument("--record", metavar="FILE", help="a payload row to decide on (default: the first stored one)")
     p.set_defaults(func=cmd_check_access)

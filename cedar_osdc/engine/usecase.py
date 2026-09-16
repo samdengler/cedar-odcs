@@ -1,8 +1,97 @@
-"""The descriptor a use case hands the engine."""
+"""The descriptor a use case hands the engine, and where its files are.
+
+A use case folder is read in one of two shapes. The shape of a use
+case (designs/reorganization.md) gathers the build's inputs and
+outputs under `contract/` and the fixtures under `tests/`; the older
+shape keeps both at the root. `layout()` tells them apart by the one
+directory only the new shape has, `contract/`, and `paths()` is what
+every reader asks for a directory, so the two spellings live here and
+nowhere else.
+
+    new                              old
+    contract/unity/                  unity/
+    contract/<stem>.odcs.yaml        <stem>.odcs.yaml
+    contract/generated/              generated/
+    tests/test-cases/                tests/
+    tests/identities/                callers/
+    tests/responses/                 records/
+    tests/events/                    events/
+
+Everything else, policies.cedar, facts.json, entities.json, and the
+two hand-written schemas, is at the root in both.
+"""
 
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def layout(root) -> str:
+    """"new" for a use case folder with a contract/ directory, else "old"."""
+    return "new" if (Path(root) / "contract").is_dir() else "old"
+
+
+@dataclass(frozen=True)
+class Paths:
+    """Where one use case keeps each kind of file, in either shape."""
+
+    root: Path
+    layout: str
+
+    @property
+    def contract_dir(self) -> Path:
+        """What the build writes into: contract/ in the new shape, the root in the old."""
+        return self.root / "contract" if self.layout == "new" else self.root
+
+    @property
+    def unity(self) -> Path:
+        return self.contract_dir / "unity"
+
+    @property
+    def generated(self) -> Path:
+        return self.contract_dir / "generated"
+
+    @property
+    def test_cases(self) -> Path:
+        return self.root / "tests" / "test-cases" if self.layout == "new" else self.root / "tests"
+
+    @property
+    def identities(self) -> Path:
+        return self.root / "tests" / "identities" if self.layout == "new" else self.root / "callers"
+
+    @property
+    def responses(self) -> Path:
+        return self.root / "tests" / "responses" if self.layout == "new" else self.root / "records"
+
+    @property
+    def events(self) -> Path:
+        return self.root / "tests" / "events" if self.layout == "new" else self.root / "events"
+
+    def relative(self, path: Path) -> str:
+        """A path under the root as the build's output keys spell it."""
+        return path.relative_to(self.root).as_posix()
+
+
+def paths(root) -> Paths:
+    root = Path(root)
+    return Paths(root, layout(root))
+
+
+def responses_fetch(root):
+    """A descriptor's fetch, reading the saved responses: row id to the
+    payload the API returned for it, or None when nothing is saved.
+
+    The one mock in a use case. A real read replaces it at deployment.
+    """
+    directory = paths(root).responses
+
+    def fetch(row_id):
+        if not isinstance(row_id, str) or "/" in row_id or "\\" in row_id or row_id.strip(".") == "":
+            return None
+        path = directory / f"{row_id}.json"
+        return json.loads(path.read_text()) if path.is_file() else None
+
+    return fetch
 
 
 @dataclass

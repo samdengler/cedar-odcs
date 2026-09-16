@@ -20,6 +20,7 @@ import pytest
 from cedar_osdc.cli.main import _pairs, load_use_case, main
 from cedar_osdc.engine import calls
 from cedar_osdc.engine.enforce import Engine, explain
+from cedar_osdc.engine.usecase import paths
 from cedar_osdc.gateway import handlers
 
 REPO = Path(__file__).resolve().parents[1]
@@ -51,7 +52,7 @@ def test_the_interfaces_translate_every_event_the_same_way(name, capsys):
     use_case = load_use_case(str(root)).USE_CASE
     engine = Engine(use_case)
     compared = skipped = 0
-    for path in sorted((root / "events").glob("*.json")):
+    for path in sorted(paths(root).events.glob("*.json")):
         event = json.loads(path.read_text())
         request = event["mcp"]["gatewayRequest"]
         # The handler's own reading of the event, not a second copy of it.
@@ -101,7 +102,7 @@ def test_the_handlers_take_their_refusal_words_from_the_engine():
     engine = Engine(use_case)
     request_handler, _ = handlers.handlers(use_case)
     for fixture in ("request-wrong-name-changes-contact", "request-holder-changes-fare"):
-        event = json.loads((USE_CASES["reservations"] / "events" / f"{fixture}.json").read_text())
+        event = json.loads((paths(USE_CASES["reservations"]).events / f"{fixture}.json").read_text())
         request = event["mcp"]["gatewayRequest"]
         name, arguments = handlers._tool_call(handlers._body(request["body"]))
         claims = handlers.claims_of(handlers._header(request["headers"], "Authorization"))
@@ -118,7 +119,7 @@ def test_the_command_line_takes_its_refusal_words_from_the_engine(capsys):
         assert template not in source, f"cli/main.py spells {template!r} itself"
 
     directory = str(USE_CASES["reservations"])
-    caller = str(USE_CASES["reservations"] / "callers/agent.json")
+    caller = str(paths(USE_CASES["reservations"]).identities / "agent.json")
     use_case = load_use_case(directory).USE_CASE
     engine = Engine(use_case)
     claims = json.loads(Path(caller).read_text())

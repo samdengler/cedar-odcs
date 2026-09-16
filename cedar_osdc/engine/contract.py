@@ -29,6 +29,8 @@ from pathlib import Path
 import yaml
 from open_data_contract_standard.model import OpenDataContractStandard
 
+from cedar_osdc.engine.usecase import paths
+
 LEVELS = ("public", "internal", "confidential", "restricted")
 FIXED_WRITERS = ("owner", "system")
 CONTRACT_VERSION = "v3.2.0"
@@ -271,24 +273,31 @@ def role_names(facts: list) -> set:
 def build(root: Path, entity_name: str, contract_id: str, table_file: str, tags_file: str) -> dict:
     """Every output as {relative path: text}, without writing.
 
-    Inputs under root: unity/<table_file>, unity/<tags_file>, facts.json,
-    principals.cedarschema, actions.cedarschema.
+    Inputs under root: the two Unity fixtures, facts.json,
+    principals.cedarschema, actions.cedarschema. The Unity fixtures
+    and the generated files sit under contract/ in the new shape and
+    at the root in the old; `paths` knows which folder is which, and
+    the keys returned here follow it. entities.json is at the root in
+    both.
     """
-    table = json.loads((root / "unity" / table_file).read_text())
-    assignments = json.loads((root / "unity" / tags_file).read_text())
+    place = paths(root)
+    table = json.loads((place.unity / table_file).read_text())
+    assignments = json.loads((place.unity / tags_file).read_text())
+    unity = place.relative(place.unity)
     contract_text = render(contract_from_unity(table, assignments, entity_name, contract_id),
-                           f"unity/{table_file} and unity/{tags_file}")
+                           f"{unity}/{table_file} and {unity}/{tags_file}")
     contract = load_contract(contract_text)
-    facts = json.loads((root / "facts.json").read_text())
+    facts = json.loads((place.root / "facts.json").read_text())
     entities = contract_entities(contract, role_names(facts))
-    schema = ((root / "principals.cedarschema").read_text() + entity_schema(contract) + "\n"
-              + (root / "actions.cedarschema").read_text())
+    schema = ((place.root / "principals.cedarschema").read_text() + entity_schema(contract) + "\n"
+              + (place.root / "actions.cedarschema").read_text())
     stem = entity_name.lower()
+    generated = place.relative(place.generated)
     return {
-        f"{stem}.odcs.yaml": contract_text,
-        "generated/contract.entities.json": json.dumps(entities, indent=2) + "\n",
-        "generated/entities.cedarschema": entity_schema(contract),
-        f"generated/{stem}.cedarschema": schema,
+        place.relative(place.contract_dir / f"{stem}.odcs.yaml"): contract_text,
+        f"{generated}/contract.entities.json": json.dumps(entities, indent=2) + "\n",
+        f"{generated}/entities.cedarschema": entity_schema(contract),
+        f"{generated}/{stem}.cedarschema": schema,
         "entities.json": json.dumps(facts + entities, indent=2) + "\n",
     }
 
