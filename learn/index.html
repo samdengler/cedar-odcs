@@ -152,7 +152,7 @@ h2:hover .anchor { opacity: 1; }
 <pre><code class="lang-sh">uv sync
 uv run cedar-osdc check usecases/hello</code></pre>
 
-<p>Four steps run, each printing its result: the contract is built, the policies validate, the tests pass, the policies are proven never to error. Hello has no guardrails yet; from step 2 on, the last step proves each guardrail too. That is the whole loop, and every step of the path uses it.</p>
+<p>Four steps run, each printing its result: the contract is built, the policies validate, the tests pass, the policies are proven never to error. The fourth needs Rust and the cvc5 solver, which <code>analysis/README.md</code> says how to install; without them it prints those steps and exits 1, and the three steps of this path need only the first three gates. Hello has no guardrails yet; from step 2 on, the last gate proves each guardrail too. That is the whole loop, and every step of the path uses it.</p>
 
 <h2 id="steps">2. The three steps</h2>
 

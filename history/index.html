@@ -51,7 +51,8 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
   <h1>cedar-osdc</h1>
   <p>Data governance for agent tool calls, enforced with Cedar policies derived from
      Open Data Contract Standard documents. One design document per iteration. Iterations 1 through 10
-     live under <code>history/</code>, each with its own policies, entities, and test corpus; from
+     live under <code>history/</code>, nine of them as a directory with its own policies, entities, and
+     test corpus (iteration 8 is the proofs, a page only); from
      iteration 11 the mechanism lives in <code>cedar_osdc/</code> and each use case in
      <code>usecases/</code>.</p>
 </header>
@@ -73,7 +74,7 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
      each iteration is small, and no iteration starts before the previous one is understood.</p>
 
   <p>After iteration 13, <a href="what-reservations-changed.html">a writeup</a> accounts for
-     what the mechanism in <code>core/</code> had to change to admit the reservation use case, and
+     what the mechanism in <code>core/</code>, since renamed <code>cedar_osdc/</code> had to change to admit the reservation use case, and
      what that says about how general it is.</p>
 
   <h2>Iterations</h2>
@@ -130,7 +131,7 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
     </li>
     <li>
       <span class="name"><a href="reservations-11.html">Reservations by locator and last name</a>
-        <span class="desc">A second use case with no customer identity: possession presented in context, decided on the response leg, nested records by path, and the mechanism extracted into <code>core/</code>. Code in <code>usecases/reservations/</code>.</span></span>
+        <span class="desc">A second use case with no customer identity: possession presented in context, decided on the response leg, nested records by path, and the mechanism extracted into <code>core/</code>, since renamed <code>cedar_osdc/</code>. Code in <code>usecases/reservations/</code>.</span></span>
       <span class="status done">Done</span>
     </li>
     <li>
@@ -145,7 +146,7 @@ ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); fon
     </li>
     <li>
       <span class="name"><a href="command-line-14.html">The command line</a>
-        <span class="desc">The mechanism behind nine verbs that match Cedar's where the meaning is the same, plus a dry run of one tool call and a report of what a token grants; every question links to Cedar's playground. Code in <code>core/cli.py</code>.</span></span>
+        <span class="desc">The mechanism behind nine verbs that match Cedar's where the meaning is the same, plus a dry run of one tool call and a report of what a token grants; every question links to Cedar's playground. Code in <code>core/cli.py</code>, now <code>cedar_osdc/cli/</code>.</span></span>
       <span class="status done">Done</span>
     </li>
     <li>

@@ -410,7 +410,7 @@ def cmd_validate(args):
         return subprocess.call([cedar, "validate", "--schema", str(schema_file),
                                 "--policies", str(policies_file)])
     print("validator  cedarpy.validate_policies (the cedar command is not on the path; "
-          "install it with `cargo install cedar-policy-cli` for the official validator)")
+          "optional: `cargo install cedar-policy-cli` switches to the official validator)")
     result = cedarpy.validate_policies(policies_file.read_text(), schema_file.read_text())
     if not result.validation_passed:
         for error in result.errors:

@@ -151,7 +151,7 @@ h2:hover .anchor { opacity: 1; }
 
 <pre><code class="lang-sh">uv run cedar-osdc run-tests usecases/hello</code></pre>
 
-<p>Nine cases pass. Each is a Cedar authorization request with the decision it should get, in <code>tests/test-cases/hello.json</code>. Now ask what each identity may do:</p>
+<p>Nine cases pass. Each is a Cedar authorization request with the decision it should get, in <code>tests/test-cases/hello.json</code>; the cases of a use case together are its corpus. Now ask what each identity may do:</p>
 
 <pre><code class="lang-sh">uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/ada.json
 uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/rae.json</code></pre>
@@ -199,6 +199,7 @@ uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/iden
 <tr><td><code>contract/note.odcs.yaml</code></td><td>the data contract generated from those, ODCS v3.2.0</td></tr>
 <tr><td><code>contract/generated/contract.entities.json</code></td><td>the classification map and the writers map, generated from the contract</td></tr>
 <tr><td><code>contract/generated/note.cedarschema</code></td><td>the Cedar schema, generated</td></tr>
+<tr><td><code>principals.cedarschema</code>, <code>actions.cedarschema</code></td><td>hand-written: who can be a principal, and the verbs with their context; the build joins them with the generated schema</td></tr>
 <tr><td><code>facts.json</code></td><td>the sample users, the role, and two notes</td></tr>
 <tr><td><code>entities.json</code></td><td>facts plus the generated maps, what the policies read</td></tr>
 <tr><td><code>policies.cedar</code></td><td>four policies; no policy names a field</td></tr>
@@ -207,6 +208,7 @@ uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/iden
 <tr><td><code>tests/identities/ada.json</code>, <code>rae.json</code></td><td>one identity each: the claims of that caller's credential, standing in for a decoded, verified JWT</td></tr>
 <tr><td><code>tests/responses/note-1.json</code></td><td>what the notes API returns for note 1, saved</td></tr>
 <tr><td><code>usecase.py</code></td><td>the descriptor: entity type, which field is the owner, the verbs, the tool table</td></tr>
+<tr><td><code>build.py</code>, <code>tests/test_*.py</code>, <code>tests/events/</code></td><td>the build hook, the pytest wrappers, and Gateway events for the handler tests; step 2 uses events</td></tr>
 </table>
 
 <h2 id="map">4. The policies read a map</h2>
