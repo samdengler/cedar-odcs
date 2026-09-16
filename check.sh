@@ -4,5 +4,6 @@
 # if either fails. Run from anywhere.
 set -e
 cd "$(dirname "$0")"
+ROOT="$(pwd)"
 uv run pytest -q
-cd analysis && cargo run --quiet
+cd analysis && cargo run --quiet -- "$ROOT"

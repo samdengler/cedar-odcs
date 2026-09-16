@@ -46,8 +46,15 @@ use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
+/// The repository root: the first positional command line argument, or
+/// (absent that) the analysis crate's directory's parent, as before. Takes
+/// an explicit root so a later run can grow a `prove DIR` mode without
+/// this derivation changing again.
 fn repo_root() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf()
+    match std::env::args().nth(1) {
+        Some(arg) => PathBuf::from(arg),
+        None => Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf(),
+    }
 }
 
 fn read(path: &Path) -> String {
@@ -721,6 +728,7 @@ fn solver() -> Result<LocalSolver> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    println!("root: {}", repo_root().display());
     let mut compiler = CedarSymCompiler::new(solver()?)?;
     let mut tally = Tally { pass: 0, fail: 0, shown: 0 };
 

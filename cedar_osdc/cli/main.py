@@ -430,7 +430,7 @@ def cmd_prove(args):
     if shutil.which("cargo") is None:
         print("The proofs need Rust (cargo) and the cvc5 solver; see analysis/README.md.")
         return 2
-    return subprocess.call(["cargo", "run", "--quiet"], cwd=analysis)
+    return subprocess.call(["cargo", "run", "--quiet", "--", str(REPO)], cwd=analysis)
 
 
 def cmd_new(args):
