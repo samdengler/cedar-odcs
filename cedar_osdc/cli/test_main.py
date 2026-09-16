@@ -8,18 +8,18 @@ from pathlib import Path
 import pytest
 
 from cedar_osdc.cli.main import main, playground_link
+from cedar_osdc.engine.usecase import paths
 
 REPO = Path(__file__).resolve().parents[2]
 R = str(REPO / "usecases/reservations")
-TOKENS = json.loads((REPO / "usecases/reservations/callers.json").read_text())
-RECORDS = json.loads((REPO / "usecases/reservations/records.json").read_text())
+FIXTURES = paths(REPO / "usecases/reservations")
 
 
 @pytest.fixture
 def caller(tmp_path):
     def write(name):
         path = tmp_path / f"{name}.json"
-        path.write_text(json.dumps(TOKENS[name]))
+        path.write_text((FIXTURES.identities / f"{name}.json").read_text())
         return str(path)
     return write
 
@@ -53,7 +53,7 @@ def test_authorize_names_the_policy(capsys):
 
 def test_dry_run_reports_both_legs(capsys, caller, tmp_path):
     record = tmp_path / "record.json"
-    record.write_text(json.dumps(RECORDS["ABC123"]))
+    record.write_text((FIXTURES.responses / "ABC123.json").read_text())
     code, out = run(capsys, "dry-run", R, "--caller", caller("agent"), "--tool", "reservations___get_reservation",
                     "--arg", "recordLocator=ABC123", "--arg", "lastName=Smith", "--response", str(record))
     assert code == 0

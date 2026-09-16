@@ -1,9 +1,8 @@
 """Reservations: possession of a record locator and the holder's last name."""
 
-import json
 from pathlib import Path
 
-from cedar_osdc.engine.usecase import UseCase
+from cedar_osdc.engine.usecase import UseCase, responses_fetch
 
 ROOT = Path(__file__).parent
 
@@ -28,15 +27,6 @@ TOOLS = {
     },
 }
 
-RECORDS = json.loads((ROOT / "records.json").read_text())
-
-
-def fetch(record_locator: str):
-    """The read path, stood in for by a fixture: what the reservations
-    API returns for a locator, or None. The interceptor calls this
-    before a write by possession is forwarded."""
-    return RECORDS.get(record_locator)
-
 USE_CASE = UseCase(
     name="reservations",
     root=ROOT,
@@ -48,7 +38,7 @@ USE_CASE = UseCase(
     field_actions={'Action::"UpdateReservation"': 'Action::"UpdateReservationField"'},
     tools=TOOLS,
     prefetch_actions={'Action::"UpdateReservation"', 'Action::"CancelReservation"'},
-    fetch=fetch,
+    fetch=responses_fetch(ROOT),
 )
 
 BUILD = dict(entity_name="Reservation", contract_id="c0a8f1e2-5b3d-4e6f-9a7b-8c9d0e1f2a3b",

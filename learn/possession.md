@@ -21,7 +21,7 @@ Forty-three cases. Then the customer's view, which is nobody's
 identity and only the pair:
 
 ```sh
-uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers/agent.json \
+uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --presented locator=ABC123 --presented lastName=Smith
 ```
 
@@ -52,9 +52,9 @@ read is decided on the response leg against the record that came
 back. Try a wrong name:
 
 ```sh
-uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/callers/agent.json \
+uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Jones \
-    --response usecases/reservations/records/ABC123.json
+    --response usecases/reservations/tests/responses/ABC123.json
 ```
 
 The lookup is forwarded, the record comes back, the name does not
@@ -63,7 +63,7 @@ match, and the customer receives an empty object.
 A write cannot wait. Cancel with the wrong name:
 
 ```sh
-uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/callers/agent.json \
+uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --tool reservations___cancel_reservation --arg recordLocator=ABC123 --arg lastName=Jones
 ```
 
@@ -75,7 +75,7 @@ that supplies the record.
 ## Three parties
 
 ```sh
-uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers/sam-through-agent.json
+uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/sam-through-agent.json
 ```
 
 The token is an exchanged one: the specialist is its subject, the
@@ -84,7 +84,7 @@ specialist is the acted-for human whose roles decide; the specialist
 reads the remarks, writes them, and lists reservations. Add the pair:
 
 ```sh
-uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers/sam-through-agent.json \
+uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/sam-through-agent.json \
     --presented locator=ABC123 --presented lastName=Smith
 ```
 
@@ -100,7 +100,7 @@ read remarks" fails. With Rust and cvc5, `uv run cedar-osdc prove`
 also fails the guardrail "specialist levels off with pair", over every
 record and every tag map at once.
 
-Then a contract change: in `unity/reservations.column_tags.json`,
+Then a contract change: in `usecases/reservations/contract/unity/reservations.column_tags.json`,
 change the `passengers` column's `classification__passport_number`
 from `restricted` to `confidential`, rebuild, and run `check-access`
 for the pair. Passport numbers are now readable by possession, and
