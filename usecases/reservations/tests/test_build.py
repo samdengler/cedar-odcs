@@ -4,6 +4,7 @@ attributes the descriptor reads, and the committed artifacts current."""
 import json
 
 from cedar_osdc.engine.contract import attributes_of, build, load_contract
+from cedar_osdc.engine.usecase import paths
 from usecases.reservations.usecase import BUILD, ROOT, USE_CASE
 
 
@@ -13,7 +14,7 @@ def test_committed_artifacts_are_current():
 
 
 def test_maps_are_keyed_by_path():
-    maps = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "generated/contract.entities.json").read_text())}
+    maps = {e["uid"]["id"]: e["tags"] for e in json.loads((paths(ROOT).generated / "contract.entities.json").read_text())}
     levels = maps["Reservation"]
     assert levels["passengers[].seat"] == "public"
     assert levels["passengers[].passportNumber"] == "restricted"
@@ -28,10 +29,10 @@ def test_maps_are_keyed_by_path():
 
 
 def test_descriptor_attributes_come_from_the_contract():
-    contract = load_contract((ROOT / "reservation.odcs.yaml").read_text())
+    contract = load_contract((paths(ROOT).contract_dir / "reservation.odcs.yaml").read_text())
     assert attributes_of(contract) == USE_CASE.attributes
 
 
 def test_schema_declares_the_scalar_attributes():
-    schema = (ROOT / "generated/reservation.cedarschema").read_text()
+    schema = (paths(ROOT).generated / "reservation.cedarschema").read_text()
     assert "entity Reservation {\n  recordLocator: String,\n  holderLastName: String\n};" in schema

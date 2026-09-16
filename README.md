@@ -127,12 +127,12 @@ Requires [uv](https://docs.astral.sh/uv/). From the repository root, `uv sync` i
 
 ```sh
 uv run cedar-osdc run-tests usecases/reservations
-uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers/agent.json --presented locator=ABC123 --presented lastName=Smith
-uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/callers/agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response usecases/reservations/records/ABC123.json
+uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/agent.json --presented locator=ABC123 --presented lastName=Smith
+uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response usecases/reservations/tests/responses/ABC123.json
 uv run cedar-osdc share usecases/reservations --case "co-traveler"
 ```
 
-The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a caller may do. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A caller file is a JSON object of claims; `usecases/reservations/callers.json` holds three to copy from. The design narrative is `cedar_osdc/iteration-14.html`.
+The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a caller may do. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A caller file is a JSON object of claims; `usecases/reservations/tests/identities/` holds three to copy from. The design narrative is `cedar_osdc/iteration-14.html`.
 
 ## Running
 
