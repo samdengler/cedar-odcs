@@ -54,7 +54,7 @@ def test_generated_schema_extends_the_hand_written_one():
     def normalize(text):
         return " ".join(text.split())
     generated = (HERE / "generated/orders.cedarschema").read_text()
-    hand_written = (HERE / "../analysis/schemas/on-behalf-of.cedarschema").read_text()
+    hand_written = (HERE / "../history/chain/schemas/on-behalf-of.cedarschema").read_text()
     assert normalize(generated).startswith(normalize(hand_written))
     assert "action ListOrders" in generated
 

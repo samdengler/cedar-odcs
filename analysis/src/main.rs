@@ -1,23 +1,29 @@
-//! Symbolic proofs over each iteration's policy set, and over the
-//! composition of the iterations.
+//! Symbolic proofs, in two modes.
 //!
-//! For every iteration this runner proves, over ALL possible requests
-//! (not the corpus's samples):
+//! `prove DIR` proves one use case, the folder being its own
+//! statement of what must hold:
 //!
-//!   - spec equivalence: the policy set is decision-for-decision
-//!     equivalent to a one-or-two-policy behavioral spec, or
-//!   - guardrail no-ops: adding a forbid that states an invariant
-//!     ("support never updates", "restricted is unreadable",
-//!     "undeclared fields fail closed") changes no decision, which
-//!     proves the invariant already held, and
-//!   - never-errors: each policy evaluates without error under the
-//!     schema's assumptions.
+//!   - never-errors: each policy in `DIR/policies.cedar` evaluates
+//!     without error under the schema `DIR`'s build wrote, for every
+//!     request in every request environment.
+//!   - guardrail no-ops: every `*.cedar` under `DIR/guardrails/` is a
+//!     forbid stating an invariant ("support never updates",
+//!     "restricted is unreadable", "undeclared fields fail closed");
+//!     adding it changes no decision, which proves the invariant
+//!     already held. Whatever is in the directory applies; there is no
+//!     manifest.
 //!
-//! It also runs the reveal: with `owner` declared optional in the
-//! schema (modeling a store that may not know an order), Cedar's
-//! validator rejects the unguarded `resource.owner` access in the
-//! object-level policies, the same gap the corpus pins as runtime
-//! evaluation errors. The field policies' `has` guards pass.
+//! `prove-history ROOT` proves the chain of iterations that built the
+//! orders use case, and the reservations use case's own short chain.
+//! For every iteration it runs the two proofs above against that
+//! iteration's policies, plus, for the first two, spec equivalence:
+//! the policy set is decision-for-decision equivalent to a one-or-two-
+//! policy behavioral spec. It also runs the reveal: with `owner`
+//! declared optional in the schema (modeling a store that may not know
+//! an order), Cedar's validator rejects the unguarded `resource.owner`
+//! access in the object-level policies, the same gap the corpus pins
+//! as runtime evaluation errors. The field policies' `has` guards
+//! pass.
 //!
 //! Then, across iterations (iteration 8, provable composition):
 //!
@@ -30,14 +36,18 @@
 //!     confining the comparison to a region such as direct mode).
 //!     Without a declared revision the pair must differ, and the
 //!     runner shows that it does.
-//!   - every guardrail against the final set: carried ones proven
-//!     again, revised ones pointed at their successors, retired ones
+//!   - the final set: every guardrail the live use case carries is
+//!     proven a no-op against it again, and every retired guardrail is
 //!     shown to fail, so the retirement list is checked rather than
 //!     asserted.
 //!
+//! Everything the chain reads that is not a use case's live policies
+//! lives in `history/chain/`: the hand-written schemas, the specs, the
+//! declared revisions and restrictions, and the retired guardrails.
+//!
 //! Requires the cvc5 solver; see README.md in this directory.
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, bail, Context, Result};
 use cedar_policy::{PolicySet, RequestEnv, Schema};
 use cedar_policy_symcc::{
     solver::LocalSolver, CedarSymCompiler, CompiledPolicy, CompiledPolicySet,
@@ -45,17 +55,6 @@ use cedar_policy_symcc::{
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-
-/// The repository root: the first positional command line argument, or
-/// (absent that) the analysis crate's directory's parent, as before. Takes
-/// an explicit root so a later run can grow a `prove DIR` mode without
-/// this derivation changing again.
-fn repo_root() -> PathBuf {
-    match std::env::args().nth(1) {
-        Some(arg) => PathBuf::from(arg),
-        None => Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf(),
-    }
-}
 
 fn read(path: &Path) -> String {
     std::fs::read_to_string(path).unwrap_or_else(|e| panic!("reading {}: {e}", path.display()))
@@ -66,8 +65,14 @@ fn load_schema(text: &str) -> Result<Schema> {
     Ok(schema)
 }
 
-fn stem(path: &str) -> String {
-    Path::new(path).file_stem().unwrap().to_string_lossy().into_owned()
+fn stem(path: &Path) -> String {
+    path.file_stem().unwrap().to_string_lossy().into_owned()
+}
+
+/// A path as it reads in the runner's output: relative to the
+/// repository root when it is under it, absolute otherwise.
+fn shown(root: &Path, path: &Path) -> String {
+    path.strip_prefix(root).unwrap_or(path).to_string_lossy().into_owned()
 }
 
 struct Tally {
@@ -205,6 +210,24 @@ async fn prove_never_errors(
     Ok(())
 }
 
+/// Prove every guardrail file of a directory a no-op against a policy
+/// set: the invariant each one states already holds.
+async fn prove_guardrails(
+    compiler: &mut Compiler,
+    schema: &Schema,
+    policy_text: &str,
+    pset: &PolicySet,
+    files: &[PathBuf],
+    tally: &mut Tally,
+) -> Result<()> {
+    for file in files {
+        let combined = joined(policy_text, &[read(file)])?;
+        let label = format!("guardrail is a no-op: {}", stem(file));
+        prove_equivalent(compiler, schema, pset, &combined, &label, tally).await?;
+    }
+    Ok(())
+}
+
 /// The reveal: retype each policy under a schema where `owner` is
 /// optional, modeling an entity store that may not know an order.
 /// Policies with bare `resource.owner` access fail validation; the
@@ -231,60 +254,142 @@ fn optional_owner_reveal(schema_text: &str, pset: &PolicySet) -> Result<()> {
     Ok(())
 }
 
+// ------------------------------------------------------------ paths
+
+/// The Cedar schema a build wrote for a use case directory: the one
+/// `*.cedarschema` under `contract/generated/`, the use case shape, or
+/// under `generated/`, the shape before it, that is not an entities
+/// schema.
+fn built_schema(dir: &Path) -> Result<PathBuf> {
+    for generated in [dir.join("contract/generated"), dir.join("generated")] {
+        if !generated.is_dir() {
+            continue;
+        }
+        let mut found: Vec<PathBuf> = std::fs::read_dir(&generated)?
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("cedarschema"))
+            .filter(|p| !p.file_name().unwrap().to_string_lossy().contains("entities"))
+            .collect();
+        found.sort();
+        match found.len() {
+            0 => continue,
+            1 => return Ok(found.remove(0)),
+            _ => bail!("{} holds more than one built schema", generated.display()),
+        }
+    }
+    bail!("no built schema under {}: run the use case's build first", dir.display())
+}
+
+/// Every `*.cedar` under `dir/guardrails/`, in a stable order. A
+/// directory that is not there is no guardrails, not a failure.
+fn guardrail_files(dir: &Path) -> Vec<PathBuf> {
+    let mut files: Vec<PathBuf> = match std::fs::read_dir(dir.join("guardrails")) {
+        Ok(entries) => entries
+            .filter_map(|e| e.ok().map(|e| e.path()))
+            .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("cedar"))
+            .collect(),
+        Err(_) => Vec::new(),
+    };
+    files.sort();
+    files
+}
+
+fn joined(base: &str, extras: &[String]) -> Result<PolicySet> {
+    let mut text = base.to_string();
+    for extra in extras {
+        text.push('\n');
+        text.push_str(extra);
+    }
+    Ok(PolicySet::from_str(&text)?)
+}
+
+// ------------------------------------------- prove DIR: one use case
+
+async fn prove_use_case(compiler: &mut Compiler, dir: &Path, tally: &mut Tally) -> Result<()> {
+    println!("=== {} ===", dir.display());
+    let schema = load_schema(&read(&built_schema(dir)?))?;
+    let policy_text = read(&dir.join("policies.cedar"));
+    let pset = PolicySet::from_str(&policy_text)?;
+
+    prove_never_errors(compiler, &schema, &pset, tally).await?;
+    let files = guardrail_files(dir);
+    prove_guardrails(compiler, &schema, &policy_text, &pset, &files, tally).await?;
+    Ok(())
+}
+
+// ------------------------------------- prove-history: the tables
+
+/// Where each snapshot of the chain sits, relative to the repository
+/// root. Run 3 moves the snapshots under `history/`; this table is the
+/// one place that changes.
+const SNAPSHOTS: &[(&str, &str)] = &[
+    ("bola-reads", "bola-reads"),
+    ("bola-writes", "bola-writes"),
+    ("field-reads", "field-reads"),
+    ("field-writes", "field-writes"),
+    ("function-level", "function-level"),
+    ("on-behalf-of", "on-behalf-of"),
+    ("contract", "contract"),
+    ("row-filtering", "row-filtering"),
+];
+
+/// Everything the chain reads that is not a use case's live policies.
+fn chain(root: &Path) -> PathBuf {
+    root.join("history/chain")
+}
+
 struct Iteration {
     name: &'static str,
-    /// Directory under the repository root holding policies.cedar; the
-    /// name itself for the numbered iterations, usecases/<name> for
-    /// the use cases running on core.
-    dir: &'static str,
-    /// The chain of policy sets this iteration belongs to. Preservation
-    /// pairs and the final-set guardrail pass run per chain.
-    chain: &'static str,
+    /// Whether the policies are a live use case's (`usecases/<name>/`)
+    /// rather than a snapshot's.
+    live: bool,
+    /// A behavioral spec under `history/chain/specs/`.
     spec: Option<&'static str>,
+    /// For a snapshot, the guardrails that iteration was proven
+    /// against, each `<snapshot>/<file>` under that snapshot's own
+    /// `guardrails/` or `retired/<file>` under
+    /// `history/chain/retired/`. A live use case names none: whatever
+    /// is in its `guardrails/` applies.
     guardrails: &'static [&'static str],
 }
 
 const ITERATIONS: &[Iteration] = &[
     Iteration {
         name: "bola-reads",
-        dir: "bola-reads",
-        chain: "orders",
-        spec: Some("specs/bola-reads.spec.cedar"),
+        live: false,
+        spec: Some("bola-reads.spec.cedar"),
         guardrails: &[],
     },
     Iteration {
         name: "bola-writes",
-        dir: "bola-writes",
-        chain: "orders",
-        spec: Some("specs/bola-writes.spec.cedar"),
-        guardrails: &["guardrails/bola-writes/support-never-updates.cedar"],
+        live: false,
+        spec: Some("bola-writes.spec.cedar"),
+        guardrails: &["retired/support-never-updates.cedar"],
     },
     Iteration {
         name: "field-reads",
-        dir: "field-reads",
-        chain: "orders",
+        live: false,
         spec: None,
         guardrails: &[
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-reads/support-confidential.cedar",
+            "field-reads/fail-closed.cedar",
+            "field-reads/restricted-unreadable.cedar",
+            "field-reads/support-confidential.cedar",
         ],
     },
     // Iteration 4 carries the applicable prior guardrails the way the
     // corpora are carried: proven again against the grown policy set.
     Iteration {
         name: "field-writes",
-        dir: "field-writes",
-        chain: "orders",
+        live: false,
         spec: None,
         guardrails: &[
-            "guardrails/bola-writes/support-never-updates.cedar",
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-reads/support-confidential.cedar",
-            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
-            "guardrails/field-writes/system-fields-unwritable.cedar",
-            "guardrails/field-writes/writes-require-ownership.cedar",
+            "retired/support-never-updates.cedar",
+            "field-reads/fail-closed.cedar",
+            "field-reads/restricted-unreadable.cedar",
+            "field-reads/support-confidential.cedar",
+            "field-writes/mass-assignment-fail-closed.cedar",
+            "field-writes/system-fields-unwritable.cedar",
+            "retired/writes-require-ownership.cedar",
         ],
     },
     // Iteration 5 grants the support role an object-level update, so
@@ -293,19 +398,18 @@ const ITERATIONS: &[Iteration] = &[
     // role-writes-only-role-fields bounds the path that replaced them.
     Iteration {
         name: "function-level",
-        dir: "function-level",
-        chain: "orders",
+        live: false,
         spec: None,
         guardrails: &[
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-reads/support-confidential.cedar",
-            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
-            "guardrails/field-writes/system-fields-unwritable.cedar",
-            "guardrails/function-level/refund-requires-finance.cedar",
-            "guardrails/function-level/cancel-requires-owner-or-support.cedar",
-            "guardrails/function-level/role-writes-only-role-fields.cedar",
-            "guardrails/function-level/refund-implies-no-read.cedar",
+            "field-reads/fail-closed.cedar",
+            "field-reads/restricted-unreadable.cedar",
+            "field-reads/support-confidential.cedar",
+            "field-writes/mass-assignment-fail-closed.cedar",
+            "field-writes/system-fields-unwritable.cedar",
+            "function-level/refund-requires-finance.cedar",
+            "function-level/cancel-requires-owner-or-support.cedar",
+            "function-level/role-writes-only-role-fields.cedar",
+            "function-level/refund-implies-no-read.cedar",
         ],
     },
     // Iteration 6 gives every policy a mode. Guardrails that mention
@@ -313,22 +417,21 @@ const ITERATIONS: &[Iteration] = &[
     // direct mode; the mode-free ones are carried as they are.
     Iteration {
         name: "on-behalf-of",
-        dir: "on-behalf-of",
-        chain: "orders",
+        live: false,
         spec: None,
         guardrails: &[
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
-            "guardrails/field-writes/system-fields-unwritable.cedar",
-            "guardrails/function-level/refund-requires-finance.cedar",
-            "guardrails/on-behalf-of/support-confidential.cedar",
-            "guardrails/on-behalf-of/cancel-requires-owner-or-support.cedar",
-            "guardrails/on-behalf-of/role-writes-only-role-fields.cedar",
-            "guardrails/on-behalf-of/refund-implies-no-read.cedar",
-            "guardrails/on-behalf-of/acting-bounded-by-ownership.cedar",
-            "guardrails/on-behalf-of/acting-reads-customer-levels-only.cedar",
-            "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
+            "field-reads/fail-closed.cedar",
+            "field-reads/restricted-unreadable.cedar",
+            "field-writes/mass-assignment-fail-closed.cedar",
+            "field-writes/system-fields-unwritable.cedar",
+            "function-level/refund-requires-finance.cedar",
+            "on-behalf-of/support-confidential.cedar",
+            "on-behalf-of/cancel-requires-owner-or-support.cedar",
+            "on-behalf-of/role-writes-only-role-fields.cedar",
+            "on-behalf-of/refund-implies-no-read.cedar",
+            "on-behalf-of/acting-bounded-by-ownership.cedar",
+            "on-behalf-of/acting-reads-customer-levels-only.cedar",
+            "on-behalf-of/acting-writes-owner-fields-only.cedar",
         ],
     },
     // Iteration 7 changes no policy. Its schema is the one the build
@@ -337,22 +440,21 @@ const ITERATIONS: &[Iteration] = &[
     // the same guardrails as the hand-written one.
     Iteration {
         name: "contract",
-        dir: "contract",
-        chain: "orders",
+        live: false,
         spec: None,
         guardrails: &[
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
-            "guardrails/field-writes/system-fields-unwritable.cedar",
-            "guardrails/function-level/refund-requires-finance.cedar",
-            "guardrails/on-behalf-of/support-confidential.cedar",
-            "guardrails/on-behalf-of/cancel-requires-owner-or-support.cedar",
-            "guardrails/on-behalf-of/role-writes-only-role-fields.cedar",
-            "guardrails/on-behalf-of/refund-implies-no-read.cedar",
-            "guardrails/on-behalf-of/acting-bounded-by-ownership.cedar",
-            "guardrails/on-behalf-of/acting-reads-customer-levels-only.cedar",
-            "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
+            "field-reads/fail-closed.cedar",
+            "field-reads/restricted-unreadable.cedar",
+            "field-writes/mass-assignment-fail-closed.cedar",
+            "field-writes/system-fields-unwritable.cedar",
+            "function-level/refund-requires-finance.cedar",
+            "on-behalf-of/support-confidential.cedar",
+            "on-behalf-of/cancel-requires-owner-or-support.cedar",
+            "on-behalf-of/role-writes-only-role-fields.cedar",
+            "on-behalf-of/refund-implies-no-read.cedar",
+            "on-behalf-of/acting-bounded-by-ownership.cedar",
+            "on-behalf-of/acting-reads-customer-levels-only.cedar",
+            "on-behalf-of/acting-writes-owner-fields-only.cedar",
         ],
     },
     // Iteration 9 adds the list verb, which has no order to own. The
@@ -360,71 +462,29 @@ const ITERATIONS: &[Iteration] = &[
     // verbs explicitly, so the list call stays outside it.
     Iteration {
         name: "row-filtering",
-        dir: "row-filtering",
-        chain: "orders",
+        live: false,
         spec: None,
         guardrails: &[
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
-            "guardrails/field-writes/system-fields-unwritable.cedar",
-            "guardrails/function-level/refund-requires-finance.cedar",
-            "guardrails/on-behalf-of/support-confidential.cedar",
-            "guardrails/on-behalf-of/cancel-requires-owner-or-support.cedar",
-            "guardrails/on-behalf-of/role-writes-only-role-fields.cedar",
-            "guardrails/on-behalf-of/refund-implies-no-read.cedar",
-            "guardrails/row-filtering/acting-bounded-by-ownership.cedar",
-            "guardrails/on-behalf-of/acting-reads-customer-levels-only.cedar",
-            "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
+            "field-reads/fail-closed.cedar",
+            "field-reads/restricted-unreadable.cedar",
+            "field-writes/mass-assignment-fail-closed.cedar",
+            "field-writes/system-fields-unwritable.cedar",
+            "function-level/refund-requires-finance.cedar",
+            "on-behalf-of/support-confidential.cedar",
+            "on-behalf-of/cancel-requires-owner-or-support.cedar",
+            "on-behalf-of/role-writes-only-role-fields.cedar",
+            "on-behalf-of/refund-implies-no-read.cedar",
+            "row-filtering/acting-bounded-by-ownership.cedar",
+            "on-behalf-of/acting-reads-customer-levels-only.cedar",
+            "on-behalf-of/acting-writes-owner-fields-only.cedar",
         ],
     },
-    // The orders use case on core: iteration 9's policies, the schema
-    // core's build wrote, the same guardrails.
-    Iteration {
-        name: "orders",
-        dir: "usecases/orders",
-        chain: "orders",
-        spec: None,
-        guardrails: &[
-            "guardrails/field-reads/fail-closed.cedar",
-            "guardrails/field-reads/restricted-unreadable.cedar",
-            "guardrails/field-writes/mass-assignment-fail-closed.cedar",
-            "guardrails/field-writes/system-fields-unwritable.cedar",
-            "guardrails/function-level/refund-requires-finance.cedar",
-            "guardrails/on-behalf-of/support-confidential.cedar",
-            "guardrails/on-behalf-of/cancel-requires-owner-or-support.cedar",
-            "guardrails/on-behalf-of/role-writes-only-role-fields.cedar",
-            "guardrails/on-behalf-of/refund-implies-no-read.cedar",
-            "guardrails/row-filtering/acting-bounded-by-ownership.cedar",
-            "guardrails/on-behalf-of/acting-reads-customer-levels-only.cedar",
-            "guardrails/on-behalf-of/acting-writes-owner-fields-only.cedar",
-        ],
-    },
-    // The reservations use case, iteration 11: access by possession of
-    // a record locator and the holder's last name. A chain of its own.
-    Iteration {
-        name: "reservations",
-        dir: "usecases/reservations",
-        chain: "reservations",
-        spec: None,
-        guardrails: &[
-            "guardrails/reservations/lookup-requires-pair-or-specialist.cedar",
-            "guardrails/reservations/read-requires-pair-or-specialist.cedar",
-            "guardrails/reservations/possession-names-the-record.cedar",
-            "guardrails/reservations/fail-closed.cedar",
-            "guardrails/reservations/restricted-unreadable.cedar",
-            "guardrails/reservations/possession-reads-customer-levels-only.cedar",
-            "guardrails/reservations/writes-require-pair-or-specialist.cedar",
-            "guardrails/reservations/possession-writes-named-record-only.cedar",
-            "guardrails/reservations/possession-writes-owner-paths-only.cedar",
-            "guardrails/reservations/mass-assignment-fail-closed.cedar",
-            "guardrails/reservations/specialist-levels-off-with-pair.cedar",
-            "guardrails/reservations/specialist-paths-off-with-pair.cedar",
-            "guardrails/reservations/specialist-writes-specialist-paths-only.cedar",
-            "guardrails/reservations/list-requires-specialist.cedar",
-            "guardrails/reservations/only-employees-acted-for.cedar",
-        ],
-    },
+    // The orders use case, iteration 11: iteration 9's policies, the
+    // schema its own build wrote, the guardrails in its folder.
+    Iteration { name: "orders", live: true, spec: None, guardrails: &[] },
+    // The reservations use case, iterations 11 to 13: access by
+    // possession of a record locator and the holder's last name.
+    Iteration { name: "reservations", live: true, spec: None, guardrails: &[] },
 ];
 
 fn iteration(name: &str) -> &'static Iteration {
@@ -434,15 +494,47 @@ fn iteration(name: &str) -> &'static Iteration {
         .unwrap_or_else(|| panic!("no iteration named {name}"))
 }
 
+/// The directory holding an iteration's policies: the use case's own
+/// folder, or the snapshot's place in SNAPSHOTS.
+fn dir_of(root: &Path, name: &str) -> PathBuf {
+    if iteration(name).live {
+        return root.join("usecases").join(name);
+    }
+    let (_, dir) = SNAPSHOTS
+        .iter()
+        .find(|(snapshot, _)| *snapshot == name)
+        .unwrap_or_else(|| panic!("no snapshot directory for {name}"));
+    root.join(dir)
+}
+
+/// The guardrail files an iteration is proven against: the files its
+/// table entry names, or, for a live use case, everything in its
+/// `guardrails/`.
+fn guardrails_of(root: &Path, it: &Iteration) -> Vec<PathBuf> {
+    if it.live {
+        return guardrail_files(&dir_of(root, it.name));
+    }
+    it.guardrails
+        .iter()
+        .map(|entry| match entry.split_once('/') {
+            Some(("retired", file)) => chain(root).join("retired").join(file),
+            Some((snapshot, file)) => dir_of(root, snapshot).join("guardrails").join(file),
+            None => panic!("guardrail {entry} names no directory"),
+        })
+        .collect()
+}
+
 /// A consecutive pair of iterations whose composition is proven.
 struct Pair {
     older: &'static str,
     newer: &'static str,
     /// Policies added to the older set before comparing: the widenings
     /// the newer iteration declared. Without them the pair must differ.
+    /// Files under `history/chain/revisions/`.
     revisions: &'static [&'static str],
     /// Forbids added to both sets before comparing, confining the
-    /// comparison to a region of the request space.
+    /// comparison to a region of the request space. Files under
+    /// `history/chain/restrictions/`.
     restrictions: &'static [&'static str],
 }
 
@@ -459,8 +551,8 @@ const PAIRS: &[Pair] = &[
         older: "field-writes",
         newer: "function-level",
         revisions: &[
-            "revisions/function-level/support-updates-any-order.cedar",
-            "revisions/function-level/support-updates-support-fields.cedar",
+            "function-level/support-updates-any-order.cedar",
+            "function-level/support-updates-support-fields.cedar",
         ],
         restrictions: &[],
     },
@@ -470,7 +562,7 @@ const PAIRS: &[Pair] = &[
         older: "function-level",
         newer: "on-behalf-of",
         revisions: &[],
-        restrictions: &["restrictions/direct-mode.cedar"],
+        restrictions: &["direct-mode.cedar"],
     },
     // Iteration 7 generates the schema and the tag maps and leaves the
     // policies alone; the pair proves the generated schema decides as
@@ -483,127 +575,85 @@ const PAIRS: &[Pair] = &[
     Pair {
         older: "contract",
         newer: "row-filtering",
-        revisions: &["revisions/row-filtering/anyone-lists-orders.cedar"],
+        revisions: &["row-filtering/anyone-lists-orders.cedar"],
         restrictions: &[],
     },
-    // The move to core changes no policy: the use case decides as
-    // iteration 9 did, under the schema core's build wrote.
+    // The move to the use case shape changes no policy: the use case
+    // decides as iteration 9 did, under the schema its build wrote.
     Pair { older: "row-filtering", newer: "orders", revisions: &[], restrictions: &[] },
 ];
 
-/// Guardrails that no longer hold against the final set, each with
-/// the iteration that retired it and why. The runner shows that each
-/// one really does fail.
-const RETIRED: &[(&str, &str)] = &[
+/// The live use case that closes each chain. Its `guardrails/` is the
+/// chain's current invariant set, proven against its policies, and
+/// every retired guardrail of the chain must differ from them.
+const FINALS: &[&str] = &["orders", "reservations"];
+
+/// Guardrails that no longer hold, each with the final set it must
+/// differ from and the iteration that retired it. The files are under
+/// `history/chain/retired/`, and the runner shows that each one really
+/// does fail.
+const RETIRED: &[(&str, &str, &str)] = &[
     (
-        "guardrails/reservations/lookup-requires-pair.cedar",
+        "lookup-requires-pair.cedar",
+        "reservations",
         "iteration 13 lets a specialist look up without a pair; revised to lookup-requires-pair-or-specialist",
     ),
     (
-        "guardrails/reservations/read-requires-pair.cedar",
+        "read-requires-pair.cedar",
+        "reservations",
         "iteration 13 lets a specialist read without a pair; revised to read-requires-pair-or-specialist",
     ),
     (
-        "guardrails/reservations/writes-require-pair.cedar",
+        "writes-require-pair.cedar",
+        "reservations",
         "iteration 13 lets a specialist write remarks and cancel without a pair; revised to writes-require-pair-or-specialist",
     ),
     (
-        "guardrails/bola-writes/support-never-updates.cedar",
+        "support-never-updates.cedar",
+        "orders",
         "iteration 5 granted the support role an object-level update",
     ),
     (
-        "guardrails/field-writes/writes-require-ownership.cedar",
+        "writes-require-ownership.cedar",
+        "orders",
         "iteration 5 opened a role-granted write path, bounded by role-writes-only-role-fields",
     ),
 ];
 
-/// The final policy set of each chain, against which every guardrail
-/// of that chain is given a status.
-const FINALS: &[(&str, &str)] = &[("orders", "orders"), ("reservations", "reservations")];
-
 /// Iterations whose schema is a build output rather than a file in
-/// schemas/: the path is relative to this directory.
+/// `history/chain/schemas/`: the iteration whose directory holds it.
 const SCHEMA_OVERRIDES: &[(&str, &str)] = &[
-    ("contract", "../contract/generated/orders.cedarschema"),
-    ("row-filtering", "../contract/generated/orders.cedarschema"),
-    ("orders", "../usecases/orders/generated/order.cedarschema"),
-    ("reservations", "../usecases/reservations/generated/reservation.cedarschema"),
+    ("contract", "contract"),
+    ("row-filtering", "contract"),
+    ("orders", "orders"),
+    ("reservations", "reservations"),
 ];
 
-fn schema_path(analysis: &Path, iteration: &str) -> PathBuf {
-    match SCHEMA_OVERRIDES.iter().find(|(name, _)| *name == iteration) {
-        Some((_, path)) => analysis.join(path),
-        None => analysis.join(format!("schemas/{iteration}.cedarschema")),
+fn schema_path(root: &Path, name: &str) -> Result<PathBuf> {
+    match SCHEMA_OVERRIDES.iter().find(|(i, _)| *i == name) {
+        Some((_, owner)) => built_schema(&dir_of(root, owner)),
+        None => Ok(chain(root).join(format!("schemas/{name}.cedarschema"))),
     }
-}
-
-/// The guardrail of the same name in the latest later iteration, if
-/// any: a revised guardrail is proven in its successor's form.
-fn successor_of(analysis: &Path, path: &str) -> Option<String> {
-    let iteration = path.split('/').nth(1)?;
-    let position = ITERATIONS.iter().position(|i| i.name == iteration)?;
-    let name = stem(path);
-    ITERATIONS[position + 1..]
-        .iter()
-        .map(|later| format!("guardrails/{}/{name}.cedar", later.name))
-        .filter(|candidate| analysis.join(candidate).exists())
-        .last()
 }
 
 fn policies_of(root: &Path, name: &str) -> String {
-    read(&root.join(iteration(name).dir).join("policies.cedar"))
+    read(&dir_of(root, name).join("policies.cedar"))
 }
 
-/// The chain a guardrail file belongs to, from the iteration named by
-/// its directory; None for a directory naming no iteration.
-fn chain_of_guardrail(path: &str) -> Option<&'static str> {
-    let name = path.split('/').nth(1)?;
-    ITERATIONS.iter().find(|i| i.name == name).map(|i| i.chain)
-}
+// ------------------------------------- prove-history: the two passes
 
-fn joined(base: &str, extras: &[String]) -> Result<PolicySet> {
-    let mut text = base.to_string();
-    for extra in extras {
-        text.push('\n');
-        text.push_str(extra);
-    }
-    Ok(PolicySet::from_str(&text)?)
-}
-
-/// Every guardrail file under guardrails/, in a stable order.
-fn all_guardrails(analysis: &Path) -> Vec<String> {
-    let mut files = Vec::new();
-    for dir in std::fs::read_dir(analysis.join("guardrails")).unwrap() {
-        let dir = dir.unwrap().path();
-        for file in std::fs::read_dir(&dir).unwrap() {
-            let file = file.unwrap().path();
-            if file.extension().and_then(|e| e.to_str()) != Some("cedar") {
-                continue;
-            }
-            files.push(
-                file.strip_prefix(analysis).unwrap().to_string_lossy().into_owned(),
-            );
-        }
-    }
-    files.sort();
-    files
-}
-
-async fn prove_iterations(compiler: &mut Compiler, tally: &mut Tally) -> Result<()> {
-    let root = repo_root();
-    let analysis = root.join("analysis");
-
-    for iteration in ITERATIONS {
-        println!("\n=== {} ===", iteration.name);
-        let schema_text = read(&schema_path(&analysis, iteration.name));
+async fn prove_iterations(compiler: &mut Compiler, root: &Path, tally: &mut Tally) -> Result<()> {
+    for it in ITERATIONS {
+        println!("\n=== {} ===", it.name);
+        let schema_text = read(&schema_path(root, it.name)?);
         let schema = load_schema(&schema_text)?;
-        let policy_text = policies_of(&root, iteration.name);
+        let policy_text = policies_of(root, it.name);
         let pset = PolicySet::from_str(&policy_text)?;
 
         prove_never_errors(compiler, &schema, &pset, tally).await?;
 
-        if let Some(spec_path) = iteration.spec {
-            let spec = PolicySet::from_str(&read(&analysis.join(spec_path)))?;
+        if let Some(spec) = it.spec {
+            let spec = PolicySet::from_str(&read(&chain(root).join("specs").join(spec)))?;
             prove_equivalent(
                 compiler,
                 &schema,
@@ -615,27 +665,21 @@ async fn prove_iterations(compiler: &mut Compiler, tally: &mut Tally) -> Result<
             .await?;
         }
 
-        for guardrail_path in iteration.guardrails {
-            let combined = joined(&policy_text, &[read(&analysis.join(guardrail_path))])?;
-            let label = format!("guardrail is a no-op: {}", stem(guardrail_path));
-            prove_equivalent(compiler, &schema, &pset, &combined, &label, tally).await?;
-        }
+        let files = guardrails_of(root, it);
+        prove_guardrails(compiler, &schema, &policy_text, &pset, &files, tally).await?;
 
         optional_owner_reveal(&schema_text, &pset)?;
     }
     Ok(())
 }
 
-async fn prove_composition(compiler: &mut Compiler, tally: &mut Tally) -> Result<()> {
-    let root = repo_root();
-    let analysis = root.join("analysis");
-
+async fn prove_composition(compiler: &mut Compiler, root: &Path, tally: &mut Tally) -> Result<()> {
     println!("\n=== composition: preservation between iterations ===");
     for pair in PAIRS {
-        let older_schema = load_schema(&read(&schema_path(&analysis, pair.older)))?;
+        let older_schema = load_schema(&read(&schema_path(root, pair.older)?))?;
         let older_actions: BTreeSet<String> =
             older_schema.actions().map(|a| a.to_string()).collect();
-        let newer_schema = load_schema(&read(&schema_path(&analysis, pair.newer)))?;
+        let newer_schema = load_schema(&read(&schema_path(root, pair.newer)?))?;
         let envs: Vec<RequestEnv> = newer_schema
             .request_envs()
             .filter(|env| older_actions.contains(&action_of(env)))
@@ -644,16 +688,16 @@ async fn prove_composition(compiler: &mut Compiler, tally: &mut Tally) -> Result
         let restrictions: Vec<String> = pair
             .restrictions
             .iter()
-            .map(|p| read(&analysis.join(p)))
+            .map(|p| read(&chain(root).join("restrictions").join(p)))
             .collect();
         let revisions: Vec<String> = pair
             .revisions
             .iter()
-            .map(|p| read(&analysis.join(p)))
+            .map(|p| read(&chain(root).join("revisions").join(p)))
             .collect();
 
-        let older_text = policies_of(&root, pair.older);
-        let newer_text = policies_of(&root, pair.newer);
+        let older_text = policies_of(root, pair.older);
+        let newer_text = policies_of(root, pair.newer);
         let newer = joined(&newer_text, &restrictions)?;
         let older_plain = joined(&older_text, &restrictions)?;
         let mut with_revisions = revisions.clone();
@@ -662,11 +706,13 @@ async fn prove_composition(compiler: &mut Compiler, tally: &mut Tally) -> Result
 
         let mut label = format!("{} preserved in {}", pair.older, pair.newer);
         if !pair.revisions.is_empty() {
-            let names: Vec<String> = pair.revisions.iter().map(|p| stem(p)).collect();
+            let names: Vec<String> =
+                pair.revisions.iter().map(|p| stem(Path::new(p))).collect();
             label.push_str(&format!(" given the declared revision {}", names.join(", ")));
         }
         if !pair.restrictions.is_empty() {
-            let names: Vec<String> = pair.restrictions.iter().map(|p| stem(p)).collect();
+            let names: Vec<String> =
+                pair.restrictions.iter().map(|p| stem(Path::new(p))).collect();
             label.push_str(&format!(" within {}", names.join(", ")));
         }
         prove_equivalent_in(compiler, &newer_schema, &older_revised, &newer, &envs, &label, tally)
@@ -684,30 +730,69 @@ async fn prove_composition(compiler: &mut Compiler, tally: &mut Tally) -> Result
         }
     }
 
-    for (chain, final_name) in FINALS {
-    println!("\n=== composition: every {chain} guardrail against the final set ({final_name}) ===");
-    let schema = load_schema(&read(&schema_path(&analysis, final_name)))?;
-    let envs: Vec<RequestEnv> = schema.request_envs().collect();
-    let final_text = policies_of(&root, final_name);
-    let final_set = PolicySet::from_str(&final_text)?;
-    for path in all_guardrails(&analysis) {
-        if chain_of_guardrail(&path) != Some(chain) {
-            continue;
-        }
-        let combined = joined(&final_text, &[read(&analysis.join(&path))])?;
-        if let Some((_, reason)) = RETIRED.iter().find(|(p, _)| *p == path) {
-            let label = format!("retired  {path}: {reason}");
-            show_difference(compiler, &schema, &final_set, &combined, &envs, &label, tally).await?;
-        } else if let Some(successor) = successor_of(&analysis, &path) {
-            println!("  revised {path}: superseded by {successor}");
-        } else {
-            let label = format!("carried  {path}");
+    for final_name in FINALS {
+        println!("\n=== composition: every {final_name} guardrail against the final set ===");
+        let schema = load_schema(&read(&schema_path(root, final_name)?))?;
+        let envs: Vec<RequestEnv> = schema.request_envs().collect();
+        let final_text = policies_of(root, final_name);
+        let final_set = PolicySet::from_str(&final_text)?;
+
+        for path in guardrail_files(&dir_of(root, final_name)) {
+            let combined = joined(&final_text, &[read(&path)])?;
+            let label = format!("carried  {}", shown(root, &path));
             prove_equivalent_in(compiler, &schema, &final_set, &combined, &envs, &label, tally)
                 .await?;
         }
-    }
+        for (file, _, reason) in RETIRED.iter().filter(|(_, against, _)| against == final_name) {
+            let path = chain(root).join("retired").join(file);
+            let combined = joined(&final_text, &[read(&path)])?;
+            let label = format!("retired  {}: {reason}", shown(root, &path));
+            show_difference(compiler, &schema, &final_set, &combined, &envs, &label, tally).await?;
+        }
     }
     Ok(())
+}
+
+// ------------------------------------------------------- the command
+
+const USAGE: &str = "usage: cargo run -- prove <use case dir>\n       \
+                     cargo run -- prove-history <repository root>";
+
+enum Mode {
+    /// One use case's own folder.
+    UseCase(PathBuf),
+    /// The chain, from the repository root.
+    History(PathBuf),
+}
+
+/// The repository root when no argument names one: the analysis
+/// crate's directory's parent.
+fn default_root() -> PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf()
+}
+
+/// Whether a directory is the repository root, so that the bare
+/// argument `check.sh` passes still means the chain.
+fn is_repo_root(dir: &Path) -> bool {
+    dir.join("analysis/Cargo.toml").is_file()
+}
+
+fn mode() -> Result<Mode> {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    match args.split_first() {
+        None => Ok(Mode::History(default_root())),
+        Some((first, rest)) if first == "prove" => match rest.first() {
+            Some(dir) => Ok(Mode::UseCase(PathBuf::from(dir))),
+            None => Err(anyhow!("prove needs a use case directory\n{USAGE}")),
+        },
+        Some((first, rest)) if first == "prove-history" => Ok(Mode::History(
+            rest.first().map(PathBuf::from).unwrap_or_else(default_root),
+        )),
+        Some((first, rest)) if rest.is_empty() && is_repo_root(Path::new(first)) => {
+            Ok(Mode::History(PathBuf::from(first)))
+        }
+        Some((first, _)) => Err(anyhow!("{first} is neither a mode nor the repository root\n{USAGE}")),
+    }
 }
 
 /// Spawn cvc5 from $CVC5, PATH, or the copy bundled in .tools.
@@ -728,12 +813,20 @@ fn solver() -> Result<LocalSolver> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    println!("root: {}", repo_root().display());
+    let mode = mode()?;
     let mut compiler = CedarSymCompiler::new(solver()?)?;
     let mut tally = Tally { pass: 0, fail: 0, shown: 0 };
 
-    prove_iterations(&mut compiler, &mut tally).await?;
-    prove_composition(&mut compiler, &mut tally).await?;
+    match mode {
+        Mode::UseCase(dir) => {
+            prove_use_case(&mut compiler, &dir, &mut tally).await?;
+        }
+        Mode::History(root) => {
+            println!("root: {}", root.display());
+            prove_iterations(&mut compiler, &root, &mut tally).await?;
+            prove_composition(&mut compiler, &root, &mut tally).await?;
+        }
+    }
 
     println!(
         "\n{} proved, {} failed, {} differences shown as expected",

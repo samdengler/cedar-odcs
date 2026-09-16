@@ -1,7 +1,7 @@
 # analysis
 
-Symbolic proofs over each iteration's policy set, and over the
-composition of the iterations, using Cedar's symbolic compiler
+Symbolic proofs over a use case's policies, and over the chain of
+iterations that built them, using Cedar's symbolic compiler
 ([cedar-policy-symcc](https://crates.io/crates/cedar-policy-symcc))
 and the cvc5 SMT solver. The corpus samples decisions by example; these
 checks prove properties over every possible request. The compiler
@@ -10,17 +10,44 @@ The solver, the schemas and entity models written here, and the
 enforcement code that builds requests are not; "What the proofs
 assume" below says what a green run does and does not establish.
 
+## The two modes
+
+```sh
+cargo run -- prove ../usecases/reservations
+cargo run -- prove-history ..
+```
+
+`prove DIR` is one use case: never-errors for every policy in
+`DIR/policies.cedar`, and every `*.cedar` under `DIR/guardrails/`
+proven a no-op against them, under the schema `DIR`'s build wrote
+(`contract/generated/`, or `generated/` in the shape before it).
+Whatever is in `guardrails/` applies; there is no manifest, and
+retiring a guardrail is deleting the file, which git records.
+
+`prove-history ROOT` is the chain of iterations that built the orders
+use case, and the reservations use case's own short chain: the same
+two proofs for every iteration, spec equivalence for the first two,
+the reveal, and the composition passes below. Everything it reads that
+is not a use case's live policies lives in `history/chain/`:
+`schemas/` for iterations 1 through 6, `specs/`, `revisions/`,
+`restrictions/`, and `retired/`, the five retired guardrails. Each
+snapshot's own guardrails sit in its own directory
+(`field-reads/guardrails/` and so on), the form that iteration was
+proven against. A bare directory argument that is the repository root
+means `prove-history`, which is how `check.sh` calls it.
+
 ## What is proved
 
-Two kinds of properties, checked per iteration against the same
-`policies.cedar` files the tests run:
+Two kinds of properties, checked against the same `policies.cedar`
+files the tests run:
 
 - Spec equivalence. The policy set is decision-for-decision equivalent
-  to a short behavioral spec (`specs/`). This proves both directions at
-  once: everyone intended gets in, nobody else does.
-- Guardrail no-ops. A forbid stating an invariant (`guardrails/`) is
-  added to the policy set, and the combined set is proven equivalent to
-  the original: the forbid forbids nothing that was allowed, so the
+  to a short behavioral spec (`history/chain/specs/`, iterations 1 and
+  2). This proves both directions at once: everyone intended gets in,
+  nobody else does.
+- Guardrail no-ops. A forbid stating an invariant is added to the
+  policy set, and the combined set is proven equivalent to the
+  original: the forbid forbids nothing that was allowed, so the
   invariant already held.
 
 Plus never-errors for every policy, and the reveal: retyping each
@@ -56,7 +83,7 @@ Current results, all proved:
   party nothing is allowed outside that party's ownership, for every
   verb; acting reads only public and confidential fields and writes
   only owner fields. Four earlier guardrails that mention ownership or
-  a role are revised for mode (`guardrails/on-behalf-of/`); the five
+  a role are revised for mode (`on-behalf-of/guardrails/`); the five
   mode-free ones are carried unchanged and reproven.
 - `contract`: iteration 6's policies, unchanged, proven again against
   the schema iteration 7's build wrote from the data contract
@@ -68,9 +95,10 @@ Current results, all proved:
   reproven against the thirteen-policy set, with acting-bounded-by-
   ownership revised to name the six order verbs, because the list
   call has no order to own and is allowed while acting.
-- `orders` (the use case on core, iteration 11): iteration 9's
-  policies under the schema core's build wrote; preserved from
-  `row-filtering` with no revision; the twelve guardrails reproven.
+- `orders` (the use case, iteration 11): iteration 9's policies under
+  the schema its own build wrote; preserved from `row-filtering` with
+  no revision; the twelve guardrails in `usecases/orders/guardrails/`
+  reproven.
 - `reservations` (iteration 11): three possession policies never
   error; a lookup and a read require a presented pair; a pair reaches
   only the record it names; undeclared paths fail closed, nested ones
@@ -86,8 +114,13 @@ Current results, all proved:
   outside the employee role is granted nothing on any verb.
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
-  restrictions; every guardrail ever written has a checked status
-  against the final set. 141 proofs, 3 expected differences shown.
+  restrictions; every guardrail each final set still carries is proven
+  against it, and every retired one is shown to fail. 35 proofs, 7
+  expected differences shown.
+
+A whole `prove-history` run is 211 proofs and 7 expected differences.
+`prove usecases/orders` alone is 25 and `prove usecases/reservations`
+29, each a subset of the run above.
 
 ## Composition
 
@@ -103,14 +136,15 @@ Three kinds of check, all in `src/main.rs`:
   without a separate proof: a policy for `RefundOrder` cannot change a `ReadOrder`
   decision because the two are proven in separate environments.
 - Declared revisions. An iteration that changes an earlier decision
-  on purpose declares the change as a policy file in `revisions/`.
-  It is added to the older set before comparing, so the proof reads:
-  the older iteration plus these widenings equals the newer
-  one. The runner also compares without the revisions and shows the
-  difference, so a declared revision is visible rather than assumed.
-- Restrictions. A forbid in `restrictions/` added to both sides
-  confines the comparison to a region of the request space. Iteration
-  6 promised no change in direct mode; `restrictions/direct-mode.cedar`
+  on purpose declares the change as a policy file in
+  `history/chain/revisions/`. It is added to the older set before
+  comparing, so the proof reads: the older iteration plus these
+  widenings equals the newer one. The runner also compares without the
+  revisions and shows the difference, so a declared revision is
+  visible rather than assumed.
+- Restrictions. A forbid in `history/chain/restrictions/` added to
+  both sides confines the comparison to a region of the request space.
+  Iteration 6 promised no change in direct mode; `direct-mode.cedar`
   forbids every request that carries `actingFor`, and the pair is
   proven equivalent over what remains.
 
@@ -127,9 +161,9 @@ The pairs and their results:
 | contract | row-filtering | anyone-lists-orders | none | all seven |
 | row-filtering | orders | none | none | all seven |
 
-All eight pairs are proven. Iterations belong to chains (`orders`,
-`reservations`); pairs and the guardrail status pass run per chain,
-each against that chain's final set. The contract pair changes no policy; it
+All eight pairs are proven. The pairs run along the orders chain,
+which the orders use case closes; the final-set pass runs once per
+live use case, `orders` and `reservations`. The contract pair changes no policy; it
 proves that the schema generated from the data contract decides as
 the hand-written one did. The two share that generated schema, which
 declares the list verb, so iteration 9's one permit is a declared
@@ -137,23 +171,21 @@ revision on it and the six order actions are proven untouched. Without its decla
 field-writes to function-level pair differs under `UpdateOrder`, shown
 as expected.
 
-The second pass puts every file under `guardrails/` against the final
-policy set (`row-filtering`) and prints a status for each:
+The second pass puts every guardrail of a chain against that chain's
+final policy set, the live use case, and prints a status for each:
 
-- carried: proven a no-op against the final set (twelve files, the
-  five mode-free ones, six under `guardrails/on-behalf-of/`, and the
-  one under `guardrails/row-filtering/`).
-- revised: superseded by a file of the same name under a later
-  iteration's guardrail directory, which is the one proven (five files:
-  support-confidential, cancel-requires-owner-or-support,
-  role-writes-only-role-fields, refund-implies-no-read, and iteration
-  6's acting-bounded-by-ownership, revised by iteration 9 to name the
-  order verbs).
-- retired: listed in `RETIRED` with the iteration and reason, and shown
-  to fail against the final set, so the retirement is a checked fact
-  rather than a note (two files: support-never-updates and
+- carried: the files in the use case's own `guardrails/`, each proven
+  a no-op against its policies (twelve for orders, fifteen for
+  reservations). The pre-mode and pre-list forms of six of the orders
+  files are history: they are proven in the iteration that wrote them
+  and are not carried forward.
+- retired: listed in `RETIRED` with the final set it must differ from
+  and the iteration that retired it, and shown to fail against that
+  set, so the retirement is a checked fact rather than a note. The
+  files are in `history/chain/retired/`: support-never-updates and
   writes-require-ownership, both retired by iteration 5's role-granted
-  update).
+  update, and the three bare-pair reservations guardrails iteration 13
+  replaced.
 
 The runner's output for the composition section:
 
@@ -172,16 +204,23 @@ The runner's output for the composition section:
         actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
   PASS  on-behalf-of preserved in contract
         actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
-  PASS  contract preserved in row-filtering
-        actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
+  PASS  contract preserved in row-filtering given the declared revision anyone-lists-orders
+        actions compared: Action::"CancelOrder", Action::"ListOrders", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
+  SHOWN without the declared revision, contract and row-filtering differ: differs under Action::"ListOrders", as expected
+  PASS  row-filtering preserved in orders
+        actions compared: Action::"CancelOrder", Action::"ListOrders", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
 
-=== composition: every guardrail against the final set (row-filtering) ===
-  SHOWN retired  guardrails/bola-writes/support-never-updates.cedar: iteration 5 granted the support role an object-level update: differs under Action::"UpdateOrder", as expected
-  PASS  carried  guardrails/field-reads/fail-closed.cedar
-  PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
-  revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
+=== composition: every orders guardrail against the final set ===
+  PASS  carried  usecases/orders/guardrails/acting-bounded-by-ownership.cedar
+  PASS  carried  usecases/orders/guardrails/acting-reads-customer-levels-only.cedar
   ...
-208 proved, 0 failed, 7 differences shown as expected
+  SHOWN retired  history/chain/retired/support-never-updates.cedar: iteration 5 granted the support role an object-level update: differs under Action::"UpdateOrder", as expected
+  SHOWN retired  history/chain/retired/writes-require-ownership.cedar: iteration 5 opened a role-granted write path, bounded by role-writes-only-role-fields: differs under Action::"UpdateOrderField", as expected
+
+=== composition: every reservations guardrail against the final set ===
+  PASS  carried  usecases/reservations/guardrails/fail-closed.cedar
+  ...
+211 proved, 0 failed, 7 differences shown as expected
 ```
 
 ## What the proofs assume
@@ -246,7 +285,7 @@ should look.
    for any writers map that names `support` as a writer. Iteration 4's
    map never did, so the carried corpus never sampled the change. The
    second widening is now declared in
-   `revisions/function-level/support-updates-support-fields.cedar`,
+   `history/chain/revisions/function-level/support-updates-support-fields.cedar`,
    and the pair is proven with both. The corpus checks the map that
    exists; the proof checks every map.
 
@@ -269,11 +308,15 @@ unzip -q cvc5.zip -d .tools && rm cvc5.zip
 chmod +x .tools/cvc5-macOS-arm64-static/bin/cvc5
 ```
 
-Then:
+Then, one use case or the whole chain:
 
 ```sh
-cargo run
+cargo run -- prove ../usecases/reservations
+cargo run -- prove-history ..
 ```
+
+Either exits nonzero on a failure. `cargo run` with no argument, and
+`cargo run -- <repository root>`, both mean `prove-history`.
 
 Or, from the repository root, every check the repository has in one
 command, tests first and then the proofs:
@@ -284,7 +327,7 @@ command, tests first and then the proofs:
 
 The runner uses the compiler's `CompiledPolicySet` and `CompiledPolicy`
 API, which validates and compiles a policy set once per request
-environment and reuses it across queries. The schemas in `schemas/`
-are hand-written per iteration through iteration 6; from iteration 7
-on, the schema is the one the contract build writes, named in
-`SCHEMA_OVERRIDES`.
+environment and reuses it across queries. The schemas in
+`history/chain/schemas/` are hand-written per iteration through
+iteration 6; from iteration 7 on, the schema is the one the contract
+build writes, in the directory `SCHEMA_OVERRIDES` names.
