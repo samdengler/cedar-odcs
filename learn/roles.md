@@ -20,9 +20,9 @@ Seventy-five cases, carried from nine iterations. Then compare what
 three callers may do on bob's order:
 
 ```sh
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/callers/alice.json
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/callers/carol.json
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/callers/dave.json
+uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/alice.json
+uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/carol.json
+uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/dave.json
 ```
 
 Alice, a customer, holds no verb on an order she does not own. Carol,
@@ -47,7 +47,7 @@ permit(
 Try the refund as alice, who owns the order:
 
 ```sh
-uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/callers/alice.json \
+uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/tests/identities/alice.json \
     --tool orders___refund_order --arg orderId=order-1001
 ```
 
@@ -60,7 +60,7 @@ Carol may update any order, but the writers map bounds what she may
 set. Put a payload through the request leg:
 
 ```sh
-uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/callers/carol.json \
+uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/tests/identities/carol.json \
     --tool orders___update_order --arg orderId=order-2002 \
     --arg 'changes={"internalNotes": "called back", "shippingAddress": "9 Elm St"}'
 ```
@@ -75,7 +75,7 @@ refused the same way: mass assignment fails closed.
 Carol acting for alice holds alice's access, and her own role is off:
 
 ```sh
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/callers/carol-for-alice.json
+uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json
 ```
 
 The confidential fields of alice's order are readable, the internal

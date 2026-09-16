@@ -14,7 +14,7 @@ def test_committed_artifacts_are_current():
 
 def test_maps_carry_iteration_7():
     prior = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "../../contract/generated/contract.entities.json").read_text())}
-    now = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "generated/contract.entities.json").read_text())}
+    now = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "contract/generated/contract.entities.json").read_text())}
     assert now == prior
 
 
