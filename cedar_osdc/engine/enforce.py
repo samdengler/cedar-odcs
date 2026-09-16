@@ -1,5 +1,12 @@
 """The two legs of enforcement, for any use case.
 
+  decide_request   the request leg for a Call (see engine/calls.py)
+  decide_response  the response leg for a Call: the rows of a list,
+                   or the one object
+
+Both are written in terms of three questions an interface may also
+ask directly:
+
   check_call     the request leg: the verb round, then the payload
                  round for a verb that carries a payload
   filter_rows    the response leg for a list: the row round, then
@@ -22,11 +29,15 @@ looked up in the tag maps by the field policies.
 import json
 import re
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import cedarpy
 
 from cedar_osdc.engine.identities import Projection, project
 from cedar_osdc.engine.usecase import UseCase
+
+if TYPE_CHECKING:  # calls.py imports this module; the name is for readers
+    from cedar_osdc.engine.calls import Call
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:@/-]+$")
 
@@ -97,6 +108,12 @@ class Engine:
 
     # ---- the request leg
 
+    def decide_request(self, claims: dict, call: "Call") -> CallDecision:
+        """One tool call on the request leg: the verb round, the
+        pre-fetch the verb may need, then the payload round."""
+        return self.check_call(claims, call.action, call.resource, call.payload,
+                               call.context, row_id=call.row_id)
+
     def check_call(self, claims: dict, action: str, resource: str,
                    body: dict = None, context: dict = None, row_id: str = None) -> CallDecision:
         projection = self.projection(claims)
@@ -129,6 +146,18 @@ class Engine:
         return CallDecision(allowed=not denied, denied_verb=False, denied_fields=sorted(set(denied)))
 
     # ---- the response leg
+
+    def decide_response(self, claims: dict, call: "Call", payload) -> RowsDecision:
+        """The tool's payload, filtered as the tool's returns says: a
+        list of rows or one object. A payload of the other shape
+        cannot be filtered and is withheld."""
+        if call.returns == "list":
+            if not isinstance(payload, list):
+                raise ValueError("list tool returned no list")
+            return self.filter_rows(claims, payload, call.context)
+        if not isinstance(payload, dict):
+            raise ValueError("object tool returned no object")
+        return self.filter_object(claims, payload, call.context)
 
     def filter_rows(self, claims: dict, rows: list, context: dict = None) -> RowsDecision:
         projection = self.projection(claims)

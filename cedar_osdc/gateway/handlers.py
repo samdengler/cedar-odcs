@@ -1,17 +1,10 @@
 """AgentCore Gateway interceptor handlers, for any use case.
 
 handlers(use_case) returns (request_handler, response_handler) in the
-event and result formats the Gateway documents for MCP targets. The
-use case's tool table says, per MCP tool name:
-
-  action     the request-leg verb
-  id         the argument that names the resource, or
-  collection the collection id for a list verb
-  payload    the argument holding a write payload, if any
-  presented  arguments copied into context as the presented facts,
-             e.g. a record locator and a last name, if any
-  returns    "object" or "list": what the response leg filters;
-             every tool must say
+event and result formats the Gateway documents for MCP targets. A
+handler reads the event, hands the engine a Call (engine/calls.py
+maps the tool table onto the engine's terms) and writes the engine's
+decision back as a Gateway result.
 
 Anything a handler cannot evaluate is rejected or withheld.
 
@@ -26,7 +19,8 @@ import base64
 import json
 import logging
 
-from cedar_osdc.engine.enforce import ID_PATTERN, Engine
+from cedar_osdc.engine import calls
+from cedar_osdc.engine.enforce import Engine
 from cedar_osdc.engine.usecase import UseCase
 
 log = logging.getLogger("cedar-osdc")
@@ -129,75 +123,21 @@ class Handlers:
         self.engine = Engine(use_case)
         self.tools = use_case.tools
 
-    # ---- what a tool call names
-
-    def _resource(self, tool: dict, arguments: dict) -> str:
-        if "collection" in tool:
-            return f'Collection::"{tool["collection"]}"'
-        value = arguments.get(tool["id"])
-        if not isinstance(value, str) or not ID_PATTERN.match(value):
-            raise ValueError(f"argument {tool['id']} is missing or not an id")
-        return self.engine.resource_ref(value)
-
-    def _context(self, tool: dict, arguments: dict) -> dict:
-        """The presented facts, when the call presents them. A tool
-        that declares them accepts a call without them: the policies
-        then decide on the caller's own grants, a specialist's view,
-        and a customer's call falls to the lookup's default deny. A
-        partial pair is an error."""
-        if "presented" not in tool:
-            return {}
-        values = {name: arguments.get(argument) for argument, name in tool["presented"].items()}
-        given = {name: v for name, v in values.items() if isinstance(v, str) and v}
-        # The resource id can double as one half of the pair; the pair
-        # is presented when the other half is. A locator alone is a
-        # call without a pair.
-        id_names = {name for argument, name in tool["presented"].items() if argument == tool.get("id")}
-        if not (set(given) - id_names):
-            return {}
-        if len(given) != len(values):
-            missing = sorted(set(values) - set(given))
-            raise ValueError(f"presented facts incomplete: {', '.join(missing)} missing")
-        # Presented facts are compared upper-cased; the contract states
-        # the record holds them that way.
-        return {"presented": {name: v.upper() for name, v in given.items()}}
-
-    def _payload(self, tool: dict, arguments: dict):
-        expected = set()
-        if "id" in tool:
-            expected.add(tool["id"])
-        if "payload" in tool:
-            expected.add(tool["payload"])
-        expected |= set(tool.get("presented", {}))
-        unexpected = set(arguments) - expected
-        if unexpected:
-            raise ValueError(f"unexpected arguments: {', '.join(sorted(unexpected))}")
-        if "payload" not in tool:
-            return None
-        payload = arguments.get(tool["payload"])
-        if not isinstance(payload, dict) or not payload:
-            raise ValueError(f"argument {tool['payload']} must be an object naming the fields to change")
-        return payload
-
     # ---- the two interception points
 
     def request_handler(self, event: dict, context=None) -> dict:
         try:
             request = event["mcp"]["gatewayRequest"]
             body = _body(request.get("body"))
-            call = _tool_call(body)
-            if call is None:
+            tool_call = _tool_call(body)
+            if tool_call is None:
                 return _pass_request(body)
-            name, arguments = call
+            name, arguments = tool_call
             tool = self.tools.get(name)
             if tool is None:
                 return _reject(body.get("id"), f"tool {name} is not governed; no policy covers it")
             claims = claims_of(_header(request.get("headers"), "Authorization"))
-            decision = self.engine.check_call(
-                claims, tool["action"], self._resource(tool, arguments),
-                self._payload(tool, arguments), self._context(tool, arguments),
-                row_id=arguments.get(tool["id"]) if "id" in tool else None,
-            )
+            decision = self.engine.decide_request(claims, calls.call(self.use_case, name, arguments))
         except (TokenError, ValueError, KeyError, TypeError) as e:
             log.info("rejected: request could not be evaluated: %s", e)
             return _reject(_request_id(event), f"request could not be evaluated: {e}")
@@ -215,26 +155,20 @@ class Handlers:
         try:
             request = event["mcp"]["gatewayRequest"]
             response = event["mcp"]["gatewayResponse"]
-            call = _tool_call(_body(request.get("body")))
-            if call is None or "result" not in (response.get("body") or {}):
+            tool_call = _tool_call(_body(request.get("body")))
+            if tool_call is None or "result" not in (response.get("body") or {}):
                 return _pass_response(response)
-            name, arguments = call
+            name, arguments = tool_call
             tool = self.tools.get(name)
             if tool is None or "returns" not in tool:
                 raise ValueError(f"tool {name} declares no result kind")
             claims = claims_of(_header(request.get("headers"), "Authorization"))
-            presented = self._context(tool, arguments)
+            governed = calls.call(self.use_case, name, arguments)
             result = response["body"]["result"]
-            payload = _result_payload(result)
-            if tool["returns"] == "list":
-                if not isinstance(payload, list):
-                    raise ValueError("list tool returned no list")
-                decision = self.engine.filter_rows(claims, payload, presented)
+            decision = self.engine.decide_response(claims, governed, _result_payload(result))
+            if governed.returns == "list":
                 filtered = decision.rows
             else:
-                if not isinstance(payload, dict):
-                    raise ValueError("object tool returned no object")
-                decision = self.engine.filter_object(claims, payload, presented)
                 # An object the caller may not read leaves as an empty
                 # object: the call succeeded upstream (a write may have
                 # happened) and nothing of the record is shown.

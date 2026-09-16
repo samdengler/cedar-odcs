@@ -37,8 +37,8 @@ from pathlib import Path
 
 import cedarpy
 
+from cedar_osdc.engine import calls
 from cedar_osdc.engine.enforce import Engine
-from cedar_osdc.gateway.handlers import Handlers
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -101,12 +101,6 @@ def _caller(path: str) -> dict:
     if not isinstance(claims, dict) or "sub" not in claims:
         raise Usage(f"{path} is not a caller file: a JSON object of claims with a sub")
     return claims
-
-
-def _bearer(claims: dict) -> str:
-    def b64(o):
-        return base64.urlsafe_b64encode(json.dumps(o, separators=(",", ":")).encode()).rstrip(b"=").decode()
-    return f"Bearer {b64({'alg': 'RS256', 'typ': 'JWT'})}.{b64(claims)}.dry-run"
 
 
 def _schema_text(use_case) -> str:
@@ -220,42 +214,45 @@ def cmd_dry_run(args):
     if tool is None:
         raise Usage(f"tool {args.tool} is not in the use case's tool table: {', '.join(use_case.tools)}")
     arguments = _pairs(args.arg)
-    handlers = Handlers(use_case)
-    engine = handlers.engine
+    engine = Engine(use_case)
     projection = engine.projection(claims)
     print(f"Caller     {projection.principal}, {projection.mode}"
           + (f", acting for {projection.context['actingFor']['__entity']['id']}" if projection.context else ""))
     print(f"Tool       {args.tool}  {json.dumps(arguments)}")
-    body = {"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": args.tool, "arguments": arguments}}
-    event = {"interceptorInputVersion": "1.0", "mcp": {"rawGatewayRequest": {"body": json.dumps(body)},
-             "gatewayRequest": {"path": "/mcp", "httpMethod": "POST",
-                                "headers": {"Authorization": _bearer(claims)}, "body": body}}}
-    out = handlers.request_handler(event)
-    if "transformedGatewayResponse" in out["mcp"]:
-        print(f"Request    rejected: {out['mcp']['transformedGatewayResponse']['body']['error']['message']}")
+    # A call the engine cannot make sense of is rejected in the same
+    # words the interceptor rejects it with.
+    try:
+        governed = calls.call(use_case, args.tool, arguments)
+        decision = engine.decide_request(claims, governed)
+    except (ValueError, KeyError, TypeError) as e:
+        print(f"Request    rejected: request could not be evaluated: {e}")
+        return 1
+    if not decision.allowed:
+        verb = governed.action.split("::", 1)[1].strip('"')
+        if decision.denied_verb:
+            print(f"Request    rejected: {verb} is not permitted for this caller")
+        else:
+            print(f"Request    rejected: {verb} rejected; fields not permitted: {', '.join(decision.denied_fields)}")
         return 1
     print("Request    forwarded: the verb round passed"
-          + (" and the payload round passed" if "payload" in tool else ""))
+          + (" and the payload round passed" if governed.payload is not None else ""))
     if not args.response:
         print("Response   (give --response FILE to run the response leg on a payload)")
         return 0
     payload = json.loads(Path(args.response).read_text())
-    presented = handlers._context(tool, arguments)
-    if tool.get("returns") == "list":
+    if governed.returns == "list":
         if not isinstance(payload, list):
             raise Usage("a list tool's response must be a JSON array")
-        decision = engine.filter_rows(claims, payload, presented)
-    else:
-        if not isinstance(payload, dict):
-            raise Usage("an object tool's response must be a JSON object")
-        decision = engine.filter_object(claims, payload, presented)
+    elif not isinstance(payload, dict):
+        raise Usage("an object tool's response must be a JSON object")
+    decision = engine.decide_response(claims, governed, payload)
     for d in decision.dropped:
         print(f"Response   row {d['position']} ({d['id'] or 'no id'}) dropped: {d['reason']}")
     for position, paths in decision.stripped.items():
         print(f"Response   row {position} stripped: {', '.join(paths)}")
     if not decision.dropped and not decision.stripped:
         print("Response   nothing removed")
-    result = decision.rows if tool.get("returns") == "list" else (decision.rows[0] if decision.rows else {})
+    result = decision.rows if governed.returns == "list" else (decision.rows[0] if decision.rows else {})
     print("Returned   " + json.dumps(result, indent=2).replace("\n", "\n           "))
     return 0
 
