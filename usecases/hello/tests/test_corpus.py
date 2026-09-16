@@ -1,7 +1,7 @@
 import pytest
 
 from cedar_osdc.engine.corpus import cases, check
-from learn.hello.usecase import ROOT
+from usecases.hello.usecase import ROOT
 
 
 @pytest.mark.parametrize("policies,entities,request_spec", list(cases(ROOT)))

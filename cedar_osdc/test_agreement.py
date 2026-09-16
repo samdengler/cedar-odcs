@@ -26,7 +26,7 @@ from cedar_osdc.gateway import handlers
 REPO = Path(__file__).resolve().parents[1]
 
 USE_CASES = {
-    "hello": REPO / "learn/hello",
+    "hello": REPO / "usecases/hello",
     "orders": REPO / "usecases/orders",
     "reservations": REPO / "usecases/reservations",
 }

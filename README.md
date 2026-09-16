@@ -8,8 +8,8 @@ Clone, then from the repository root with [uv](https://docs.astral.sh/uv/) insta
 
 ```sh
 uv sync
-uv run cedar-osdc run-tests learn/hello
-uv run cedar-osdc check-access learn/hello --caller learn/hello/callers/ada.json
+uv run cedar-osdc run-tests usecases/hello
+uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/ada.json
 ```
 
 Then follow the [learning path](learn/README.md): three steps that begin where Cedar's own tutorial ends, each a use case you can run, change, and break. The [guide](learn/guide.md) says what to know about your own domain to fill in a use case, and the [proofs page](learn/proofs.md) says what the symbolic proofs give and do not. The rest of this README is the map of the repository and the record of how it was built.

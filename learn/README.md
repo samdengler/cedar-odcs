@@ -18,12 +18,12 @@ installed:
 
 ```sh
 uv sync
-uv run cedar-osdc run-tests learn/hello
+uv run cedar-osdc run-tests usecases/hello
 ```
 
 | Step | What you learn | Runs against | Cedar pages it assumes |
 |---|---|---|---|
-| [1. Hello](hello/README.md) | a contract classifies fields, policies grant levels, the response leg strips the rest | `learn/hello` | terms, syntax |
+| [1. Hello](../usecases/hello/README.md) | a contract classifies fields, policies grant levels, the response leg strips the rest | `usecases/hello` | terms, syntax |
 | [2. Roles, verbs, and acting for someone](roles.md) | roles hold verbs, a payload is checked field by field, an employee acts for a customer | `usecases/orders` | schema, [entity tags](https://docs.cedarpolicy.com/policies/syntax-entity.html), [validation](https://docs.cedarpolicy.com/policies/validation.html) |
 | [3. Possession, nesting, and three parties](possession.md) | a credential presented in context, a check that waits for the record, nested paths, the agent as a party | `usecases/reservations` | [entities and context JSON](https://docs.cedarpolicy.com/auth/entities-syntax.html) |
 

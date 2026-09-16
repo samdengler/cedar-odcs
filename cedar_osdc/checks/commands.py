@@ -4,7 +4,7 @@ learning pages show.
 The pages are the specification: each fenced ``sh`` block a reader is
 told to run should actually run. This module finds those command
 lines in the current source (README.md, learn/*.md, and
-learn/hello/README.md), skips the ones that are syntax references
+usecases/hello/README.md), skips the ones that are syntax references
 rather than something to type (they carry a placeholder like ``DIR``
 or ``FILE``) or that are slow and covered elsewhere (``uv sync``,
 ``uv run pytest``), and runs the rest from the repository root.
@@ -86,7 +86,7 @@ def extract_from_html(text: str) -> list[str]:
 def _command_sources(root: Path) -> list[Path]:
     paths = [root / "README.md"]
     paths.extend(sorted((root / "learn").glob("*.md")))
-    hello_readme = root / "learn" / "hello" / "README.md"
+    hello_readme = root / "usecases" / "hello" / "README.md"
     if hello_readme not in paths:
         paths.append(hello_readme)
     return [p for p in paths if p.is_file()]

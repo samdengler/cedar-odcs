@@ -11,16 +11,16 @@ Cedar pages this step assumes: terms and concepts, basic syntax.
 ## Run it
 
 ```sh
-uv run cedar-osdc run-tests learn/hello
+uv run cedar-osdc run-tests usecases/hello
 ```
 
 Nine cases pass. Each is a Cedar authorization request with the
-decision it should get, in `tests/hello.json`. Now ask what each
+decision it should get, in `tests/test-cases/hello.json`. Now ask what each
 caller may do:
 
 ```sh
-uv run cedar-osdc check-access learn/hello --caller learn/hello/callers/ada.json
-uv run cedar-osdc check-access learn/hello --caller learn/hello/callers/rae.json
+uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/ada.json
+uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/rae.json
 ```
 
 Ada, the owner, reads the body and not the reviewer's notes. Rae, the
@@ -28,8 +28,8 @@ reviewer, reads the reviewer's notes and not the body. Then put one
 tool call through the two legs, without calling any tool:
 
 ```sh
-uv run cedar-osdc dry-run learn/hello --caller learn/hello/callers/rae.json \
-    --tool notes___get_note --arg noteId=note-1 --response learn/hello/note-1.json
+uv run cedar-osdc dry-run usecases/hello --caller usecases/hello/tests/identities/rae.json \
+    --tool notes___get_note --arg noteId=note-1 --response usecases/hello/tests/responses/note-1.json
 ```
 
 The request leg forwards the call; the response leg strips `body`
@@ -47,8 +47,8 @@ do in production, with the same code.
 | `facts.json` | the sample users, the role, and two notes |
 | `entities.json` | facts plus the generated maps, what the policies read |
 | `policies.cedar` | four policies; no policy names a field |
-| `tests/hello.json` | nine cases in the cedar-integration-tests format |
-| `callers/ada.json`, `callers/rae.json` | a caller file each: the claims of that caller's credential, standing in for a decoded, verified JWT |
+| `tests/test-cases/hello.json` | nine cases in the cedar-integration-tests format |
+| `tests/identities/ada.json`, `tests/identities/rae.json` | a caller file each: the claims of that caller's credential, standing in for a decoded, verified JWT |
 | `usecase.py` | the descriptor: entity type, which field is the owner, the verbs, the tool table |
 
 The policies never name a field. They look the field up in the map
@@ -79,8 +79,8 @@ Open `unity/notes.column_tags.json` and change the `body` column's
 classification from `confidential` to `internal`. Rebuild and rerun:
 
 ```sh
-uv run cedar-osdc build learn/hello
-uv run cedar-osdc run-tests learn/hello
+uv run cedar-osdc build usecases/hello
+uv run cedar-osdc run-tests usecases/hello
 ```
 
 Two cases fail: ada can no longer read her own body, and rae now can.
@@ -96,11 +96,11 @@ grew and the policies read the map.
 ## See it in Cedar's playground
 
 ```sh
-uv run cedar-osdc share learn/hello --case "rae may not read the body"
+uv run cedar-osdc share usecases/hello --case "rae may not read the body"
 ```
 
 Open the link. The playground shows the same request, entities, and
 policies, and evaluates to denied. Edit the reviewer's field policy
 there to include `"confidential"` and evaluate again.
 
-Next: [step 2, roles, verbs, and acting for someone](../roles.md).
+Next: [step 2, roles, verbs, and acting for someone](../../learn/roles.md).

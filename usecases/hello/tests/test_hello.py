@@ -5,14 +5,15 @@ import json
 from pathlib import Path
 
 from cedar_osdc.engine.contract import build
+from cedar_osdc.engine.usecase import paths
 from cedar_osdc.gateway.handlers import handlers
-from learn.hello.usecase import BUILD, ROOT, USE_CASE
+from usecases.hello.usecase import BUILD, ROOT, USE_CASE
 
 request_handler, response_handler = handlers(USE_CASE)
 
 
 def event(name):
-    return json.loads((ROOT / "events" / f"{name}.json").read_text())
+    return json.loads((paths(ROOT).events / f"{name}.json").read_text())
 
 
 def test_committed_artifacts_are_current():

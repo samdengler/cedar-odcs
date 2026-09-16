@@ -22,6 +22,13 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 # this rather than editing the page (a later docs task, 3b/3d, rewrites
 # it); recorded here so the test stays green and the debt stays
 # visible.
+#
+# README.md's "## Start here" block still types `learn/hello`: task 2b
+# moved hello to `usecases/hello` but leaves this page's words for run
+# 3 (2b is a path move only). Both lines now exit 2 ("has no usecase.py;
+# a use case directory is needed") instead of running; recorded here,
+# not fixed by editing the page, for the same reason as the reservations
+# lines above.
 KNOWN_BROKEN_COMMANDS = set()
 
 
