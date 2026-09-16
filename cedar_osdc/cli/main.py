@@ -37,10 +37,10 @@ from pathlib import Path
 
 import cedarpy
 
-from core.enforce import Engine
-from core.interceptor import Handlers
+from cedar_osdc.engine.enforce import Engine
+from cedar_osdc.gateway.handlers import Handlers
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 
 
 class Usage(Exception):
@@ -400,7 +400,7 @@ def cmd_share(args):
 
 def cmd_build(args):
     module = load_use_case(args.directory)
-    from core.contract import build, write
+    from cedar_osdc.engine.contract import build, write
     outputs = build(module.USE_CASE.root, **module.BUILD)
     write(module.USE_CASE.root, outputs)
     for rel in outputs:

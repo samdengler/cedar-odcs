@@ -188,7 +188,7 @@ The runner's output for the composition section:
 
 A proof here is a statement about a policy set under a schema, as far
 as the symbolic compiler and cvc5 are correct. Three things sit
-outside it, and the enforcement code in `core/` is responsible for
+outside it, and the enforcement code in `cedar_osdc/engine/` is responsible for
 them:
 
 1. The schema's attributes are present. Every proof runs under a

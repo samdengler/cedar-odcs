@@ -4,7 +4,7 @@ the response leg, nested leaves filtered by path."""
 import json
 from pathlib import Path
 
-from core.interceptor import handlers
+from cedar_osdc.gateway.handlers import handlers
 from usecases.reservations.usecase import USE_CASE
 
 HERE = Path(__file__).parent
@@ -155,7 +155,7 @@ def test_agent_alone_without_a_pair_is_refused():
 
 
 def test_the_agent_is_typed_as_an_agent_and_the_specialist_is_acted_for():
-    from core.claims import project
+    from cedar_osdc.engine.identities import project
     callers = json.loads((HERE / "callers.json").read_text())
     p = project(callers["agent"], USE_CASE.entities)
     assert p.principal == 'Agent::"reservations-assistant"' and p.mode == "customer-conversation"

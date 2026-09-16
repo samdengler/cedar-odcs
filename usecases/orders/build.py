@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[2]))
 
-from core.contract import build, write  # noqa: E402
+from cedar_osdc.engine.contract import build, write  # noqa: E402
 from usecases.orders.usecase import BUILD, ROOT  # noqa: E402
 
 if __name__ == "__main__":

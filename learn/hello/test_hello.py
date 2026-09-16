@@ -4,8 +4,8 @@ two views, and the committed artifacts are current."""
 import json
 from pathlib import Path
 
-from core.contract import build
-from core.interceptor import handlers
+from cedar_osdc.engine.contract import build
+from cedar_osdc.gateway.handlers import handlers
 from learn.hello.usecase import BUILD, ROOT, USE_CASE
 
 request_handler, response_handler = handlers(USE_CASE)

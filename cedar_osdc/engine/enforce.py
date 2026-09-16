@@ -25,8 +25,8 @@ from dataclasses import dataclass, field
 
 import cedarpy
 
-from core.claims import Projection, project
-from core.usecase import UseCase
+from cedar_osdc.engine.identities import Projection, project
+from cedar_osdc.engine.usecase import UseCase
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:@/-]+$")
 

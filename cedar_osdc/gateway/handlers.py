@@ -14,17 +14,47 @@ use case's tool table says, per MCP tool name:
              every tool must say
 
 Anything a handler cannot evaluate is rejected or withheld.
+
+Decoding the bearer token the Gateway forwards (claims_of, TokenError)
+lives here too: it is a Gateway concern, not the engine's. The
+Gateway's JWT authorizer verified the token; the trust rests on the
+gateway using that authorizer, on passRequestHeaders forwarding the
+validated header, and on the forwarded token being the inbound one.
 """
 
+import base64
 import json
 import logging
 
-from core.claims import TokenError, claims_of
-from core.enforce import ID_PATTERN, Engine
-from core.usecase import UseCase
+from cedar_osdc.engine.enforce import ID_PATTERN, Engine
+from cedar_osdc.engine.usecase import UseCase
 
 log = logging.getLogger("cedar-osdc")
 OUTPUT_VERSION = "1.0"
+
+
+class TokenError(Exception):
+    """The forwarded header is not a bearer token this decoding reads."""
+
+
+def _b64url(segment: str) -> bytes:
+    standard = segment.translate(str.maketrans("-_", "+/")) + "=" * (-len(segment) % 4)
+    return base64.b64decode(standard, validate=True)
+
+
+def claims_of(bearer: str) -> dict:
+    if not isinstance(bearer, str) or not bearer.lower().startswith("bearer "):
+        raise TokenError("no bearer token")
+    parts = bearer.split(" ", 1)[1].strip().split(".")
+    if len(parts) != 3:
+        raise TokenError("not a JWT")
+    try:
+        claims = json.loads(_b64url(parts[1]))
+    except (ValueError, UnicodeDecodeError) as e:
+        raise TokenError(f"payload not decodable: {e}") from e
+    if not isinstance(claims, dict) or "sub" not in claims:
+        raise TokenError("no subject claim")
+    return claims
 
 
 def _body(body):

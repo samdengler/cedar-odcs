@@ -181,5 +181,5 @@ caller and read the result as a governance decision.
 | possession, nested paths, the core split | [iteration 11](../usecases/reservations/iteration-11.html) |
 | the pre-fetch before a write | [iteration 12](../usecases/reservations/iteration-12.html) |
 | the agent as a party, the specialist's view | [iteration 13](../usecases/reservations/iteration-13.html) |
-| the command line | [iteration 14](../core/iteration-14.html) |
-| what a second use case changed in core | [writeup](../core/what-reservations-changed.html) |
+| the command line | [iteration 14](../cedar_osdc/iteration-14.html) |
+| what a second use case changed in the mechanism | [writeup](../cedar_osdc/what-reservations-changed.html) |

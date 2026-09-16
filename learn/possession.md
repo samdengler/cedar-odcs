@@ -111,7 +111,7 @@ the corpus case that said restricted stays nobody's fails.
 Iterations [11](../usecases/reservations/iteration-11.html),
 [12](../usecases/reservations/iteration-12.html), and
 [13](../usecases/reservations/iteration-13.html), and the
-[writeup](../core/what-reservations-changed.html) of what this use
+[writeup](../cedar_osdc/what-reservations-changed.html) of what this use
 case changed in the shared core.
 
 You have now seen everything the mechanism does. The

@@ -9,14 +9,11 @@ the actor claim and says nothing about roles there, so a delegated
 token may carry none. A role claim of any shape other than a list of
 strings is an error.
 
-claims_of decodes the bearer token the Gateway forwards. The Gateway's
-JWT authorizer verified it; the trust rests on the gateway using that
-authorizer, on passRequestHeaders forwarding the validated header, and
-on the forwarded token being the inbound one.
+Decoding the bearer token itself (claims_of, TokenError) is a Gateway
+concern and lives in cedar_osdc.gateway.handlers; this module takes
+already-decoded claims.
 """
 
-import base64
-import json
 from dataclasses import dataclass
 
 ROLE_CLAIM = "roles"
@@ -27,10 +24,6 @@ PRINCIPAL_TYPE = "User"
 # Agent; a human actor is a User.
 WORKLOAD_CLAIM = "client_id"
 AGENT_TYPE = "Agent"
-
-
-class TokenError(Exception):
-    """The forwarded header is not a bearer token this projection reads."""
 
 
 @dataclass
@@ -105,23 +98,3 @@ def project(claims: dict, entities: list) -> Projection:
         mode = "employee-for-customer"
     principal_entity = _entity(actor_type, actor_sub, roles)
     return Projection(f'{actor_type}::"{actor_sub}"', context, principal_entity, mode, acted_for)
-
-
-def _b64url(segment: str) -> bytes:
-    standard = segment.translate(str.maketrans("-_", "+/")) + "=" * (-len(segment) % 4)
-    return base64.b64decode(standard, validate=True)
-
-
-def claims_of(bearer: str) -> dict:
-    if not isinstance(bearer, str) or not bearer.lower().startswith("bearer "):
-        raise TokenError("no bearer token")
-    parts = bearer.split(" ", 1)[1].strip().split(".")
-    if len(parts) != 3:
-        raise TokenError("not a JWT")
-    try:
-        claims = json.loads(_b64url(parts[1]))
-    except (ValueError, UnicodeDecodeError) as e:
-        raise TokenError(f"payload not decodable: {e}") from e
-    if not isinstance(claims, dict) or "sub" not in claims:
-        raise TokenError("no subject claim")
-    return claims

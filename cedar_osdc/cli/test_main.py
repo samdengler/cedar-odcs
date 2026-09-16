@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from core.cli import main, playground_link
+from cedar_osdc.cli.main import main, playground_link
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parents[2]
 R = str(REPO / "usecases/reservations")
 TOKENS = json.loads((REPO / "usecases/reservations/callers.json").read_text())
 RECORDS = json.loads((REPO / "usecases/reservations/records.json").read_text())

@@ -81,7 +81,7 @@ uv run cedar-osdc check-access usecases/orders --caller usecases/orders/callers/
 The confidential fields of alice's order are readable, the internal
 ones are not, and bob's order is out of reach. The token is an
 exchanged one: alice is its subject, carol its actor, and the
-projection in `core/claims.py` turns that into a principal and an
+projection in `cedar_osdc/engine/identities.py` turns that into a principal and an
 `actingFor` in context.
 
 ## Break it
