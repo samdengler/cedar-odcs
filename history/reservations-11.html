@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cedar authorization for MCP tools, iteration 14: the command line</title>
+<title>Cedar authorization for MCP tools, iteration 11: reservations by locator and last name</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -132,23 +132,24 @@ h2:hover .anchor { opacity: 1; }
   <p class="toc-title">Contents</p>
   <a href="#problem">1. The problem</a>
   <a href="#scope">2. Scope of this iteration</a>
-  <a href="#verbs">3. The verbs, beside Cedar's</a>
-  <a href="#dry-run">4. One call, run dry</a>
-  <a href="#check-access">5. What a token grants</a>
-  <a href="#share">6. The playground link</a>
+  <a href="#possession">3. Possession, presented in context</a>
+  <a href="#two-legs">4. Two legs, one credential</a>
+  <a href="#paths">5. Nested records by path</a>
+  <a href="#core">6. Core and the use cases</a>
   <a href="#the-iteration">7. The iteration, file by file</a>
   <a href="#tdd">8. Growing by tests</a>
-  <a href="#running">9. Installing and running it</a>
-  <a href="#decisions">10. Decisions made in this iteration</a>
-  <a href="#open-questions">11. Open questions</a>
+  <a href="#proofs">9. Proved as well as tested</a>
+  <a href="#running">10. Running it</a>
+  <a href="#decisions">11. Decisions made in this iteration</a>
+  <a href="#open-questions">12. Open questions</a>
   <a href="#glossary" class="tail">Glossary</a>
   <a href="#references" class="tail">References</a>
 </nav>
 <div class="page">
 <header class="doc">
   <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
-  <h1>Cedar authorization for MCP tools, iteration 14: the command line</h1>
-  <p>The mechanism at the command line, for a colleague who has cloned the repository and wants to see it work on the existing use cases in minutes, and on their own domain soon after. Nine verbs, matching the official cedar command where the meaning is the same, and two ideas Cedar has no word for.</p>
+  <h1>Cedar authorization for MCP tools, iteration 11: reservations by locator and last name</h1>
+  <p>A second use case to pressure test the mechanism. A reservation is held by whoever presents its record locator and the holder's last name; there is no customer identity beyond that pair. The customer is never a principal, the check runs on the response leg, the record is nested, and the mechanism moves into a core that names no use case.</p>
 </header>
 <main>
 
@@ -157,151 +158,248 @@ h2:hover .anchor { opacity: 1; }
   <ol>
     <li><span class="num">1.</span><a href="#problem">The problem</a></li>
     <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
-    <li><span class="num">3.</span><a href="#verbs">The verbs, beside Cedar's</a></li>
-    <li><span class="num">4.</span><a href="#dry-run">One call, run dry</a></li>
-    <li><span class="num">5.</span><a href="#check-access">What a token grants</a></li>
-    <li><span class="num">6.</span><a href="#share">The playground link</a></li>
+    <li><span class="num">3.</span><a href="#possession">Possession, presented in context</a></li>
+    <li><span class="num">4.</span><a href="#two-legs">Two legs, one credential</a></li>
+    <li><span class="num">5.</span><a href="#paths">Nested records by path</a></li>
+    <li><span class="num">6.</span><a href="#core">Core and the use cases</a></li>
     <li><span class="num">7.</span><a href="#the-iteration">The iteration, file by file</a></li>
     <li><span class="num">8.</span><a href="#tdd">Growing by tests</a></li>
-    <li><span class="num">9.</span><a href="#running">Installing and running it</a></li>
-    <li><span class="num">10.</span><a href="#decisions">Decisions made in this iteration</a></li>
-    <li><span class="num">11.</span><a href="#open-questions">Open questions</a></li>
+    <li><span class="num">9.</span><a href="#proofs">Proved as well as tested</a></li>
+    <li><span class="num">10.</span><a href="#running">Running it</a></li>
+    <li><span class="num">11.</span><a href="#decisions">Decisions made in this iteration</a></li>
+    <li><span class="num">12.</span><a href="#open-questions">Open questions</a></li>
   </ol>
-  <p class="back"><a href="../index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
+  <p class="back"><a href="index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
 </div>
 
 <h2 id="problem">1. The problem</h2>
 
-<p>Thirteen iterations and two use cases are a lot to read before running anything. A colleague evaluating the approach against a third domain needs to see a decision within minutes of cloning, needs to ask a question the corpus never asked without writing a test, and needs to take the same question to Cedar's own playground when the answer surprises them. The unit tests do all of this and are unfriendly about it: they say pass or fail, and they say it in Python.</p>
+<p>Ten iterations built governance for orders, and every rule about who may reach an order compared an identity to its owner. The next questions on that work, how the token's subject maps to an owner and what bounds an employee acting for a customer, are questions about identity. Before answering them for orders, the mechanism is tried on a use case with no customer identity at all.</p>
 
-<p>Cedar has a command line of its own, and a playground with shareable links. This iteration puts the mechanism behind verbs that match Cedar's where the meaning is the same, so a learner who knows one tool is not learning two vocabularies, and links every question to the playground.</p>
+<p>A reservation is identified by a record locator and the last name on the reservation. Whoever presents that pair holds the reservation; that is how the airline works, on the phone and on the web. A customer has no login the rules may rely on and no loyalty identifier they may compare. The reservation carries several passengers, and the pair names one of them, the holder. The record itself is nested: passengers and flight segments are lists, contact details an object.</p>
+
+<p>Three things follow, each a blind spot of the order model. The customer cannot be a Cedar principal. The check cannot run before the record has been fetched. And the field round has to name leaves inside lists.</p>
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>cedar-osdc</code> command, installed by <code>uv sync</code> at the repository root, with nine verbs: <code>run-tests</code>, <code>authorize</code>, <code>dry-run</code>, <code>check-access</code>, <code>share</code>, <code>build</code>, <code>validate</code>, <code>prove</code>, and a placeholder <code>new</code>. Every verb runs against the orders and reservations use cases as they are; no new content was needed. The playground link was checked in a browser against the site's own decoder. Nine tests drive the commands.</p>
-<p><strong>Not built:</strong> the learning path and the guide (iteration 15), scaffolding a use case and building from a plain fields file (iteration 16), and any output format other than words.</p></div>
+<div class="callout"><p><strong>Built:</strong> the <code>core</code> directory, the mechanism extracted from iterations 6 through 10 with no use case named in it; <code>usecases/orders</code>, iteration 9's policies and iteration 7's contract running on core with every corpus and every Gateway fixture carried, at parity; and <code>usecases/reservations</code>: a Unity Catalog fixture with struct and array columns, an ODCS document with nested properties, path-keyed tag maps, three possession policies, fifteen corpus cases, five Gateway fixtures, and six guardrails proven. The reservations chain joins the proofs beside the orders chain.</p>
+<p><strong>Not built:</strong> writes by possession and the pre-fetch they need (iteration 12), the specialist's view, the list verb, and the agent as a party of its own (iteration 13), the mask across requests, and any lockout against guessed last names.</p></div>
 
-<h2 id="verbs">3. The verbs, beside Cedar's</h2>
+<h2 id="possession">3. Possession, presented in context</h2>
 
-<table>
-<tr><th>Command</th><th>What it does</th><th>Cedar's counterpart</th></tr>
-<tr><td><code>run-tests DIR</code></td><td>runs the corpus and reports every case, with the policy that decided a failure; can write the cases in the cedar command's own test format</td><td><code>cedar run-tests</code></td></tr>
-<tr><td><code>authorize DIR</code></td><td>one Cedar request, with the policy that decided it by name</td><td><code>cedar authorize</code></td></tr>
-<tr><td><code>dry-run DIR</code></td><td>one tool call through both legs, without calling the tool</td><td>none</td></tr>
-<tr><td><code>check-access DIR</code></td><td>what a caller may do: verbs held, paths readable, paths writable</td><td>none, by analogy with <code>cedar check-parse</code></td></tr>
-<tr><td><code>share DIR</code></td><td>a pre-filled link to Cedar's playground for a case or a request</td><td>the playground's share button</td></tr>
-<tr><td><code>build DIR</code></td><td>the contract build, catalog to contract to Cedar</td><td>none</td></tr>
-<tr><td><code>validate DIR</code></td><td>the policies against the built schema, through the cedar command if installed</td><td><code>cedar validate</code></td></tr>
-<tr><td><code>prove</code></td><td>the symbolic proofs, if cargo and cvc5 are present</td><td><code>cedar symcc</code></td></tr>
-<tr><td><code>new NAME</code></td><td>scaffold a use case; planned for iteration 16</td><td><code>cedar new</code></td></tr>
-</table>
+<p>The pair arrives in the tool input on every call. The handler copies it into the request context as <code>presented</code>, and the policies read it there. The record's locator and holder last name are attributes of the resource entity, and the read policy is an equality on both:</p>
 
-<p>The files are Cedar's own formats throughout: <code>policies.cedar</code>, <code>entities.json</code>, a <code>.cedarschema</code>, and the corpus in the integration-test form. A use case directory is the unit every command takes, the same directory the tests and the proofs use.</p>
+<pre><code class="lang-cedar">@id("read-by-possession")
+permit(
+  principal,
+  action == Action::"ReadReservation",
+  resource
+) when {
+  context has presented &&
+  resource has recordLocator &&
+  resource has holderLastName &&
+  resource.recordLocator == context.presented.locator &&
+  resource.holderLastName == context.presented.lastName
+};</code></pre>
 
-<h2 id="dry-run">4. One call, run dry</h2>
+<p>The principal is unconstrained. Whoever holds the token, the agent in a customer conversation or a specialist, gets the same answer for the same pair; the credential is the pair, and the token says only who presented it. Here is the case that pins the holder's read, and beside it the one that pins a co-traveler's:</p>
 
-<p>A dry run is a tool call performed without its effect. The command builds the Gateway event iteration 10 documented, from a caller file of claims and the tool's arguments, and puts it through the request handler; with a response payload it runs the response leg too. The output is the decision in words:</p>
+<pre><code class="lang-json">{
+  "description": "the record is readable when locator and holder last name are the presented ones",
+  "principal": { "type": "User", "id": "reservations-assistant" },
+  "action":    { "type": "Action", "id": "ReadReservation" },
+  "resource":  { "type": "Reservation", "id": "ABC123" },
+  "context":   { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
+  "decision":  "Allow",
+  "reason":    ["policy1"]
+}
+{
+  "description": "a co-traveler's last name is not the holder's: the pair names one person",
+  "principal": { "type": "User", "id": "reservations-assistant" },
+  "action":    { "type": "Action", "id": "ReadReservation" },
+  "resource":  { "type": "Reservation", "id": "ABC123" },
+  "context":   { "presented": { "locator": "ABC123", "lastName": "PATEL" } },
+  "decision":  "Deny"
+}</code></pre>
 
-<pre><code>$ cedar-osdc dry-run usecases/reservations --caller agent.json \
-    --tool reservations___get_reservation \
-    --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
-Caller     Agent::"reservations-assistant", customer-conversation
-Tool       reservations___get_reservation  {"recordLocator": "ABC123", "lastName": "Smith"}
-Request    forwarded: the verb round passed
-Response   row 0 stripped: passengers[].passportNumber, passengers[].specialServiceRequests, remarks
-Returned   {
-             "recordLocator": "ABC123",
-             ...</code></pre>
+<p>The locator is part of the credential, so a pair valid for one reservation reads nothing of another, and the corpus pins that too. Last names are compared upper-cased: the handler upper-cases what was presented, and the contract states the record holds the holder's name that way.</p>
 
-<p>A rejected call says which verb was refused or which paths were, and exits nonzero. The caller file is the same JSON of claims the fixtures use, so the three token shapes from iteration 13 are ready to hand.</p>
+<h2 id="two-legs">4. Two legs, one credential</h2>
 
-<h2 id="check-access">5. What a token grants</h2>
+<p>Nothing about the pair can be verified before the record exists. The request leg therefore asks a different question from the response leg, and the two get different verbs. <code>LookupReservation</code> is the request leg's: permitted to anyone presenting a pair, refused for a locator alone. <code>ReadReservation</code> is the response leg's: the policy above, evaluated against the entity built from the payload, followed by the field round. A mismatch leaves the response empty.</p>
 
-<p>The corpus states expected decisions and <code>run-tests</code> holds the policies to them. <code>check-access</code> states nothing in advance: for one token it asks every verb the schema declares, every path in the classification map, and every path in the writers map, and reports the answers. The presented pair and a record to decide on are options:</p>
+<figure class="figure">
+<div data-sequence>
+<script class="dg-seq" type="application/json">
+{
+  "participants": [
+    {"id": "agent", "label": "Agent"},
+    {"id": "pep", "label": "Interceptor (PEP)"},
+    {"id": "pdp", "label": "Cedar (PDP)"},
+    {"id": "api", "label": "Reservations API"}
+  ],
+  "messages": [
+    {"from": "agent", "to": "pep", "label": "get_reservation(ABC123, Smith)"},
+    {"from": "pep", "to": "pdp", "label": "LookupReservation with a presented pair?"},
+    {"from": "pdp", "to": "pep", "label": "Allow", "style": "return"},
+    {"from": "pep", "to": "api", "label": "forward the call"},
+    {"from": "api", "to": "pep", "label": "the record, every leaf", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "ReadReservation? entity from the record"},
+    {"from": "pdp", "to": "pep", "label": "Allow: locator and holder match", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "ReadReservationField? one per leaf path"},
+    {"from": "pdp", "to": "pep", "label": "public and confidential leaves", "style": "return"},
+    {"from": "pep", "to": "agent", "label": "the record at the customer level", "style": "return"}
+  ]
+}
+</script>
+</div>
+<figcaption>The lookup is permitted on the pair alone; the record decides on the way back. With a service credential the API answers for any locator, and the interceptor is what insists on the last name.</figcaption>
+</figure>
 
-<pre><code>$ cedar-osdc check-access usecases/reservations --caller agent.json \
-    --presented locator=ABC123 --presented lastName=Smith
-Access of Agent::"reservations-assistant" (customer-conversation), presenting {"locator": "ABC123", "lastName": "SMITH"}
-On Reservation::"ABC123" with attributes {"recordLocator": "ABC123", "holderLastName": "SMITH"}
+<p>This is the placement iteration 1 named for ownership checks that need the object's attributes, arrived at because there is no other. It also answers, for this use case, the question the critical review put first about orders: where the request leg gets the object's facts. For reads it does not need them.</p>
 
-Verbs held      LookupReservation, ReadReservation, UpdateReservation, CancelReservation
-Verbs not held  ListReservations
+<h2 id="paths">5. Nested records by path</h2>
 
-Readable        recordLocator (public), holderLastName (public), status (public), ...
-Not readable    passengers[].passportNumber (restricted), passengers[].specialServiceRequests (restricted), remarks (internal)
+<p>The field round from iteration 3 named a field. Here a leaf sits inside a list of passengers, and its classification must apply to every passenger. The maps are keyed by path: <code>contact.email</code> for a leaf of an object, <code>passengers[].seat</code> for a leaf of every element of a list. The generated classification map:</p>
 
-Writable        passengers[].seat (owner), contact.email (owner), contact.phone (owner)
-Not writable    recordLocator (system), ...</code></pre>
+<pre><code class="lang-json">{ "uid": { "type": "Contract", "id": "Reservation" },
+  "tags": {
+    "recordLocator": "public",
+    "holderLastName": "public",
+    "status": "public",
+    "passengers[].firstName": "public",
+    "passengers[].lastName": "public",
+    "passengers[].dateOfBirth": "confidential",
+    "passengers[].seat": "public",
+    "passengers[].passportNumber": "restricted",
+    "passengers[].specialServiceRequests": "restricted",
+    "segments[].flightNumber": "public",
+    "segments[].origin": "public",
+    "segments[].destination": "public",
+    "segments[].departure": "public",
+    "contact.email": "confidential",
+    "contact.phone": "confidential",
+    "fare": "confidential",
+    "paymentLast4": "confidential",
+    "remarks": "internal"
+  } }</code></pre>
 
-<p>The same command with the specialist's exchanged token shows the view switch of iteration 13 in one screen: remarks readable and writable, the list held, the customer's paths closed. A learner uses this to see what the policies do, then writes the case that pins it, then <code>run-tests</code> holds it. The two words stay apart on purpose.</p>
+<p>Containers have no level of their own; only leaves do. The field round walks the payload and asks one question per distinct path, so a record with two passengers costs one decision for <code>passengers[].seat</code>, applied to both. That is iteration 1's mask, arrived at because paths made it natural. A leaf whose path is in no map is stripped, an object that loses every leaf goes with them, and a list whose elements all emptied goes too.</p>
 
-<h2 id="share">6. The playground link</h2>
+<p>The levels come from Unity Catalog, which attaches tags to columns and not to the fields inside a struct. The path travels in the tag key instead: <code>classification__passport_number</code> on the <code>passengers</code> column is the level of <code>passengers[].passportNumber</code>, and the column's own <code>classification</code> tag is the level of every leaf under it that has no key of its own. The contract build reads the column's Spark type from the catalog's <code>type_json</code> and writes nested ODCS properties, which the standard supports.</p>
 
-<p>Cedar's playground encodes its state into the URL fragment when its share button is pressed: the policies, the schema, the entities, the context, and the three parties, as JSON, gzipped, base64. <code>share</code> writes the same fragment for any corpus case or request file, so a learner opens our case in Cedar's own editor, sees the same Deny, and changes a policy there before touching a file. The format is read from the site's source and is undocumented; the command's docstring says so, and if the playground changes it, only this command stops working.</p>
+<h2 id="core">6. Core and the use cases</h2>
 
-<pre><code>$ cedar-osdc share usecases/reservations --case "co-traveler's last name is not"
-a co-traveler's last name is not the holder's: the pair names one person
-https://www.cedarpolicy.com/en/playground#data:H4sIA...</code></pre>
+<p>The mechanism now lives in <code>core</code>, extracted from iterations 6 through 10 only as this use case demanded: the corpus runner, the claims projection, the two legs of enforcement, the Gateway handlers, and the contract build. A use case is a directory with policies, facts, a contract's sources, corpora, fixtures, and a descriptor:</p>
 
-<p>The link was opened in a browser during this iteration: the playground loaded the agent, the action, the reservation, the context with the co-traveler's name, and the entities, and evaluated to "Authorization denied", as the corpus says. The first version of the encoder had the three parties as strings, and the playground silently showed its default sample; the site's validator wants each as a type and an id.</p>
+<pre><code class="lang-python">USE_CASE = UseCase(
+    name="reservations",
+    root=ROOT,
+    resource_type="Reservation",
+    attributes={"recordLocator": "String", "holderLastName": "String"},
+    id_field="recordLocator",
+    read_action='Action::"ReadReservation"',
+    read_field_action='Action::"ReadReservationField"',
+    field_actions={},
+    tools=TOOLS,
+)</code></pre>
+
+<p>The descriptor says what the mechanism cannot know: the entity type a payload row becomes, which of its fields are attributes and of what type, the verbs for the two rounds of each leg, and the tool table. Everything else is core's. The test of the split is the orders use case: iteration 9's policies and iteration 7's contract sources, run through core, pass every corpus and every Gateway fixture the numbered iterations pinned. The ten iteration directories stay untouched as the narrative.</p>
+
+<p>The writeup of what core had to change to admit reservations is deferred to the end of the use case, once iterations 12 and 13 have made their demands too.</p>
 
 <h2 id="the-iteration">7. The iteration, file by file</h2>
 
 <ul>
-<li><code>core/cli.py</code>: the nine verbs, the use case loader, the policy name lookup from <code>@id</code> annotations, the caller file to bearer encoding, and the playground link.</li>
-<li><code>pyproject.toml</code> at the root: the package becomes installable, with <code>cedar-osdc</code> as its console script and core's dependencies as the project's; the numbered iterations keep their own projects.</li>
-<li><code>core/test_cli.py</code>: every command against the reservations use case, checking the words against the decisions the corpus and the handlers already pin, and the link's round trip.</li>
+<li><code>core/usecase.py</code>, the descriptor; <code>core/claims.py</code>, the projection and the bearer decoding; <code>core/enforce.py</code>, the two legs with the path walk and the per-path mask; <code>core/interceptor.py</code>, the handlers with the presented facts; <code>core/contract.py</code>, both build stages with nested columns and path-keyed maps; <code>core/corpus.py</code>, the runner.</li>
+<li><code>usecases/orders/</code>: iteration 9's policies, iteration 7's Unity fixtures and facts, the corpora of iterations 1 through 9, the Gateway fixtures of iteration 10, and tests that hold parity with each.</li>
+<li><code>usecases/reservations/unity/</code>: the reservations table with struct and array columns in the catalog's <code>type_json</code>, and its tag assignments with path-scoped keys.</li>
+<li><code>usecases/reservations/reservation.odcs.yaml</code> and <code>generated/</code>: the build's outputs, committed.</li>
+<li><code>usecases/reservations/policies.cedar</code>: three policies, the lookup, the read, and the field read, all by possession.</li>
+<li><code>usecases/reservations/tests/reservations.json</code>: fifteen cases: the lookup with and without a pair, the holder's read, a wrong name, a co-traveler's name, a pair for another reservation, an unknown record, a specialist without a pair, and nested, index-free, restricted, internal, and undeclared paths.</li>
+<li><code>usecases/reservations/events/</code> and <code>test_interceptor.py</code>: the tool through the handlers, the record returned at the customer level with passports and medical requests stripped from every passenger, and nothing returned for a wrong or a co-traveler's name.</li>
+<li><code>usecases/reservations/test_build.py</code>: the artifacts current, the maps keyed by path, the descriptor's attributes equal to the contract's, the schema's scalar attributes.</li>
 </ul>
 
 <h2 id="tdd">8. Growing by tests</h2>
 
-<p>The commands were written against the two use cases that exist, and the first run of <code>check-access</code> listed the field verbs among the verbs not held, which is true and useless: the field rounds are reported by path below. The playground link was the one thing no local test could settle, so it was settled in a browser, and the test pins the round trip through our own decoder rather than the site's.</p>
+<p>The fifteen cases were written before the policies, and the Gateway fixtures before the handlers. Two things the tests decided. The corpus case for an unknown record made the read policy guard both attributes, so a record the store does not know fails closed with no evaluation error, where iteration 1's unguarded policy still errors. And the fixture with a co-traveler's name fixed what the response leg returns on a mismatch: an empty object, because the call succeeded upstream and nothing of the record may be shown.</p>
 
-<h2 id="running">9. Installing and running it</h2>
+<p>The orders parity tests found the two places core diverged from iteration 10 in extraction: the rejection message named the full action reference instead of the verb, and a nested list whose elements had all emptied was kept as an empty list.</p>
 
-<p>From a fresh clone, with <a href="https://docs.astral.sh/uv/">uv</a> installed:</p>
+<h2 id="proofs">9. Proved as well as tested</h2>
 
-<pre><code>uv sync
-uv run cedar-osdc run-tests usecases/reservations
-uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers.json</code></pre>
+<p>Six guardrails hold over every request and every record:</p>
 
-<p>The caller argument takes a caller file, one JSON object of the claims in that caller's credential; each use case ships a few under `callers/`. <code>validate</code> needs the official cedar command (<code>cargo install cedar-policy-cli</code>), and <code>prove</code> needs Rust and cvc5 as <code>analysis/README.md</code> describes. Everything else needs Python only.</p>
+<ul>
+<li><strong>A lookup requires a pair.</strong> A locator alone is never attempted.</li>
+<li><strong>A read requires a pair.</strong> True while possession is the only path; iteration 13's specialist view will retire it knowingly.</li>
+<li><strong>Possession names the record.</strong> A pair reaches only the record whose locator and holder it names.</li>
+<li><strong>Undeclared paths fail closed</strong>, nested ones included.</li>
+<li><strong>Restricted leaves are unreadable</strong>: passport numbers and medical requests.</li>
+<li><strong>Possession reads the customer's levels only.</strong> The specialist's remarks are never revealed to the pair.</li>
+</ul>
 
-<h2 id="decisions">10. Decisions made in this iteration</h2>
+<p>The analysis runner now knows two chains. The orders chain gained the use case on core as its final member, proven to preserve iteration 9's decisions under the schema core's build wrote; the reservations chain begins here. Each chain's guardrails are given their status against that chain's final set. Findings and instructions are in <code>analysis/README.md</code>.</p>
 
-<p><strong>Cedar's verbs where the meaning is the same.</strong> A learner who has met the cedar command finds <code>authorize</code>, <code>validate</code>, and <code>run-tests</code> doing what they expect, on the same files.</p>
+<h2 id="running">10. Running it</h2>
 
-<p><strong>Two verbs of our own, named for what they do.</strong> A dry run is a call without its effect. A check of access is a report, and it is kept apart from testing, which states expectations.</p>
+<p>From the repository root, every iteration's and every use case's tests run in one command, and every test and proof together in another:</p>
 
-<p><strong>Words, not JSON.</strong> The output is for a person reading a terminal. A machine-readable form can come when something needs it.</p>
+<pre><code>uv run pytest -v
+./check.sh</code></pre>
 
-<p><strong>The playground is the editor.</strong> Rather than build one, every question links to Cedar's.</p>
+<p>The build for one use case:</p>
 
-<h2 id="open-questions">11. Open questions</h2>
+<pre><code>uv run python usecases/reservations/build.py</code></pre>
+
+<h2 id="decisions">11. Decisions made in this iteration</h2>
+
+<p><strong>The customer is never a principal.</strong> Possession is presented in context and checked against the record. The principal is whoever holds the token.</p>
+
+<p><strong>The request leg asks a different verb from the response leg.</strong> The lookup is permitted on the pair alone; the read is decided on the record. Two verbs make the two questions visible in the corpus and the proofs.</p>
+
+<p><strong>Maps are keyed by path, and containers have no level.</strong> A nested leaf's level applies to every element. The mask is one decision per distinct path.</p>
+
+<p><strong>Nested levels travel in Unity Catalog tag keys.</strong> The catalog is still the source of truth; the convention is stated in the build's docstring and can be replaced by a governed tag scheme.</p>
+
+<p><strong>A mismatch returns an empty record.</strong> The call succeeded upstream; nothing of the record is shown; no error confirms or denies that the locator exists.</p>
+
+<p><strong>Core is extracted, never designed ahead.</strong> Each piece moved because reservations needed it, and orders holds parity on every move.</p>
+
+<h2 id="open-questions">12. Open questions</h2>
 
 <ol>
-<li>The playground format. It is versioned, with an interface version field, and undocumented. A change breaks <code>share</code> alone.</li>
-<li>Tokens as files. A caller file is claims, decoded; nothing about the command reminds a learner that the real thing is signed and verified before the handler runs. The guide has to.</li>
-<li>Whether <code>check-access</code> should take a mode instead of a token, for a learner who does not yet know the three token shapes.</li>
+<li>Lockout. A pair is guessable, and the gateway cannot count attempts on its own. Where guessed last names are stopped, upstream or in the Gateway, is a deployment decision the rules cannot make.</li>
+<li>The empty record on a mismatch. Returning nothing reveals nothing about the locator, but an agent cannot tell a wrong name from an empty reservation. Whether a distinct signal is worth the leak is a product question.</li>
+<li>Writes by possession, and the pre-fetch a write needs before it can be forwarded: iteration 12.</li>
+<li>The specialist's view, the list verb, and the agent as a principal of its own type: iteration 13.</li>
+<li>Struct fields the catalog cannot tag. The path-in-the-key convention works and is ours; Databricks may add nested tags, or governed tags may not accept the scoped keys.</li>
 </ol>
 
 <h2 id="glossary">Glossary</h2>
 
 <table>
 <tr><th>Term</th><th>Meaning</th></tr>
-<tr><td>Dry run</td><td>One tool call through both legs without calling the tool: what the interceptors would have done.</td></tr>
-<tr><td>Access check</td><td>A report of what a caller may do, from real authorization questions, stating nothing in advance.</td></tr>
-<tr><td>Caller file</td><td>A JSON object of claims standing in for a decoded, verified token.</td></tr>
-<tr><td>Playground link</td><td>Cedar's playground URL with our policies, schema, entities, and request in its fragment.</td></tr>
+<tr><td>Record locator</td><td>The six-character reservation number. The resource's id and one half of the credential.</td></tr>
+<tr><td>Holder</td><td>The person whose last name is on the reservation. One per reservation; passengers are not holders.</td></tr>
+<tr><td>Presented pair</td><td>The locator and last name a caller supplies in the tool input, carried in context as <code>presented</code>.</td></tr>
+<tr><td>Possession</td><td>Holding the pair. The only customer credential in this use case.</td></tr>
+<tr><td>Lookup</td><td>The request-leg verb: may this call be attempted. Permitted on the pair alone.</td></tr>
+<tr><td>Path</td><td>A leaf's name through its containers: <code>contact.email</code>, <code>passengers[].seat</code>. The key of both maps.</td></tr>
+<tr><td>Specialist</td><td>The human support person. "Agent" is reserved for the non-human agent.</td></tr>
+<tr><td>Descriptor</td><td>What a use case tells core: entity type, attributes, verbs, tools.</td></tr>
 </table>
 
 <h2 id="references">References</h2>
 
 <ol class="sources">
-<li id="r1"><a href="https://github.com/cedar-policy/cedar/tree/main/cedar-policy-cli">The cedar command line</a>: authorize, validate, run-tests, and the rest</li>
-<li id="r2"><a href="https://www.cedarpolicy.com/en/playground">Cedar's playground</a>, and its <a href="https://github.com/cedar-policy/cedar-website">site source</a>, where the share format lives</li>
-<li id="r3"><a href="../gateway/design.html">Iteration 10</a>: the Gateway event the dry run builds</li>
-<li id="r4"><a href="https://docs.astral.sh/uv/">uv</a></li>
+<li id="r1"><a href="bola-reads/design.html">Iteration 1</a>: the placement of ownership checks that need the object's attributes</li>
+<li id="r2"><a href="contract/design.html">Iteration 7</a>: the contract build this iteration extends to nested columns</li>
+<li id="r3"><a href="https://bitol-io.github.io/open-data-contract-standard/latest/">Open Data Contract Standard v3.2.0</a>, nested properties and items</li>
+<li id="r4"><a href="https://docs.databricks.com/aws/en/database-objects/tags">Unity Catalog, apply tags to securable objects</a>: tags attach to columns</li>
+<li id="r5"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
+<li id="r6"><a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>, the Cedar project's engine-independent test corpus format</li>
 </ol>
 
 </main>

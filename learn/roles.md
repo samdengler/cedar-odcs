@@ -106,10 +106,11 @@ sampled; the proofs page explains what that adds.
 
 ## Where to read more
 
-Iterations [1](../bola-reads/design.html) through
-[10](../gateway/design.html) each tell how one of these rules came to
-be, tests first. Iteration [5](../function-level/design.html) is the
-verbs, [4](../field-writes/design.html) the payload round, and
-[6](../on-behalf-of/design.html) the acting mode.
+Iterations [1](../history/bola-reads/design.html) through
+[10](../history/gateway/design.html) each tell how one of these rules
+came to be, tests first. Iteration
+[5](../history/function-level/design.html) is the verbs,
+[4](../history/field-writes/design.html) the payload round, and
+[6](../history/on-behalf-of/design.html) the acting mode.
 
 Next: [step 3, possession, nesting, and three parties](possession.md).

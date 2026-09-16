@@ -168,18 +168,18 @@ caller and read the result as a governance decision.
 
 | Idea | Document |
 |---|---|
-| where Cedar sits, the two legs | [iteration 1](../bola-reads/design.html) |
-| rejecting writes before the call | [iteration 2](../bola-writes/design.html) |
-| the classification map, stripping fields | [iteration 3](../field-reads/design.html) |
-| the writers map, mass assignment | [iteration 4](../field-writes/design.html) |
-| roles hold verbs | [iteration 5](../function-level/design.html) |
-| acting for someone, the claims table | [iteration 6](../on-behalf-of/design.html) |
-| Unity Catalog to ODCS to Cedar | [iteration 7](../contract/design.html) |
-| the proofs | [iteration 8](../analysis/design.html), [proofs page](proofs.md) |
-| list endpoints, entities from the payload | [iteration 9](../row-filtering/design.html) |
-| the Gateway interceptors | [iteration 10](../gateway/design.html) |
-| possession, nested paths, the core split | [iteration 11](../usecases/reservations/iteration-11.html) |
-| the pre-fetch before a write | [iteration 12](../usecases/reservations/iteration-12.html) |
-| the agent as a party, the specialist's view | [iteration 13](../usecases/reservations/iteration-13.html) |
-| the command line | [iteration 14](../cedar_osdc/iteration-14.html) |
-| what a second use case changed in the mechanism | [writeup](../cedar_osdc/what-reservations-changed.html) |
+| where Cedar sits, the two legs | [iteration 1](../history/bola-reads/design.html) |
+| rejecting writes before the call | [iteration 2](../history/bola-writes/design.html) |
+| the classification map, stripping fields | [iteration 3](../history/field-reads/design.html) |
+| the writers map, mass assignment | [iteration 4](../history/field-writes/design.html) |
+| roles hold verbs | [iteration 5](../history/function-level/design.html) |
+| acting for someone, the claims table | [iteration 6](../history/on-behalf-of/design.html) |
+| Unity Catalog to ODCS to Cedar | [iteration 7](../history/contract/design.html) |
+| the proofs | [iteration 8](../history/provable-composition.html), [proofs page](proofs.md) |
+| list endpoints, entities from the payload | [iteration 9](../history/row-filtering/design.html) |
+| the Gateway interceptors | [iteration 10](../history/gateway/design.html) |
+| possession, nested paths, the core split | [iteration 11](../history/reservations-11.html) |
+| the pre-fetch before a write | [iteration 12](../history/reservations-12.html) |
+| the agent as a party, the specialist's view | [iteration 13](../history/reservations-13.html) |
+| the command line | [iteration 14](../history/command-line-14.html) |
+| what a second use case changed in the mechanism | [writeup](../history/what-reservations-changed.html) |

@@ -23,8 +23,8 @@ def event(name: str) -> dict:
 
 
 def test_policies_and_entities_are_the_proven_ones():
-    assert (HERE / "../policies.cedar").read_text() == (HERE / "../../../row-filtering/policies.cedar").read_text()
-    assert json.loads((HERE / "../entities.json").read_text()) == json.loads((HERE / "../../../contract/entities.json").read_text())
+    assert (HERE / "../policies.cedar").read_text() == (HERE / "../../../history/row-filtering/policies.cedar").read_text()
+    assert json.loads((HERE / "../entities.json").read_text()) == json.loads((HERE / "../../../history/contract/entities.json").read_text())
 
 
 def test_allowed_read_passes_the_request_through():

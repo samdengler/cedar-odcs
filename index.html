@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>cedar-osdc: design notes by iteration</title>
+<title>cedar-osdc</title>
 <style>
 :root {
   --navy: #003366;
@@ -31,128 +31,35 @@ code { background: var(--light); color: var(--navy-deep); padding: 1px 5px; bord
        font-size: .88em; font-family: ui-monospace, "SF Mono", Consolas, monospace; }
 h2 { color: var(--navy); font-size: 19px; margin: 30px 0 8px; padding-bottom: 6px;
      border-bottom: 2px solid var(--rule); }
-ol.iterations { margin: 20px 0 0; padding: 0; list-style: none; counter-reset: iter; }
-ol.iterations li { counter-increment: iter; display: grid; grid-template-columns: 44px 1fr auto;
-                   gap: 14px; align-items: baseline; padding: 14px 6px; border-bottom: 1px solid var(--rule); }
-ol.iterations li::before { content: counter(iter); font-size: 20px; font-weight: 700; color: var(--navy);
-                           text-align: center; }
-ol.iterations .name { font-weight: 600; color: var(--navy-deep); }
-ol.iterations .desc { display: block; font-weight: 400; color: var(--muted); font-size: 14px; }
-.status { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
-          padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
-.status.done { background: var(--light); color: var(--navy-deep); }
-.status.planned { background: #f2f5f9; color: #8494a5; }
+ul.entries { margin: 20px 0 0; padding: 0; list-style: none; }
+ul.entries li { padding: 16px 6px; border-bottom: 1px solid var(--rule); }
+ul.entries .name { font-weight: 600; color: var(--navy-deep); font-size: 16px; }
+ul.entries .desc { display: block; font-weight: 400; color: var(--muted); font-size: 14px; margin-top: 2px; }
 </style>
 </head>
 <body>
 <div class="page">
 <header class="doc">
-  <div class="kicker">Design notes</div>
+  <div class="kicker">Cedar and ODCS</div>
   <h1>cedar-osdc</h1>
   <p>Data governance for agent tool calls, enforced with Cedar policies derived from
-     Open Data Contract Standard documents. One design document per iteration. Iterations 1 through 10
-     live in their own directories with policies, entities, and test corpus; from iteration 11
-     the mechanism lives in <code>core/</code> and each use case in <code>usecases/</code>.</p>
+     Open Data Contract Standard documents.</p>
 </header>
 <main>
-  <p>To run it before reading it, start with the <a href="learn/README.md">learning path</a>: three
-     steps, each a use case you can run, change, and break. To read how it came to be, start with the
-     <a href="bola-reads/design.html">iteration 1 design narrative</a>. It covers
-     the problem, where Cedar sits in the stack, Cedar concepts, and a walkthrough of the
-     code in <code>bola-reads/</code>.</p>
-
-  <h2>Growing by tests</h2>
-  <p>Every iteration grows the same way: test cases are added to a JSON corpus describing the
-     next rule, they fail, and then the policies or facts that make them pass are written.
-     Attacks are recorded before defenses, so a later change that weakens a defense fails a
-     test. The corpus is engine-independent data in the
-     <a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>
-     format, so the Python iterations and the eventual Rust enforcement build are held to
-     identical rules. Each iteration carries its predecessors' corpora as a regression gate,
-     each iteration is small, and no iteration starts before the previous one is understood.</p>
-
-  <p>After iteration 13, <a href="cedar_osdc/what-reservations-changed.html">a writeup</a> accounts for
-     what the mechanism in <code>core/</code> had to change to admit the reservation use case, and
-     what that says about how general it is.</p>
-
-  <h2>Iterations</h2>
-  <ol class="iterations">
+  <ul class="entries">
     <li>
-      <span class="name"><a href="bola-reads/design.html">Broken object level authorization (BOLA) on reads</a>
-        <span class="desc">Object level checks, default deny. Code in <code>bola-reads/</code>.</span></span>
-      <span class="status done">Done</span>
+      <a class="name" href="README.md">README</a>
+      <span class="desc">What this is, and the three commands that run it.</span>
     </li>
     <li>
-      <span class="name"><a href="bola-writes/design.html">BOLA on writes</a>
-        <span class="desc">The ownership rule gated on the request leg; a denied write rejects the whole call. Code in <code>bola-writes/</code>.</span></span>
-      <span class="status done">Done</span>
+      <a class="name" href="learn/README.md">The learning path</a>
+      <span class="desc">Three steps, each a use case you can run, change, and break.</span>
     </li>
     <li>
-      <span class="name"><a href="field-reads/design.html">Broken object property level authorization (API3) on reads</a>
-        <span class="desc">Per-field decisions, strip denied fields from responses. Code in <code>field-reads/</code>.</span></span>
-      <span class="status done">Done</span>
+      <a class="name" href="history/index.html">How it was built</a>
+      <span class="desc">Fifteen iterations, each with a design narrative, and the nine snapshots the proofs still read.</span>
     </li>
-    <li>
-      <span class="name"><a href="field-writes/design.html">API3 on writes (mass assignment)</a>
-        <span class="desc">Per-field checks on write payloads; any denied field rejects the call whole. Code in <code>field-writes/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="function-level/design.html">Function level (API5)</a>
-        <span class="desc">Verbs held by roles; a refund only finance can issue; the first role-granted write path. Code in <code>function-level/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="on-behalf-of/design.html">On behalf of access modes</a>
-        <span class="desc">Customer direct, employee direct, employee acting for a customer; the claims projection and the claims the corpus needs. Code in <code>on-behalf-of/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="contract/design.html">ODCS as source of truth</a>
-        <span class="desc">Unity Catalog column tags to an ODCS contract to the tag maps and the Cedar schema, at build time. Code in <code>contract/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="analysis/design.html">Provable composition</a>
-        <span class="desc">Each iteration proven to preserve its predecessor's decisions, revisions declared as data, every guardrail's status checked against the final set. Code in <code>analysis/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="row-filtering/design.html">Row filtering</a>
-        <span class="desc">List endpoints return only rows the caller may read, each reduced to the fields they may read; rows become entities from the payload. Code in <code>row-filtering/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="gateway/design.html">Enforcement placement</a>
-        <span class="desc">The request and response legs as AgentCore Gateway interceptor handlers, driven by the documented event shapes. Code in <code>gateway/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="usecases/reservations/iteration-11.html">Reservations by locator and last name</a>
-        <span class="desc">A second use case with no customer identity: possession presented in context, decided on the response leg, nested records by path, and the mechanism extracted into <code>core/</code>. Code in <code>usecases/reservations/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="usecases/reservations/iteration-12.html">Writes by possession</a>
-        <span class="desc">Contact, seats, and cancellation by whoever holds the pair; the record is fetched before a write is forwarded. Code in <code>usecases/reservations/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="usecases/reservations/iteration-13.html">The specialist, the agent, and the list</a>
-        <span class="desc">Three parties on a call: the agent as a principal of its own type, the specialist as the acted-for human whose roles decide, the customer only ever a presented pair. Code in <code>usecases/reservations/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="cedar_osdc/iteration-14.html">The command line</a>
-        <span class="desc">The mechanism behind nine verbs that match Cedar's where the meaning is the same, plus a dry run of one tool call and a report of what a token grants; every question links to Cedar's playground. Code in <code>core/cli.py</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-    <li>
-      <span class="name"><a href="learn/iteration-15.html">The learning path</a>
-        <span class="desc">Three runnable steps after Cedar's own tutorial, a guide from the onboarding questions, and a page on what the proofs give and do not. Pages in <code>learn/</code>.</span></span>
-      <span class="status done">Done</span>
-    </li>
-  </ol>
+  </ul>
 </main>
 </div>
 </body>

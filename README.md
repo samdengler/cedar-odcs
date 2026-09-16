@@ -28,16 +28,16 @@ Design decisions and the full iteration plan are in the design document.
 
 ## Contents
 
-Iterations 1 through 10 live in their own directories with policies, entities, test corpus, and a design document; from iteration 11 the mechanism lives in `core/` and each use case in `usecases/`. `index.html` at the root indexes the iterations and links to each design document.
+Iterations 1 through 10 live under `history/`, each in its own directory with policies, entities, test corpus, and a design document; from iteration 11 the mechanism lives in `cedar_osdc/` and each use case in `usecases/`. `history/index.html` is the timeline and links to every design document.
 
-- `bola-reads/`: iteration 1. Broken object level authorization (BOLA) on reads, standalone with no AWS dependency.
+- `history/bola-reads/`: iteration 1. Broken object level authorization (BOLA) on reads, standalone with no AWS dependency.
   - `design.html`: the design narrative. Problem, where Cedar sits in the stack, Cedar concepts, walkthrough of the code, settled decisions, and open questions.
   - `policies.cedar`: two policies; everything else is default deny.
   - `entities.json`: the facts (users, a role, orders with owners).
   - `tests/bola.json`: six test cases in the [cedar-integration-tests](https://github.com/cedar-policy/cedar-integration-tests) corpus format.
   - `test_corpus.py`: pytest runner that feeds every corpus case to the engine.
   - `authorizer.py`: the enforcement wrapper; it does the same job a Gateway interceptor will do.
-- `bola-writes/`: iteration 2. BOLA on writes: the same ownership rule gated on the request leg.
+- `history/bola-writes/`: iteration 2. BOLA on writes: the same ownership rule gated on the request leg.
   - `design.html`: the design narrative. Why writes are gated before the call, reject instead of strip, and where the ownership fact comes from pre-flight.
   - `policies.cedar`: iteration 1's two policies, plus one `UpdateOrder` policy.
   - `entities.json`: iteration 1's facts, unchanged.
@@ -45,7 +45,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `tests/bola-writes.json`: six object-level write cases.
   - `test_corpus.py`: the same runner as iteration 1.
   - `authorizer.py`: the request-leg gate; forward on Allow, reject the whole call on Deny.
-- `field-reads/`: iteration 3. Field filtering (API3 reads) on top of iterations 1 and 2.
+- `history/field-reads/`: iteration 3. Field filtering (API3 reads) on top of iterations 1 and 2.
   - `design.html`: the design narrative. The second round of per-field questions, classification as entity tags, and the response-stripping wrapper.
   - `policies.cedar`: the three object-level policies carried forward, plus two field policies that look fields up in the classification map.
   - `entities.json`: iteration 1's facts, plus the classification map as entity tags on a `Contract` entity.
@@ -54,7 +54,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `test_corpus.py`: the same runner as iteration 1.
   - `field_filter.py`: `is_allowed` with context, plus `filter_response`, the response-leg wrapper that strips denied fields and reports the removals.
   - `test_filter.py`: one upstream payload filtered end to end for each caller.
-- `field-writes/`: iteration 4. Mass assignment defense (API3 writes) on top of iterations 1 through 3.
+- `history/field-writes/`: iteration 4. Mass assignment defense (API3 writes) on top of iterations 1 through 3.
   - `design.html`: the design narrative. The payload round on the request leg, the writers map, and whole-call rejection.
   - `policies.cedar`: the five prior policies carried forward, plus one write-field policy.
   - `entities.json`: the prior facts, plus the writers map as entity tags on a second `Contract` entity.
@@ -63,7 +63,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `test_corpus.py`: the same runner.
   - `write_gate.py`: `check_request`, which rejects a payload whole when any field is denied and names the denied fields.
   - `test_gate.py`: whole-call rejection pinned end to end.
-- `function-level/`: iteration 5. Function level authorization (API5) on top of iterations 1 through 4.
+- `history/function-level/`: iteration 5. Function level authorization (API5) on top of iterations 1 through 4.
   - `design.html`: the design narrative. Roles hold verbs, the role-granted write path, and the first revised corpus case.
   - `policies.cedar`: the six prior policies carried forward, plus five verb and role policies.
   - `entities.json`: the prior facts, plus a finance role and a member of it; the writer of `internalNotes` becomes `support`.
@@ -72,7 +72,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `test_corpus.py`: the same runner.
   - `request_gate.py`: `check_call`, the whole request leg: the verb round, then the payload round for updates.
   - `test_gate.py`: verb rejection before the payload is read; role-granted updates bounded by the writers map.
-- `on-behalf-of/`: iteration 6. On behalf of access modes on top of iterations 1 through 5.
+- `history/on-behalf-of/`: iteration 6. On behalf of access modes on top of iterations 1 through 5.
   - `design.html`: the design narrative. Three modes and one principal, every policy given a mode, and the claims the corpus needs, each marked assumed until confirmed.
   - `policies.cedar`: the eleven prior policies, each revised for mode, plus one forbid: only employees act for others.
   - `entities.json`: the prior facts, plus an employee role that support and finance belong to.
@@ -81,7 +81,7 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `callers/*.json`: one hand-written token payload per mode, standing in for decoded callers.
   - `claims.py`: `project`, the claims to Cedar request mapping (RFC 8693 `sub` and `act`), and `is_allowed` asked with a token.
   - `test_claims.py`: the three modes entered through their callers; roles read from the token.
-- `contract/`: iteration 7. ODCS as source of truth: the tag maps and the Cedar schema generated at build time.
+- `history/contract/`: iteration 7. ODCS as source of truth: the tag maps and the Cedar schema generated at build time.
   - `design.html`: the design narrative. The two-stage build, the Unity Catalog tag convention, and what the contract does and does not decide.
   - `unity/`: recorded Unity Catalog API responses, the tables endpoint and the entity tag assignments endpoint, standing in for live calls.
   - `unity_import.py`: stage one, catalog to contract. An unclassified column fails the build.
@@ -91,14 +91,14 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `policies.cedar`: iteration 6's file, unchanged.
   - `tests/*.json`: iterations 1 through 6's corpora, byte for byte, plus `tests/contract.json`: five cases about the generated maps.
   - `test_build.py`: committed artifacts are current; the contract validates; iteration 6's map entries are carried; the generated schema equals the hand-written one; an incomplete catalog fails the build.
-- `row-filtering/`: iteration 9. Row filtering for list endpoints on top of iterations 1 through 7.
+- `history/row-filtering/`: iteration 9. Row filtering for list endpoints on top of iterations 1 through 7.
   - `design.html`: the design narrative. Listing decides nothing, rows are authorized one by one, and resource entities come from the payload.
   - `policies.cedar`: iteration 6's twelve policies, plus one list verb anyone may call.
   - `entities.json`: iteration 7's build output, unchanged.
   - `tests/*.json`: iterations 1 through 7's corpora, byte for byte, plus `tests/row-filtering.json`: six list verb cases.
   - `row_filter.py`: `filter_rows`, the response leg for a list: one `ReadOrder` per row built from the row itself, then the per-field round on each surviving row.
   - `test_rows.py`: the rows and fields each caller and mode receives; a row without a usable id dropped; a row without an owner decided without ownership.
-- `gateway/`: iteration 10. Enforcement in AgentCore Gateway interceptors.
+- `history/gateway/`: iteration 10. Enforcement in AgentCore Gateway interceptors.
   - `design.html`: the design narrative. The two interception points, the handlers, where the native policy engine fits, and the Lambda extension decision revisited.
   - `interceptor.py`: `request_handler` and `response_handler`, the Gateway's event and result formats for MCP targets, and the tool table.
   - `enforce.py`: the wrappers of iterations 3, 5, and 9, asked with a token's projection.
@@ -107,19 +107,19 @@ Iterations 1 through 10 live in their own directories with policies, entities, t
   - `events/*.json`: fifteen Gateway events in the documented shapes, one response per tool.
   - `tests/*.json`: every prior corpus, carried. `test_interceptor.py`: the handlers driven by the events.
 - `learn/`: iteration 15. The learning path (`README.md`), the hello use case (`hello/`), steps 2 and 3 (`roles.md`, `possession.md`), the guide (`guide.md`), and the proofs page (`proofs.md`).
-- `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules; `what-reservations-changed.html` is the writeup of what the reservation use case changed in it; `cli.py` is the `cedar-osdc` command and `iteration-14.html` its design narrative.
+- `core/`: the mechanism from iteration 11 on, with no use case named in it: the descriptor, the claims projection, the two legs of enforcement by path, the Gateway handlers, the contract build with nested columns, and the corpus runner. Its own `README.md` lists the modules; `history/what-reservations-changed.html` is the writeup of what the reservation use case changed in it; `cli/` is the `cedar-osdc` command and `history/command-line-14.html` its design narrative.
 - `usecases/orders/`: iteration 9's policies and iteration 7's contract sources on core, every corpus and Gateway fixture carried, at parity with the numbered iterations.
 - `usecases/reservations/`: iteration 11. A reservation is held by whoever presents its record locator and the holder's last name.
-  - `iteration-11.html`: the design narrative. Possession in context, two legs with one credential, nested records by path, and the core split.
+  - `history/reservations-11.html`: the design narrative. Possession in context, two legs with one credential, nested records by path, and the core split.
   - `unity/`: a reservations table with struct and array columns, and path-scoped tag assignments.
   - `reservation.odcs.yaml`, `generated/`, `entities.json`: the build's outputs, committed.
-  - `iteration-12.html`: writes by possession and the pre-fetch before a write.
-  - `iteration-13.html`: the specialist's view, the agent as a principal, and the list.
+  - `history/reservations-12.html`: writes by possession and the pre-fetch before a write.
+  - `history/reservations-13.html`: the specialist's view, the agent as a principal, and the list.
   - `policies.cedar`: six possession policies, seven specialist policies, and one forbid: only employees are acted for.
   - `records.json`: the read path's stand-in for the pre-fetch. `callers.json`, `callers/`: the three caller shapes.
   - `tests/*.json`: forty-three cases. `events/`: twenty-four Gateway fixtures.
   - `usecase.py`, `test_build.py`, `test_interceptor.py`, `test_corpus.py`.
-- `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `analysis/design.html`.
+- `analysis/`: iteration 8 and the proofs behind every iteration, using Cedar's symbolic compiler and the cvc5 SMT solver. Per iteration: spec equivalence, guardrail no-ops, and never-errors, proven over every possible request. Across iterations: each policy set proven to preserve its predecessor's decisions, with revisions declared as data and the on behalf of comparison restricted to direct mode, and every guardrail's status (carried, revised, retired) checked against the final set. Findings and instructions in `analysis/README.md`; the design narrative in `history/provable-composition.html`.
 
 ## Command line
 
@@ -132,7 +132,7 @@ uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/t
 uv run cedar-osdc share usecases/reservations --case "co-traveler"
 ```
 
-The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a caller may do. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A caller file is a JSON object of claims; `usecases/reservations/tests/identities/` holds three to copy from. The design narrative is `cedar_osdc/iteration-14.html`.
+The verbs match the official `cedar` command where the meaning is the same (`authorize`, `validate`, `run-tests`) and add `dry-run`, one tool call through both legs without calling the tool, and `check-access`, what a caller may do. `share` opens any case in Cedar's playground. `build`, `validate`, and `prove` run the contract build, the official validator, and the proofs. A caller file is a JSON object of claims; `usecases/reservations/tests/identities/` holds three to copy from. The design narrative is `history/command-line-14.html`.
 
 ## Running
 
@@ -142,10 +142,10 @@ Requires [uv](https://docs.astral.sh/uv/). From the repository root, this runs e
 uv run pytest -v
 ```
 
-Each iteration is also a standalone uv project, so the same command works inside a single iteration directory, or from the root with `--project`:
+Each iteration is also a standalone uv project, so the same command works inside a single snapshot directory, or from the root with `--project` and the same directory as the test path:
 
 ```sh
-uv run --project bola-reads pytest -v
+uv run --project history/bola-reads pytest history/bola-reads -v
 ```
 
 The symbolic proofs run separately; they need Rust and the cvc5 solver (see `analysis/README.md`):

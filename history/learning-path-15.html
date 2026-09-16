@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cedar authorization for MCP tools, iteration 13: the specialist, the agent, and the list</title>
+<title>Cedar authorization for MCP tools, iteration 15: the learning path</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -132,22 +132,21 @@ h2:hover .anchor { opacity: 1; }
   <p class="toc-title">Contents</p>
   <a href="#problem">1. The problem</a>
   <a href="#scope">2. Scope of this iteration</a>
-  <a href="#parties">3. Three parties on a call</a>
-  <a href="#view">4. The specialist's view</a>
-  <a href="#the-iteration">5. The iteration, file by file</a>
-  <a href="#tdd">6. Growing by tests</a>
-  <a href="#proofs">7. Proved as well as tested</a>
+  <a href="#path">3. Three steps, after Cedar's own</a>
+  <a href="#hello">4. The hello use case</a>
+  <a href="#guide">5. The guide and the proofs page</a>
+  <a href="#callers">6. Caller files</a>
+  <a href="#the-iteration">7. The iteration, file by file</a>
   <a href="#running">8. Running it</a>
   <a href="#decisions">9. Decisions made in this iteration</a>
   <a href="#open-questions">10. Open questions</a>
-  <a href="#glossary" class="tail">Glossary</a>
   <a href="#references" class="tail">References</a>
 </nav>
 <div class="page">
 <header class="doc">
   <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
-  <h1>Cedar authorization for MCP tools, iteration 13: the specialist, the agent, and the list</h1>
-  <p>Three parties can be on a call: the agent that holds the token, the specialist it was exchanged for, and the customer who is only ever a presented pair. The specialist's view is on when no pair is presented and off when one is; the agent is a principal of its own type; and listing has no customer form.</p>
+  <h1>Cedar authorization for MCP tools, iteration 15: the learning path</h1>
+  <p>Three runnable steps that begin where Cedar's own tutorial ends, a guide that says what to know about a domain before filling in a use case, and a page on what the proofs give and what they do not. Written for a colleague with a different domain who has just cloned the repository.</p>
 </header>
 <main>
 
@@ -156,148 +155,108 @@ h2:hover .anchor { opacity: 1; }
   <ol>
     <li><span class="num">1.</span><a href="#problem">The problem</a></li>
     <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
-    <li><span class="num">3.</span><a href="#parties">Three parties on a call</a></li>
-    <li><span class="num">4.</span><a href="#view">The specialist's view</a></li>
-    <li><span class="num">5.</span><a href="#the-iteration">The iteration, file by file</a></li>
-    <li><span class="num">6.</span><a href="#tdd">Growing by tests</a></li>
-    <li><span class="num">7.</span><a href="#proofs">Proved as well as tested</a></li>
+    <li><span class="num">3.</span><a href="#path">Three steps, after Cedar's own</a></li>
+    <li><span class="num">4.</span><a href="#hello">The hello use case</a></li>
+    <li><span class="num">5.</span><a href="#guide">The guide and the proofs page</a></li>
+    <li><span class="num">6.</span><a href="#callers">Caller files</a></li>
+    <li><span class="num">7.</span><a href="#the-iteration">The iteration, file by file</a></li>
     <li><span class="num">8.</span><a href="#running">Running it</a></li>
     <li><span class="num">9.</span><a href="#decisions">Decisions made in this iteration</a></li>
     <li><span class="num">10.</span><a href="#open-questions">Open questions</a></li>
   </ol>
-  <p class="back"><a href="../../index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
+  <p class="back"><a href="index.html">All iterations</a> <a href="#references">References</a></p>
 </div>
 
 <h2 id="problem">1. The problem</h2>
 
-<p>Iterations 11 and 12 gave the customer everything possession allows and nobody anything else. A specialist on the desk needs more: to look up a reservation by locator alone, to read the remarks left by the last specialist, to write new ones, and to list reservations, which has no customer form because there is no customer identity to list by. The specialist reaches the tools through the agent, so the token that arrives at the Gateway is an exchanged one, with the specialist as its subject and the agent as its actor.</p>
-
-<p>Iteration 6 built the on behalf of model for a human acting for a human, and its projection made the actor the principal. Applied to an exchanged token, that rule makes the agent the principal in every conversation and the specialist the acted-for party. Iteration 6 left the agent's own identity as an open question; this iteration answers it, because the reservation case leaves no other party to be the principal in a customer conversation.</p>
+<p>Fourteen iterations of design documents are the record of how the mechanism came to be. They are not how to learn it. A colleague with a different domain needs to see a decision within minutes, change something and watch a test fail, and know which of the pieces are theirs to fill in. Cedar already teaches Cedar, with a fixed reading order, a hands-on tutorial, and a playground; this project should teach only what it adds.</p>
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
-<div class="callout"><p><strong>Built:</strong> in core, a workload token typed as an <code>Agent</code> principal, and the acted-for human carried with their roles; in <code>usecases/reservations</code>, seven specialist policies and one forbid, the list verb, three token shapes, sixteen corpus cases with two carried cases revised, ten Gateway fixtures, and seven guardrails, three of them revisions of iteration 11's and 12's, with the retirements shown. The orders use case is unchanged and still at parity.</p>
-<p><strong>Not built:</strong> a bound on which reservations a specialist may reach, any rule reading the agent's identity itself, and the confirmation of the claim that marks a workload token, which stays on the claims table as assumed.</p></div>
+<div class="callout"><p><strong>Built:</strong> the <code>learn</code> directory: a path of three steps, the first a new use case of five fields and four policies, the other two exercises on the orders and reservations use cases; a guide built from the onboarding questions, with the three policy shapes in real Cedar and the command line reference; a page on how the proofs are used and what they do not cover, with the same assumptions written into the analysis README where an over-claim stood; and caller files, one per caller, for every use case. The root README leads with the path.</p>
+<p><strong>Not built:</strong> scaffolding a use case with <code>cedar-osdc new</code>, and building from a plain fields file (iteration 16). Until then the guide says to copy the hello use case.</p></div>
 
-<h2 id="parties">3. Three parties on a call</h2>
+<h2 id="path">3. Three steps, after Cedar's own</h2>
 
-<p>Iteration 6's projection is unchanged in its rule: the actor is the principal, and the subject of a delegated token is <code>actingFor</code>. Two things are added. A workload token, whose subject is the client id it was issued to, yields a principal of type <code>Agent</code>; a human's yields a <code>User</code>. And the acted-for human is carried into the entities with their roles, from the token's own role claim and the store, so the policies can ask what the human holds. Three token shapes, three projections:</p>
-
-<table>
-<tr><th>Conversation</th><th>Token</th><th>Principal</th><th>Context</th></tr>
-<tr><td>A customer, through the agent</td><td><code>sub: reservations-assistant</code>, <code>client_id: reservations-assistant</code></td><td><code>Agent::"reservations-assistant"</code></td><td>the presented pair, if any</td></tr>
-<tr><td>A specialist, through the agent</td><td><code>sub: sam</code>, <code>roles: [specialist]</code>, <code>act.sub: reservations-assistant</code></td><td><code>Agent::"reservations-assistant"</code></td><td><code>actingFor: User::"sam"</code>, and a pair if presented</td></tr>
-<tr><td>A specialist, without the agent</td><td><code>sub: sam</code>, <code>roles: [specialist]</code></td><td><code>User::"sam"</code></td><td>a pair if presented</td></tr>
-</table>
-
-<p>The policies name "the specialist" as the acted-for human when there is one and the principal otherwise, in one expression repeated wherever the role matters:</p>
-
-<pre><code class="lang-cedar">@id("specialist-reads-any-reservation")
-permit(
-  principal,
-  action == Action::"ReadReservation",
-  resource
-) when {
-  !(context has presented) &&
-  ((context has actingFor && context.actingFor in Role::"specialist") ||
-   (!(context has actingFor) && principal in Role::"specialist"))
-};</code></pre>
-
-<p>The customer is in none of the three rows as a party. The agent alone, with no human and no pair, reads nothing, and the corpus pins it. One forbid keeps the acted-for party honest: an exchanged token naming a human outside the employee role grants that human nothing, on any verb.</p>
-
-<h2 id="view">4. The specialist's view</h2>
-
-<p>The view is on only when no pair is presented. A specialist who presents a pair is working the customer's case and is held to the customer's view: the possession policies of iterations 11 and 12 decide, the record comes back without the remarks, and a wrong name reads nothing even for a specialist. A specialist who supplies a locator alone works in their own view, which is wider in three places and narrower in one:</p>
+<p>Each step names the Cedar pages it assumes, from the docs' own first-time sequence, gives the commands, and ends with a change that makes a test fail.</p>
 
 <table>
-<tr><th>Verb</th><th>The pair</th><th>The specialist, no pair</th></tr>
-<tr><td>Lookup and read</td><td>the record the pair names</td><td>any record</td></tr>
-<tr><td>Read leaves</td><td>public and confidential</td><td>public, internal, and confidential; restricted stays nobody's</td></tr>
-<tr><td>Update paths</td><td>contact details and seats</td><td>the remarks only</td></tr>
-<tr><td>Cancel</td><td>the record the pair names</td><td>any record</td></tr>
-<tr><td>List</td><td>never</td><td>yes</td></tr>
+<tr><th>Step</th><th>What it teaches</th><th>Runs against</th><th>The change that breaks it</th></tr>
+<tr><td>Hello</td><td>a contract classifies fields, policies grant levels, the response leg strips the rest</td><td><code>learn/hello</code></td><td>retag <code>body</code> from confidential to internal; two cases fail</td></tr>
+<tr><td>Roles, verbs, and acting for someone</td><td>roles hold verbs, a payload is checked field by field, an employee acts for a customer</td><td><code>usecases/orders</code></td><td>retag the writer of <code>internalNotes</code>; drop the acting-mode condition from a role policy</td></tr>
+<tr><td>Possession, nesting, and three parties</td><td>a credential presented in context, a check that waits for the record, nested paths, the agent as a party</td><td><code>usecases/reservations</code></td><td>drop the pair condition from the specialist's field policy; declassify passport numbers</td></tr>
 </table>
 
-<p>The narrower place is deliberate. A specialist changing a customer's contact details or seat presents the pair, as the desk verifies the customer, and the write goes through by possession; without the pair the customer's paths are refused and named. The corpus pins both directions: remarks by the specialist without a pair, contact refused without it.</p>
+<p>The second and third steps are exercises on the real use cases rather than reduced copies, so what a learner runs is what the tests and the proofs run. The pages are Markdown, because a colleague will read them where the clone lives, on GitHub or in an editor, and the design documents stay the deep reference behind each idea.</p>
 
-<h2 id="the-iteration">5. The iteration, file by file</h2>
+<h2 id="hello">4. The hello use case</h2>
+
+<p>A note has an owner; a reviewer may read any note; five fields carry three levels. Four policies, nine corpus cases, two callers, one tool, and the same build pipeline as the real use cases, from a Unity Catalog table fixture through an ODCS document to the generated maps. Nothing is simplified in kind, only in size: the first thing a learner rebuilds is the same artifact a deployment would.</p>
+
+<pre><code>$ uv run cedar-osdc check-access learn/hello --caller learn/hello/callers/ada.json
+Access of User::"ada" (customer-direct)
+On Note::"note-1" with attributes {"owner": {"__entity": {"type": "User", "id": "ada"}}}
+
+Verbs held      ReadNote
+Verbs not held  none
+
+Readable        id (public), owner (public), title (public), body (confidential)
+Not readable    reviewerNotes (internal)</code></pre>
+
+<h2 id="guide">5. The guide and the proofs page</h2>
+
+<p>The guide restates the README's six onboarding questions as what to know about a domain before filling in a use case, maps each answer to the file it lands in, shows the three policy shapes the project has, ownership, possession, and a role holding a verb or levels, each quoted verbatim from a use case, and ends with the command line and a map from each idea to the design document that explains it.</p>
+
+<p>The proofs page answers the question a reader asked of this project and its colleague will ask too: how are the proofs used, and what do they not cover. The second half is the part that was missing everywhere: the proofs are about policies under a schema, not the code that builds requests; a guardrail can be vacuous; a declared revision makes a change visible rather than right; and the verified part is the compiler. The analysis README said the proofs were trustworthy end to end, which the critical review called an over-claim; it now says what a green run does and does not establish, in a section of its own.</p>
+
+<h2 id="callers">6. Caller files</h2>
+
+<p>The command line took a token file, one JSON object of claims. The word misled: a reader of an agent project hears "token" and thinks of what a language model counts. The file is named for who is calling, and it is now a caller file, <code>--caller callers/ada.json</code>, with one per caller shipped in every use case. The word token remains where it means the JWT the Gateway verifies, which the caller file stands in for.</p>
+
+<h2 id="the-iteration">7. The iteration, file by file</h2>
 
 <ul>
-<li><code>core/claims.py</code> types a workload token's actor as <code>Agent</code>, on the assumed marker that the token carries a client id equal to its subject, and builds the acted-for human's entity with their roles; <code>core/enforce.py</code> puts that entity in the store for every question.</li>
-<li><code>core/interceptor.py</code> treats a tool's presented facts as optional: a call with none is decided on the caller's own grants, a call with some but not all is an error. The locator doubles as the resource id and half the pair, so a locator alone is a call without a pair.</li>
-<li><code>usecases/reservations/principals.cedarschema</code> declares <code>Agent</code>; every action accepts both principal types; <code>actions.cedarschema</code> gains <code>ListReservations</code> and <code>actingFor</code> in every context.</li>
-<li><code>policies.cedar</code> appends P7 through P13, the specialist's lookup, read, leaves, update, paths, cancel, and list, and G1, the forbid.</li>
-<li><code>tokens.json</code> holds the three token shapes; the customer-conversation fixtures now carry the workload token.</li>
-<li><code>facts.json</code> and the corpora type the agent as <code>Agent</code> throughout, and gain a human outside the employee role for the forbid's case.</li>
-<li><code>tests/reservation-specialist.json</code> adds sixteen cases; two carried cases are revised with the old decision kept in their descriptions.</li>
-<li><code>events/</code> gains ten fixtures and <code>test_interceptor.py</code> pins the specialist through the agent, the specialist with a pair, remarks written and contact refused, the direct cancel, the list, the agent alone refused, and the three projections.</li>
+<li><code>learn/README.md</code>: the path, the Cedar reading it assumes, and what is not there yet.</li>
+<li><code>learn/hello/</code>: the use case, with its own <code>README.md</code> as step 1, and tests that run with everything else.</li>
+<li><code>learn/roles.md</code>, <code>learn/possession.md</code>: steps 2 and 3.</li>
+<li><code>learn/guide.md</code>, <code>learn/proofs.md</code>.</li>
+<li><code>analysis/README.md</code>: the over-claim replaced and "What the proofs assume" added.</li>
+<li><code>core/cli.py</code>: <code>--token</code> becomes <code>--caller</code>; <code>callers/</code> in each use case.</li>
+<li><code>README.md</code>: leads with the path and the command line; the history follows.</li>
 </ul>
-
-<h2 id="tdd">6. Growing by tests</h2>
-
-<p>The sixteen cases came first, and two carried cases failed on the new policies as the method promises: the specialist who read nothing in iteration 11 and updated nothing in iteration 12 now reads and updates, and each case says which iteration revised it and what the decision was. The Gateway fixtures then found the rule for a locator alone: the handler had treated it as an incomplete pair, and the specialist's lookup was refused before any policy ran. The resource id that doubles as half the pair is the case iteration 11's handler had not met.</p>
-
-<h2 id="proofs">7. Proved as well as tested</h2>
-
-<p>Seven guardrails hold over every request, every record, and every tag map:</p>
-
-<ul>
-<li><strong>Lookup, read, and writes require a pair or a specialist.</strong> Three revisions of iteration 11's and 12's guardrails, which are retired and shown to fail against the new set, as iteration 8's runner requires.</li>
-<li><strong>Internal leaves are off with a pair, and specialist paths are off with a pair.</strong> Presenting a pair means being held to the customer's view. A first version joined these two in one forbid over both field verbs, and the prover refused it: the disjunction also forbade a possession read of a public leaf whose writer is the specialist. One guardrail per verb.</li>
-<li><strong>Without a pair a specialist writes specialist paths only.</strong></li>
-<li><strong>Listing requires a specialist</strong> without a pair in hand.</li>
-<li><strong>A human outside the employee role is granted nothing</strong>, on every verb, the list included.</li>
-</ul>
-
-<p>The seven guardrails from iterations 11 and 12 that mention neither the lookup nor a bare pair are carried and reproven. Findings and instructions are in <code>analysis/README.md</code>.</p>
 
 <h2 id="running">8. Running it</h2>
 
-<pre><code>uv run pytest -v
-./check.sh</code></pre>
+<pre><code>uv sync
+uv run cedar-osdc run-tests learn/hello</code></pre>
 
 <h2 id="decisions">9. Decisions made in this iteration</h2>
 
-<p><strong>The agent is the principal whenever it holds the token.</strong> Iteration 6's rule, applied to an exchanged token, and typed as its own kind of entity. No rule reads the agent's identity yet; the type exists so one can.</p>
+<p><strong>Teach only what Cedar does not.</strong> Each step names the Cedar pages it assumes and starts after them.</p>
 
-<p><strong>The acted-for human's roles decide.</strong> The specialist's grants come from the human the token was exchanged for. Roles are the union of the token's claim and the store, as iteration 6 revised.</p>
+<p><strong>Exercises on the real use cases, not reduced copies.</strong> Only the hello step is new content.</p>
 
-<p><strong>The specialist's view is off with a pair in hand.</strong> Presenting the pair is a choice to work the customer's case. It keeps one rule for what the pair grants, whoever presents it.</p>
+<p><strong>Markdown for the path, the design documents for depth.</strong></p>
 
-<p><strong>The customer's paths need the pair, even for a specialist.</strong> The desk verifies the customer and presents the pair; the write then goes through by possession.</p>
+<p><strong>Every step ends by breaking something.</strong> The loop is the method.</p>
 
-<p><strong>Only employees are acted for.</strong> A customer is never a party by identity in this use case; the forbid makes that a rule rather than an absence.</p>
+<p><strong>A caller file, not a token file.</strong></p>
 
 <h2 id="open-questions">10. Open questions</h2>
 
 <ol>
-<li>The workload token's marker. The projection assumes a client id claim equal to the subject. One real token settles it; the row is on the claims table as assumed.</li>
-<li>Which reservations a specialist may reach. The view reaches any record. A desk that serves one region or one channel would want a bound, and the record carries nothing to bound on yet.</li>
-<li>Rules about the agent. Two agents with different purposes would want different grants; the type is there and no policy uses it.</li>
-<li>The specialist's writes at the desk. Remarks are the only path without a pair. Whether irregular operations, a rebooking say, are specialist verbs or pair-verified ones is a governance decision the corpus can record either way.</li>
-<li>Chains for a use case that evolves in place, carried from iteration 12.</li>
+<li>Whether step 2 is too long for a first sitting, and should split the acting mode into its own step.</li>
+<li>Scaffolding and a plain fields file, so a learner's own use case does not begin as a copy: iteration 16.</li>
+<li>A vacuity check for guardrails, so the proofs page's caution becomes a runner feature.</li>
 </ol>
-
-<h2 id="glossary">Glossary</h2>
-
-<table>
-<tr><th>Term</th><th>Meaning</th></tr>
-<tr><td>Agent</td><td>The non-human agent on AgentCore Runtime, and the Cedar entity type of a workload principal.</td></tr>
-<tr><td>Specialist</td><td>The human support person, a User in the specialist role.</td></tr>
-<tr><td>Acted-for human</td><td>The subject of an exchanged token, carried as <code>actingFor</code> with their roles.</td></tr>
-<tr><td>The specialist's view</td><td>What the specialist's role grants when no pair is presented.</td></tr>
-<tr><td>The customer's view</td><td>What the pair grants, to whoever presents it.</td></tr>
-<tr><td>Workload token</td><td>A token issued to the agent as an OAuth client, naming no human.</td></tr>
-</table>
 
 <h2 id="references">References</h2>
 
 <ol class="sources">
-<li id="r1"><a href="../../on-behalf-of/design.html">Iteration 6</a>: the on behalf of model and the projection this iteration extends</li>
-<li id="r2"><a href="iteration-11.html">Iteration 11</a> and <a href="iteration-12.html">iteration 12</a>: the possession policies that make the customer's view</li>
-<li id="r3"><a href="https://datatracker.ietf.org/doc/html/rfc8693">RFC 8693, OAuth 2.0 Token Exchange</a>, the actor claim</li>
-<li id="r4"><a href="https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/on-behalf-of-token-exchange.html">AgentCore Identity, on behalf of token exchange</a>: the exchanged token carries both the agent's and the caller's identity</li>
-<li id="r5"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
+<li id="r1"><a href="https://docs.cedarpolicy.com/">Cedar's documentation</a>, whose first-time sequence the path assumes</li>
+<li id="r2"><a href="https://github.com/cedar-policy/cedar-examples/tree/main/tinytodo">TinyTodo</a>, Cedar's hands-on tutorial</li>
+<li id="r3"><a href="https://www.cedarpolicy.com/en/playground">Cedar's playground</a></li>
+<li id="r4"><a href="command-line-14.html">Iteration 14</a>, the command line the path runs on</li>
 </ol>
 
 </main>

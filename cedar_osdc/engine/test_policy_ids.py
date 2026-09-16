@@ -5,7 +5,7 @@ by a policy's `@id`, mapping the name to the position Cedar itself
 reports. If a policy had no `@id`, or two policies in the same file
 shared one, that mapping would silently misalign a case onto the
 wrong policy. This is the guardrail: for every policies.cedar under
-usecases/*/ and under the nine top-level iteration directories, the
+usecases/*/ and under the nine snapshots in history/, the
 count of permit/forbid statements must equal the count of @id
 annotations, and the ids collected from one file must all be
 distinct.
@@ -22,7 +22,7 @@ ITERATIONS = ("bola-reads", "bola-writes", "field-reads", "field-writes",
               "function-level", "on-behalf-of", "contract", "row-filtering", "gateway")
 
 POLICY_FILES = sorted(REPO.glob("usecases/*/policies.cedar")) + [
-    REPO / name / "policies.cedar" for name in ITERATIONS
+    REPO / "history" / name / "policies.cedar" for name in ITERATIONS
 ]
 
 POLICY = re.compile(r"^\s*(?:permit|forbid)\(", re.M)

@@ -320,17 +320,17 @@ async fn prove_use_case(compiler: &mut Compiler, dir: &Path, tally: &mut Tally) 
 // ------------------------------------- prove-history: the tables
 
 /// Where each snapshot of the chain sits, relative to the repository
-/// root. Run 3 moves the snapshots under `history/`; this table is the
-/// one place that changes.
+/// root. The snapshots live under `history/`; this table is the one
+/// place those paths are written.
 const SNAPSHOTS: &[(&str, &str)] = &[
-    ("bola-reads", "bola-reads"),
-    ("bola-writes", "bola-writes"),
-    ("field-reads", "field-reads"),
-    ("field-writes", "field-writes"),
-    ("function-level", "function-level"),
-    ("on-behalf-of", "on-behalf-of"),
-    ("contract", "contract"),
-    ("row-filtering", "row-filtering"),
+    ("bola-reads", "history/bola-reads"),
+    ("bola-writes", "history/bola-writes"),
+    ("field-reads", "history/field-reads"),
+    ("field-writes", "history/field-writes"),
+    ("function-level", "history/function-level"),
+    ("on-behalf-of", "history/on-behalf-of"),
+    ("contract", "history/contract"),
+    ("row-filtering", "history/row-filtering"),
 ];
 
 /// Everything the chain reads that is not a use case's live policies.

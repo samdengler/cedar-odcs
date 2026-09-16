@@ -13,10 +13,10 @@ def test_committed_artifacts_are_current():
 
 
 def test_maps_carry_iteration_7():
-    prior = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "../../contract/generated/contract.entities.json").read_text())}
+    prior = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "../../history/contract/generated/contract.entities.json").read_text())}
     now = {e["uid"]["id"]: e["tags"] for e in json.loads((ROOT / "contract/generated/contract.entities.json").read_text())}
     assert now == prior
 
 
 def test_policies_are_iteration_9s():
-    assert (ROOT / "policies.cedar").read_text() == (ROOT / "../../row-filtering/policies.cedar").read_text()
+    assert (ROOT / "policies.cedar").read_text() == (ROOT / "../../history/row-filtering/policies.cedar").read_text()

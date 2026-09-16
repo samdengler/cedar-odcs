@@ -32,7 +32,7 @@ is not a use case's live policies lives in `history/chain/`:
 `schemas/` for iterations 1 through 6, `specs/`, `revisions/`,
 `restrictions/`, and `retired/`, the five retired guardrails. Each
 snapshot's own guardrails sit in its own directory
-(`field-reads/guardrails/` and so on), the form that iteration was
+(`history/field-reads/guardrails/` and so on), the form that iteration was
 proven against. A bare directory argument that is the repository root
 means `prove-history`, which is how `check.sh` calls it.
 
@@ -83,11 +83,11 @@ Current results, all proved:
   party nothing is allowed outside that party's ownership, for every
   verb; acting reads only public and confidential fields and writes
   only owner fields. Four earlier guardrails that mention ownership or
-  a role are revised for mode (`on-behalf-of/guardrails/`); the five
+  a role are revised for mode (`history/on-behalf-of/guardrails/`); the five
   mode-free ones are carried unchanged and reproven.
 - `contract`: iteration 6's policies, unchanged, proven again against
   the schema iteration 7's build wrote from the data contract
-  (`contract/generated/orders.cedarschema`, named in
+  (`history/contract/generated/orders.cedarschema`, named in
   `SCHEMA_OVERRIDES`): the generated schema types the policies and
   admits the same twenty-four properties.
 - `row-filtering`: proven against the same generated schema as

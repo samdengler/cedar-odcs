@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cedar authorization for MCP tools, iteration 11: reservations by locator and last name</title>
+<title>Cedar authorization for MCP tools, iteration 12: writes by possession</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -132,24 +132,22 @@ h2:hover .anchor { opacity: 1; }
   <p class="toc-title">Contents</p>
   <a href="#problem">1. The problem</a>
   <a href="#scope">2. Scope of this iteration</a>
-  <a href="#possession">3. Possession, presented in context</a>
-  <a href="#two-legs">4. Two legs, one credential</a>
-  <a href="#paths">5. Nested records by path</a>
-  <a href="#core">6. Core and the use cases</a>
-  <a href="#the-iteration">7. The iteration, file by file</a>
-  <a href="#tdd">8. Growing by tests</a>
-  <a href="#proofs">9. Proved as well as tested</a>
-  <a href="#running">10. Running it</a>
-  <a href="#decisions">11. Decisions made in this iteration</a>
-  <a href="#open-questions">12. Open questions</a>
+  <a href="#prefetch">3. The pre-fetch before a write</a>
+  <a href="#writers">4. What possession may write</a>
+  <a href="#the-iteration">5. The iteration, file by file</a>
+  <a href="#tdd">6. Growing by tests</a>
+  <a href="#proofs">7. Proved as well as tested</a>
+  <a href="#running">8. Running it</a>
+  <a href="#decisions">9. Decisions made in this iteration</a>
+  <a href="#open-questions">10. Open questions</a>
   <a href="#glossary" class="tail">Glossary</a>
   <a href="#references" class="tail">References</a>
 </nav>
 <div class="page">
 <header class="doc">
   <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
-  <h1>Cedar authorization for MCP tools, iteration 11: reservations by locator and last name</h1>
-  <p>A second use case to pressure test the mechanism. A reservation is held by whoever presents its record locator and the holder's last name; there is no customer identity beyond that pair. The customer is never a principal, the check runs on the response leg, the record is nested, and the mechanism moves into a core that names no use case.</p>
+  <h1>Cedar authorization for MCP tools, iteration 12: writes by possession</h1>
+  <p>Anyone who knows the locator and the holder's last name may change the contact details, move a seat, or cancel the reservation. A write cannot wait for the response, so the request leg fetches the record first and decides on it; the payload round then bounds the write to the paths the holder may set.</p>
 </header>
 <main>
 
@@ -158,75 +156,57 @@ h2:hover .anchor { opacity: 1; }
   <ol>
     <li><span class="num">1.</span><a href="#problem">The problem</a></li>
     <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
-    <li><span class="num">3.</span><a href="#possession">Possession, presented in context</a></li>
-    <li><span class="num">4.</span><a href="#two-legs">Two legs, one credential</a></li>
-    <li><span class="num">5.</span><a href="#paths">Nested records by path</a></li>
-    <li><span class="num">6.</span><a href="#core">Core and the use cases</a></li>
-    <li><span class="num">7.</span><a href="#the-iteration">The iteration, file by file</a></li>
-    <li><span class="num">8.</span><a href="#tdd">Growing by tests</a></li>
-    <li><span class="num">9.</span><a href="#proofs">Proved as well as tested</a></li>
-    <li><span class="num">10.</span><a href="#running">Running it</a></li>
-    <li><span class="num">11.</span><a href="#decisions">Decisions made in this iteration</a></li>
-    <li><span class="num">12.</span><a href="#open-questions">Open questions</a></li>
+    <li><span class="num">3.</span><a href="#prefetch">The pre-fetch before a write</a></li>
+    <li><span class="num">4.</span><a href="#writers">What possession may write</a></li>
+    <li><span class="num">5.</span><a href="#the-iteration">The iteration, file by file</a></li>
+    <li><span class="num">6.</span><a href="#tdd">Growing by tests</a></li>
+    <li><span class="num">7.</span><a href="#proofs">Proved as well as tested</a></li>
+    <li><span class="num">8.</span><a href="#running">Running it</a></li>
+    <li><span class="num">9.</span><a href="#decisions">Decisions made in this iteration</a></li>
+    <li><span class="num">10.</span><a href="#open-questions">Open questions</a></li>
   </ol>
-  <p class="back"><a href="../../index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
+  <p class="back"><a href="index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
 </div>
 
 <h2 id="problem">1. The problem</h2>
 
-<p>Ten iterations built governance for orders, and every rule about who may reach an order compared an identity to its owner. The next questions on that work, how the token's subject maps to an owner and what bounds an employee acting for a customer, are questions about identity. Before answering them for orders, the mechanism is tried on a use case with no customer identity at all.</p>
+<p>Iteration 11 decided reads on the response leg, because a presented pair can only be checked against the record and the record arrives with the response. A write has no such luxury. Once the reservations API has applied a cancellation, the cancellation is done; the interceptor has to know before forwarding the call whether the pair matches. And the airline's rule is that it may: anyone who knows the locator and the holder's last name can cancel a flight, change the contact details, or move a seat, on the phone or on the web.</p>
 
-<p>A reservation is identified by a record locator and the last name on the reservation. Whoever presents that pair holds the reservation; that is how the airline works, on the phone and on the web. A customer has no login the rules may rely on and no loyalty identifier they may compare. The reservation carries several passengers, and the pair names one of them, the holder. The record itself is nested: passengers and flight segments are lists, contact details an object.</p>
-
-<p>Three things follow, each a blind spot of the order model. The customer cannot be a Cedar principal. The check cannot run before the record has been fetched. And the field round has to name leaves inside lists.</p>
+<p>Iteration 2 raised this for orders and left it as the open question of where the request leg gets the object's facts. Ten iterations later it was still open, and the critical review put it third among the things a deployment needs. For reservations there is no store to consult and no identity to derive the fact from; the only source of the holder's last name is the record itself.</p>
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>core</code> directory, the mechanism extracted from iterations 6 through 10 with no use case named in it; <code>usecases/orders</code>, iteration 9's policies and iteration 7's contract running on core with every corpus and every Gateway fixture carried, at parity; and <code>usecases/reservations</code>: a Unity Catalog fixture with struct and array columns, an ODCS document with nested properties, path-keyed tag maps, three possession policies, fifteen corpus cases, five Gateway fixtures, and six guardrails proven. The reservations chain joins the proofs beside the orders chain.</p>
-<p><strong>Not built:</strong> writes by possession and the pre-fetch they need (iteration 12), the specialist's view, the list verb, and the agent as a party of its own (iteration 13), the mask across requests, and any lockout against guessed last names.</p></div>
+<div class="callout"><p><strong>Built:</strong> the pre-fetch in core: a use case names the request-leg verbs that need the record, and hands core a function that fetches it through the read path; the engine decides the verb and the payload on the fetched entity and forwards nothing without it. In <code>usecases/reservations</code>: three write policies by possession, a writers map naming the contact details and passengers' seats as the holder's, twelve corpus cases, nine Gateway fixtures, and four guardrails proven. The orders use case is unchanged and still at parity.</p>
+<p><strong>Not built:</strong> the specialist's writes (remarks) and view, the list verb, the agent as a principal of its own type (iteration 13), and a real read path behind the fetch: a fixture stands in for the API.</p></div>
 
-<h2 id="possession">3. Possession, presented in context</h2>
+<h2 id="prefetch">3. The pre-fetch before a write</h2>
 
-<p>The pair arrives in the tool input on every call. The handler copies it into the request context as <code>presented</code>, and the policies read it there. The record's locator and holder last name are attributes of the resource entity, and the read policy is an equality on both:</p>
+<p>The descriptor gains two things: the verbs that cannot be decided without the record, and the function that fetches it.</p>
 
-<pre><code class="lang-cedar">@id("read-by-possession")
-permit(
-  principal,
-  action == Action::"ReadReservation",
-  resource
-) when {
-  context has presented &&
-  resource has recordLocator &&
-  resource has holderLastName &&
-  resource.recordLocator == context.presented.locator &&
-  resource.holderLastName == context.presented.lastName
-};</code></pre>
+<pre><code class="lang-python">USE_CASE = UseCase(
+    name="reservations",
+    root=ROOT,
+    resource_type="Reservation",
+    attributes={"recordLocator": "String", "holderLastName": "String"},
+    id_field="recordLocator",
+    read_action='Action::"ReadReservation"',
+    read_field_action='Action::"ReadReservationField"',
+    field_actions={'Action::"UpdateReservation"': 'Action::"UpdateReservationField"'},
+    tools=TOOLS,
+    prefetch_actions={'Action::"UpdateReservation"', 'Action::"CancelReservation"'},
+    fetch=fetch,
+)</code></pre>
 
-<p>The principal is unconstrained. Whoever holds the token, the agent in a customer conversation or a specialist, gets the same answer for the same pair; the credential is the pair, and the token says only who presented it. Here is the case that pins the holder's read, and beside it the one that pins a co-traveler's:</p>
+<p>For those verbs the engine fetches the record by its id, builds the resource entity from it exactly as the response leg does, and asks the verb question with that entity in the store. No record means no call. The payload round that follows sees the same entity, so the field policies can read the holder's name too:</p>
 
-<pre><code class="lang-json">{
-  "description": "the record is readable when locator and holder last name are the presented ones",
-  "principal": { "type": "User", "id": "reservations-assistant" },
-  "action":    { "type": "Action", "id": "ReadReservation" },
-  "resource":  { "type": "Reservation", "id": "ABC123" },
-  "context":   { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
-  "decision":  "Allow",
-  "reason":    ["policy1"]
-}
-{
-  "description": "a co-traveler's last name is not the holder's: the pair names one person",
-  "principal": { "type": "User", "id": "reservations-assistant" },
-  "action":    { "type": "Action", "id": "ReadReservation" },
-  "resource":  { "type": "Reservation", "id": "ABC123" },
-  "context":   { "presented": { "locator": "ABC123", "lastName": "PATEL" } },
-  "decision":  "Deny"
-}</code></pre>
-
-<p>The locator is part of the credential, so a pair valid for one reservation reads nothing of another, and the corpus pins that too. Last names are compared upper-cased: the handler upper-cases what was presented, and the contract states the record holds the holder's name that way.</p>
-
-<h2 id="two-legs">4. Two legs, one credential</h2>
-
-<p>Nothing about the pair can be verified before the record exists. The request leg therefore asks a different question from the response leg, and the two get different verbs. <code>LookupReservation</code> is the request leg's: permitted to anyone presenting a pair, refused for a locator alone. <code>ReadReservation</code> is the response leg's: the policy above, evaluated against the entity built from the payload, followed by the field round. A mismatch leaves the response empty.</p>
+<pre><code class="lang-python">extra = []
+if action in self.use_case.prefetch_actions:
+    record = self.use_case.fetch(row_id) if row_id is not None else None
+    if not isinstance(record, dict):
+        return CallDecision(allowed=False, denied_verb=True)
+    extra = [self.entity_from_row(record)]
+if not self.is_allowed(projection, action, resource, context, extra):
+    return CallDecision(allowed=False, denied_verb=True)</code></pre>
 
 <figure class="figure">
 <div data-sequence>
@@ -239,167 +219,138 @@ permit(
     {"id": "api", "label": "Reservations API"}
   ],
   "messages": [
-    {"from": "agent", "to": "pep", "label": "get_reservation(ABC123, Smith)"},
-    {"from": "pep", "to": "pdp", "label": "LookupReservation with a presented pair?"},
-    {"from": "pdp", "to": "pep", "label": "Allow", "style": "return"},
-    {"from": "pep", "to": "api", "label": "forward the call"},
-    {"from": "api", "to": "pep", "label": "the record, every leaf", "style": "return"},
-    {"from": "pep", "to": "pdp", "label": "ReadReservation? entity from the record"},
-    {"from": "pdp", "to": "pep", "label": "Allow: locator and holder match", "style": "return"},
-    {"from": "pep", "to": "pdp", "label": "ReadReservationField? one per leaf path"},
-    {"from": "pdp", "to": "pep", "label": "public and confidential leaves", "style": "return"},
-    {"from": "pep", "to": "agent", "label": "the record at the customer level", "style": "return"}
+    {"from": "agent", "to": "pep", "label": "cancel_reservation(ABC123, Jones)"},
+    {"from": "pep", "to": "api", "label": "read ABC123 (the pre-fetch)"},
+    {"from": "api", "to": "pep", "label": "the record: holder SMITH", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "CancelReservation? entity from the record"},
+    {"from": "pdp", "to": "pep", "label": "Deny: JONES is not the holder", "style": "return"},
+    {"from": "pep", "to": "agent", "label": "call rejected; nothing forwarded", "style": "return"}
   ]
 }
 </script>
 </div>
-<figcaption>The lookup is permitted on the pair alone; the record decides on the way back. With a service credential the API answers for any locator, and the interceptor is what insists on the last name.</figcaption>
+<figcaption>A cancellation with the wrong name. The record is fetched first, the pair fails against it, and the cancel never reaches the API. The cost is one read per write.</figcaption>
 </figure>
 
-<p>This is the placement iteration 1 named for ownership checks that need the object's attributes, arrived at because there is no other. It also answers, for this use case, the question the critical review put first about orders: where the request leg gets the object's facts. For reads it does not need them.</p>
+<p>The read path is the same tool the customer would call, so the pre-fetch costs one read per write and no new machinery. In this repository a fixture stands in for it. The policies do not know a pre-fetch happened: the update and cancel policies read <code>resource.recordLocator</code> and <code>resource.holderLastName</code> exactly as the read policy does, and the corpus pins them against stored records the same way.</p>
 
-<h2 id="paths">5. Nested records by path</h2>
+<h2 id="writers">4. What possession may write</h2>
 
-<p>The field round from iteration 3 named a field. Here a leaf sits inside a list of passengers, and its classification must apply to every passenger. The maps are keyed by path: <code>contact.email</code> for a leaf of an object, <code>passengers[].seat</code> for a leaf of every element of a list. The generated classification map:</p>
+<p>The writers map from iteration 4, keyed by path since iteration 11, names what the pair may set. The catalog's tags put <code>writer: owner</code> on the contact column and <code>writer__seat: owner</code> on the passengers column, so the map reads:</p>
 
-<pre><code class="lang-json">{ "uid": { "type": "Contract", "id": "Reservation" },
+<pre><code class="lang-json">{ "uid": { "type": "Contract", "id": "Reservation/writers" },
   "tags": {
-    "recordLocator": "public",
-    "holderLastName": "public",
-    "status": "public",
-    "passengers[].firstName": "public",
-    "passengers[].lastName": "public",
-    "passengers[].dateOfBirth": "confidential",
-    "passengers[].seat": "public",
-    "passengers[].passportNumber": "restricted",
-    "passengers[].specialServiceRequests": "restricted",
-    "segments[].flightNumber": "public",
-    "segments[].origin": "public",
-    "segments[].destination": "public",
-    "segments[].departure": "public",
-    "contact.email": "confidential",
-    "contact.phone": "confidential",
-    "fare": "confidential",
-    "paymentLast4": "confidential",
-    "remarks": "internal"
+    "recordLocator": "system",
+    "holderLastName": "system",
+    "status": "system",
+    "passengers[].firstName": "system",
+    "passengers[].lastName": "system",
+    "passengers[].dateOfBirth": "system",
+    "passengers[].seat": "owner",
+    "passengers[].passportNumber": "system",
+    "passengers[].specialServiceRequests": "system",
+    "segments[].flightNumber": "system",
+    "segments[].origin": "system",
+    "segments[].destination": "system",
+    "segments[].departure": "system",
+    "contact.email": "owner",
+    "contact.phone": "owner",
+    "fare": "system",
+    "paymentLast4": "system",
+    "remarks": "specialist"
   } }</code></pre>
 
-<p>Containers have no level of their own; only leaves do. The field round walks the payload and asks one question per distinct path, so a record with two passengers costs one decision for <code>passengers[].seat</code>, applied to both. That is iteration 1's mask, arrived at because paths made it natural. A leaf whose path is in no map is stripped, an object that loses every leaf goes with them, and a list whose elements all emptied goes too.</p>
+<p>The field policy is iteration 4's, with possession in place of ownership:</p>
 
-<p>The levels come from Unity Catalog, which attaches tags to columns and not to the fields inside a struct. The path travels in the tag key instead: <code>classification__passport_number</code> on the <code>passengers</code> column is the level of <code>passengers[].passportNumber</code>, and the column's own <code>classification</code> tag is the level of every leaf under it that has no key of its own. The contract build reads the column's Spark type from the catalog's <code>type_json</code> and writes nested ODCS properties, which the standard supports.</p>
+<pre><code class="lang-cedar">@id("update-fields-by-possession")
+permit(
+  principal,
+  action == Action::"UpdateReservationField",
+  resource
+) when {
+  context has presented &&
+  resource has recordLocator &&
+  resource has holderLastName &&
+  resource.recordLocator == context.presented.locator &&
+  resource.holderLastName == context.presented.lastName &&
+  context has field &&
+  Contract::"Reservation/writers".hasTag(context.field) &&
+  Contract::"Reservation/writers".getTag(context.field) == "owner"
+};</code></pre>
 
-<h2 id="core">6. Core and the use cases</h2>
+<p>A payload of <code>{"contact": {"email": ...}, "passengers": [{"seat": "14C"}, {"seat": "14D"}]}</code> is walked to the paths <code>contact.email</code> and <code>passengers[].seat</code> and forwarded. A payload that also sets <code>fare</code> is rejected whole and names the path; one that renames a passenger is rejected naming <code>passengers[].lastName</code>. The passenger list, the fare, the payment, and the specialist's remarks are system or the specialist's, and a path in no map fails closed. Cancellation is a verb with no payload, held by the pair.</p>
 
-<p>The mechanism now lives in <code>core</code>, extracted from iterations 6 through 10 only as this use case demanded: the corpus runner, the claims projection, the two legs of enforcement, the Gateway handlers, and the contract build. A use case is a directory with policies, facts, a contract's sources, corpora, fixtures, and a descriptor:</p>
-
-<pre><code class="lang-python">USE_CASE = UseCase(
-    name="reservations",
-    root=ROOT,
-    resource_type="Reservation",
-    attributes={"recordLocator": "String", "holderLastName": "String"},
-    id_field="recordLocator",
-    read_action='Action::"ReadReservation"',
-    read_field_action='Action::"ReadReservationField"',
-    field_actions={},
-    tools=TOOLS,
-)</code></pre>
-
-<p>The descriptor says what the mechanism cannot know: the entity type a payload row becomes, which of its fields are attributes and of what type, the verbs for the two rounds of each leg, and the tool table. Everything else is core's. The test of the split is the orders use case: iteration 9's policies and iteration 7's contract sources, run through core, pass every corpus and every Gateway fixture the numbered iterations pinned. The ten iteration directories stay untouched as the narrative.</p>
-
-<p>The writeup of what core had to change to admit reservations is deferred to the end of the use case, once iterations 12 and 13 have made their demands too.</p>
-
-<h2 id="the-iteration">7. The iteration, file by file</h2>
+<h2 id="the-iteration">5. The iteration, file by file</h2>
 
 <ul>
-<li><code>core/usecase.py</code>, the descriptor; <code>core/claims.py</code>, the projection and the bearer decoding; <code>core/enforce.py</code>, the two legs with the path walk and the per-path mask; <code>core/interceptor.py</code>, the handlers with the presented facts; <code>core/contract.py</code>, both build stages with nested columns and path-keyed maps; <code>core/corpus.py</code>, the runner.</li>
-<li><code>usecases/orders/</code>: iteration 9's policies, iteration 7's Unity fixtures and facts, the corpora of iterations 1 through 9, the Gateway fixtures of iteration 10, and tests that hold parity with each.</li>
-<li><code>usecases/reservations/unity/</code>: the reservations table with struct and array columns in the catalog's <code>type_json</code>, and its tag assignments with path-scoped keys.</li>
-<li><code>usecases/reservations/reservation.odcs.yaml</code> and <code>generated/</code>: the build's outputs, committed.</li>
-<li><code>usecases/reservations/policies.cedar</code>: three policies, the lookup, the read, and the field read, all by possession.</li>
-<li><code>usecases/reservations/tests/reservations.json</code>: fifteen cases: the lookup with and without a pair, the holder's read, a wrong name, a co-traveler's name, a pair for another reservation, an unknown record, a specialist without a pair, and nested, index-free, restricted, internal, and undeclared paths.</li>
-<li><code>usecases/reservations/events/</code> and <code>test_interceptor.py</code>: the tool through the handlers, the record returned at the customer level with passports and medical requests stripped from every passenger, and nothing returned for a wrong or a co-traveler's name.</li>
-<li><code>usecases/reservations/test_build.py</code>: the artifacts current, the maps keyed by path, the descriptor's attributes equal to the contract's, the schema's scalar attributes.</li>
+<li><code>core/usecase.py</code> gains <code>prefetch_actions</code> and <code>fetch</code>; <code>core/enforce.py</code> fetches the record for those verbs and decides on it; <code>core/interceptor.py</code> passes the row id through.</li>
+<li><code>usecases/reservations/actions.cedarschema</code> gains <code>UpdateReservation</code>, <code>UpdateReservationField</code>, and <code>CancelReservation</code>; the build's schema and maps are regenerated and committed.</li>
+<li><code>usecases/reservations/policies.cedar</code> appends P4, P5, and P6: the update, the field update, and the cancel, all by possession.</li>
+<li><code>usecases/reservations/records.json</code> is the read path's stand-in: two records as the API returns them. <code>usecase.py</code> hands core <code>fetch</code>, which reads it.</li>
+<li><code>tests/reservation-writes.json</code> adds twelve cases: the update and the cancel by possession, a wrong name, no pair, a pair for another reservation, an unknown record, and the paths: contact and seat allowed, fare, a passenger's name, remarks, and an undeclared path refused.</li>
+<li><code>events/</code> gains seven request fixtures and two response fixtures; <code>test_interceptor.py</code> pins the pre-fetch: a wrong name and an unknown record are refused before anything is forwarded, a fare change is named, a nested seat change passes, and both legs are covered for every tool.</li>
 </ul>
 
-<h2 id="tdd">8. Growing by tests</h2>
+<h2 id="tdd">6. Growing by tests</h2>
 
-<p>The fifteen cases were written before the policies, and the Gateway fixtures before the handlers. Two things the tests decided. The corpus case for an unknown record made the read policy guard both attributes, so a record the store does not know fails closed with no evaluation error, where iteration 1's unguarded policy still errors. And the fixture with a co-traveler's name fixed what the response leg returns on a mismatch: an empty object, because the call succeeded upstream and nothing of the record may be shown.</p>
+<p>The corpus cases came first, and they are indistinguishable in form from iteration 11's: a resource with attributes, a presented pair, a decision. The corpus does not know about the pre-fetch, and that is the point: the policies are written against the record, and where the record came from is the wrapper's business. The Gateway fixtures are where the pre-fetch is pinned, and the fixture for an unknown locator settled the rule that no record means no call rather than a call decided on nothing.</p>
 
-<p>The orders parity tests found the two places core diverged from iteration 10 in extraction: the rejection message named the full action reference instead of the verb, and a nested list whose elements had all emptied was kept as an empty list.</p>
+<h2 id="proofs">7. Proved as well as tested</h2>
 
-<h2 id="proofs">9. Proved as well as tested</h2>
-
-<p>Six guardrails hold over every request and every record:</p>
+<p>Four new guardrails hold over every request, every record, and every writers map:</p>
 
 <ul>
-<li><strong>A lookup requires a pair.</strong> A locator alone is never attempted.</li>
-<li><strong>A read requires a pair.</strong> True while possession is the only path; iteration 13's specialist view will retire it knowingly.</li>
-<li><strong>Possession names the record.</strong> A pair reaches only the record whose locator and holder it names.</li>
-<li><strong>Undeclared paths fail closed</strong>, nested ones included.</li>
-<li><strong>Restricted leaves are unreadable</strong>: passport numbers and medical requests.</li>
-<li><strong>Possession reads the customer's levels only.</strong> The specialist's remarks are never revealed to the pair.</li>
+<li><strong>Writes require a pair.</strong> No update, field update, or cancel without one. Iteration 13's specialist writes will revise this knowingly.</li>
+<li><strong>Possession writes only the record it names</strong>, for every write verb.</li>
+<li><strong>Possession writes owner paths only.</strong> Whatever the map holds for a path short of <code>owner</code>, the pair never sets it.</li>
+<li><strong>Mass assignment fails closed</strong>, nested paths included.</li>
 </ul>
 
-<p>The analysis runner now knows two chains. The orders chain gained the use case on core as its final member, proven to preserve iteration 9's decisions under the schema core's build wrote; the reservations chain begins here. Each chain's guardrails are given their status against that chain's final set. Findings and instructions are in <code>analysis/README.md</code>.</p>
+<p>The six guardrails from iteration 11 are reproven against the six-policy set. The reservations chain has no pairs yet: its iterations evolve one directory in place, which the open questions take up. Findings and instructions are in <code>analysis/README.md</code>.</p>
 
-<h2 id="running">10. Running it</h2>
-
-<p>From the repository root, every iteration's and every use case's tests run in one command, and every test and proof together in another:</p>
+<h2 id="running">8. Running it</h2>
 
 <pre><code>uv run pytest -v
 ./check.sh</code></pre>
 
-<p>The build for one use case:</p>
+<h2 id="decisions">9. Decisions made in this iteration</h2>
 
-<pre><code>uv run python usecases/reservations/build.py</code></pre>
+<p><strong>A write by possession is preceded by a read.</strong> The record is fetched through the read path and the verb is decided on it. One read per write, no store, no cache, no staleness beyond the moment between the two calls.</p>
 
-<h2 id="decisions">11. Decisions made in this iteration</h2>
+<p><strong>No record means no call.</strong> A locator the API does not know is refused on the request leg with nothing forwarded.</p>
 
-<p><strong>The customer is never a principal.</strong> Possession is presented in context and checked against the record. The principal is whoever holds the token.</p>
+<p><strong>The policies do not know about the pre-fetch.</strong> They read the record's attributes; the corpus pins them against stored records; the wrapper supplies the entity from wherever it got it.</p>
 
-<p><strong>The request leg asks a different verb from the response leg.</strong> The lookup is permitted on the pair alone; the read is decided on the record. Two verbs make the two questions visible in the corpus and the proofs.</p>
+<p><strong>Cancellation is held by the pair.</strong> Confirmed as the airline's rule. The corpus records it as a permit, so a later tightening is a visible change.</p>
 
-<p><strong>Maps are keyed by path, and containers have no level.</strong> A nested leaf's level applies to every element. The mask is one decision per distinct path.</p>
+<p><strong>The holder moves any passenger's seat.</strong> The path <code>passengers[].seat</code> is one decision for every element; which passenger a payload element addresses is the API's positional convention, and the interceptor does not resolve it.</p>
 
-<p><strong>Nested levels travel in Unity Catalog tag keys.</strong> The catalog is still the source of truth; the convention is stated in the build's docstring and can be replaced by a governed tag scheme.</p>
-
-<p><strong>A mismatch returns an empty record.</strong> The call succeeded upstream; nothing of the record is shown; no error confirms or denies that the locator exists.</p>
-
-<p><strong>Core is extracted, never designed ahead.</strong> Each piece moved because reservations needed it, and orders holds parity on every move.</p>
-
-<h2 id="open-questions">12. Open questions</h2>
+<h2 id="open-questions">10. Open questions</h2>
 
 <ol>
-<li>Lockout. A pair is guessable, and the gateway cannot count attempts on its own. Where guessed last names are stopped, upstream or in the Gateway, is a deployment decision the rules cannot make.</li>
-<li>The empty record on a mismatch. Returning nothing reveals nothing about the locator, but an agent cannot tell a wrong name from an empty reservation. Whether a distinct signal is worth the leak is a product question.</li>
-<li>Writes by possession, and the pre-fetch a write needs before it can be forwarded: iteration 12.</li>
-<li>The specialist's view, the list verb, and the agent as a principal of its own type: iteration 13.</li>
-<li>Struct fields the catalog cannot tag. The path-in-the-key convention works and is ours; Databricks may add nested tags, or governed tags may not accept the scoped keys.</li>
+<li>Chains for a use case that evolves in place. The numbered iterations each kept a directory, and the composition proofs compare them. Reservations grows one directory across iterations 11 through 13, so nothing proves iteration 12 preserved iteration 11's decisions except the carried corpus. Either the runner learns to read a prior policy set from git, or each iteration of a use case keeps a snapshot of its policies for the pair.</li>
+<li>The read between the fetch and the write. A record can change between the two calls. For a cancellation on a possession check that is harmless; for a rule that depends on the record's state, such as refusing to cancel a flown segment, it is the usual race and needs the API's own conditional write.</li>
+<li>Positional payloads for lists. <code>passengers[].seat</code> says every element may carry a seat; it does not say which passenger the second element is. If the API keys passengers by an id, the payload round should require it.</li>
+<li>The pre-fetch's cost at volume, and whether the read path should be the same tool or a narrower endpoint returning only the attributes the policies read.</li>
 </ol>
 
 <h2 id="glossary">Glossary</h2>
 
 <table>
 <tr><th>Term</th><th>Meaning</th></tr>
-<tr><td>Record locator</td><td>The six-character reservation number. The resource's id and one half of the credential.</td></tr>
-<tr><td>Holder</td><td>The person whose last name is on the reservation. One per reservation; passengers are not holders.</td></tr>
-<tr><td>Presented pair</td><td>The locator and last name a caller supplies in the tool input, carried in context as <code>presented</code>.</td></tr>
-<tr><td>Possession</td><td>Holding the pair. The only customer credential in this use case.</td></tr>
-<tr><td>Lookup</td><td>The request-leg verb: may this call be attempted. Permitted on the pair alone.</td></tr>
-<tr><td>Path</td><td>A leaf's name through its containers: <code>contact.email</code>, <code>passengers[].seat</code>. The key of both maps.</td></tr>
-<tr><td>Specialist</td><td>The human support person. "Agent" is reserved for the non-human agent.</td></tr>
-<tr><td>Descriptor</td><td>What a use case tells core: entity type, attributes, verbs, tools.</td></tr>
+<tr><td>Pre-fetch</td><td>Reading the record through the read path before a write is forwarded, so the request leg can decide on the record's attributes.</td></tr>
+<tr><td>Prefetch verbs</td><td>The request-leg verbs the descriptor names as needing the record: update and cancel.</td></tr>
+<tr><td>Owner path</td><td>A path whose writer is <code>owner</code>: <code>contact.email</code>, <code>contact.phone</code>, <code>passengers[].seat</code>. What the pair may set.</td></tr>
+<tr><td>Records fixture</td><td><code>records.json</code>, standing in for the reservations API's read path.</td></tr>
 </table>
 
 <h2 id="references">References</h2>
 
 <ol class="sources">
-<li id="r1"><a href="../../bola-reads/design.html">Iteration 1</a>: the placement of ownership checks that need the object's attributes</li>
-<li id="r2"><a href="../../contract/design.html">Iteration 7</a>: the contract build this iteration extends to nested columns</li>
-<li id="r3"><a href="https://bitol-io.github.io/open-data-contract-standard/latest/">Open Data Contract Standard v3.2.0</a>, nested properties and items</li>
-<li id="r4"><a href="https://docs.databricks.com/aws/en/database-objects/tags">Unity Catalog, apply tags to securable objects</a>: tags attach to columns</li>
-<li id="r5"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
-<li id="r6"><a href="https://github.com/cedar-policy/cedar-integration-tests">cedar-integration-tests</a>, the Cedar project's engine-independent test corpus format</li>
+<li id="r1"><a href="reservations-11.html">Iteration 11</a>: possession presented in context, and the response-leg read</li>
+<li id="r2"><a href="bola-writes/design.html">Iteration 2</a>: where the ownership fact for a write comes from, the question this iteration answers for reservations</li>
+<li id="r3"><a href="field-writes/design.html">Iteration 4</a>: the writers map and whole-call rejection</li>
+<li id="r4"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
 </ol>
 
 </main>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>What the reservation use case changed in core</title>
+<title>Cedar authorization for MCP tools, iteration 8: provable composition</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -130,126 +130,191 @@ h2:hover .anchor { opacity: 1; }
 <div class="shell">
 <nav class="toc">
   <p class="toc-title">Contents</p>
-  <a href="#question">1. The question</a>
-  <a href="#extraction">2. What the extraction itself changed</a>
-  <a href="#prefetch">3. The pre-fetch, iteration 12</a>
-  <a href="#parties">4. Parties and presented facts, iteration 13</a>
-  <a href="#unchanged">5. What did not change</a>
-  <a href="#size">6. The size of the changes</a>
-  <a href="#orders">7. What orders gains from them</a>
-  <a href="#leaks">8. Two conventions that leaked into core</a>
-  <a href="#next">9. What a third use case would force</a>
-  <a href="#verdict">10. Whether the mechanism held</a>
+  <a href="#problem">1. The problem</a>
+  <a href="#scope">2. Scope of this iteration</a>
+  <a href="#preservation">3. Preservation between iterations</a>
+  <a href="#revisions">4. Declared revisions and restrictions</a>
+  <a href="#guardrails">5. Every guardrail against the final set</a>
+  <a href="#the-iteration">6. The iteration, file by file</a>
+  <a href="#running">7. Running it</a>
+  <a href="#decisions">8. Decisions made in this iteration</a>
+  <a href="#open-questions">9. Open questions</a>
+  <a href="#glossary" class="tail">Glossary</a>
+  <a href="#references" class="tail">References</a>
 </nav>
 <div class="page">
 <header class="doc">
-  <div class="kicker">Writeup &middot; Cedar OSDC &middot; September 2026</div>
-  <h1>What the reservation use case changed in core</h1>
-  <p>The reservation case was chosen to pressure test the mechanism built for orders. This is the account of what the mechanism had to change to admit it, taken from the diffs of iterations 11 through 13, and what those changes say about how general the mechanism is.</p>
+  <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
+  <h1>Cedar authorization for MCP tools, iteration 8: provable composition</h1>
+  <p>The corpora carry each iteration's cases forward and rerun them. This iteration states the same promise as a theorem: each iteration preserves every decision of the one before it, except the widenings it declared, and every guardrail ever written has a checked status against the final policy set.</p>
 </header>
 <main>
 
 <div class="toc-top">
   <p class="toc-title">Contents</p>
   <ol>
-    <li><span class="num">1.</span><a href="#question">The question</a></li>
-    <li><span class="num">2.</span><a href="#extraction">What the extraction itself changed</a></li>
-    <li><span class="num">3.</span><a href="#prefetch">The pre-fetch, iteration 12</a></li>
-    <li><span class="num">4.</span><a href="#parties">Parties and presented facts, iteration 13</a></li>
-    <li><span class="num">5.</span><a href="#unchanged">What did not change</a></li>
-    <li><span class="num">6.</span><a href="#size">The size of the changes</a></li>
-    <li><span class="num">7.</span><a href="#orders">What orders gains from them</a></li>
-    <li><span class="num">8.</span><a href="#leaks">Two conventions that leaked into core</a></li>
-    <li><span class="num">9.</span><a href="#next">What a third use case would force</a></li>
-    <li><span class="num">10.</span><a href="#verdict">Whether the mechanism held</a></li>
+    <li><span class="num">1.</span><a href="#problem">The problem</a></li>
+    <li><span class="num">2.</span><a href="#scope">Scope of this iteration</a></li>
+    <li><span class="num">3.</span><a href="#preservation">Preservation between iterations</a></li>
+    <li><span class="num">4.</span><a href="#revisions">Declared revisions and restrictions</a></li>
+    <li><span class="num">5.</span><a href="#guardrails">Every guardrail against the final set</a></li>
+    <li><span class="num">6.</span><a href="#the-iteration">The iteration, file by file</a></li>
+    <li><span class="num">7.</span><a href="#running">Running it</a></li>
+    <li><span class="num">8.</span><a href="#decisions">Decisions made in this iteration</a></li>
+    <li><span class="num">9.</span><a href="#open-questions">Open questions</a></li>
   </ol>
-  <p class="back"><a href="../index.html">All iterations</a></p>
+  <p class="back"><a href="index.html">All iterations</a> <a href="#glossary">Glossary</a> <a href="#references">References</a></p>
 </div>
 
-<h2 id="question">1. The question</h2>
+<h2 id="problem">1. The problem</h2>
 
-<p>Before iteration 11 there was no core. The mechanism existed as the final state of the numbered iterations: the projection in iteration 6, the contract build in iteration 7, the row filter in iteration 9, and the handlers and enforcement library in iteration 10, each naming orders throughout. The question was whether that mechanism would carry a use case with no customer identity, possession as the only credential, a check that cannot run before the fetch, and a nested record, and what it would cost to make it. The answer is in three parts: what changed in the act of extracting core, what iteration 12 added, and what iteration 13 added.</p>
+<p>Nine iterations have grown one policy set. Each carried its predecessors' corpora as a regression gate, and the gate worked: iteration 5 tripped it on purpose and revised one case, iteration 6 edited every policy and tripped nothing. But a corpus samples. It checks the writers map in <code>entities.json</code>, the four users, the two orders. A decision that changed for a map nobody wrote, or a principal in two roles at once, passes the gate unseen. Iteration 2's first guardrail and iteration 5's fourth were both falsified that way, by the prover rather than the corpus.</p>
 
-<h2 id="extraction">2. What the extraction itself changed</h2>
+<p>The per-iteration proofs in <code>analysis/</code> have covered invariants within one policy set since iteration 4. What they have not covered is the relation between sets: that iteration 5 changed the decisions it said it changed, that iteration 6 changed none in direct mode, and that a guardrail proven in iteration 3 still holds against the set as it stands today, or is known and recorded not to. This iteration proves the composition.</p>
 
-<p>Iteration 11 moved the mechanism into <code>core</code> and ran orders through it at parity before touching reservations. Most of the move was renaming: the entity type, the verbs, the attribute map, and the tool table became fields of a descriptor the use case supplies, and nothing else in the enforcement library referred to orders. Five things changed in substance during the move, each because reservations needed it.</p>
+<h2 id="scope">2. Scope of this iteration</h2>
 
-<ul>
-<li><strong>Fields became paths.</strong> Iteration 10's field round walked one level and flattened nested objects to dotted keys, refusing any list holding objects. Core walks the whole payload and names a leaf inside a list by an index-free path, <code>passengers[].seat</code>, so one decision applies to every element. The maps are keyed by those paths, containers have no level of their own, an object that loses every leaf is removed, and a list whose elements all emptied is removed with them.</li>
-<li><strong>One decision per distinct path.</strong> Iteration 1's review promised a mask; ten iterations deferred it. Keying by path made it natural: within one call the field round asks Cedar once per path, and rows with the same attributes share the answers. The critical review's cost finding is not answered by this, but the per-row multiplier is.</li>
-<li><strong>Scalar attributes.</strong> Orders had one attribute and it was an entity reference, the owner. A reservation's locator and holder name are strings. The descriptor's attribute map now takes <code>String</code>, <code>Long</code>, and <code>Bool</code> beside entity types, and the contract build carries the distinction as a second custom property.</li>
-<li><strong>Presented facts.</strong> A tool table entry can name arguments to copy into context as presented facts. Orders never needed context from the tool input; possession is nothing but that.</li>
-<li><strong>Nested columns in the build.</strong> Stage one reads a struct or array column's Spark type from the catalog's <code>type_json</code> and writes nested ODCS properties; stage two walks them to path-keyed maps. Unity Catalog tags columns and not the fields inside them, so a nested leaf's level travels in the tag key, <code>classification__passport_number</code> on the passengers column. That convention is core's, stated in the build's docstring.</li>
-</ul>
+<div class="callout"><p><strong>Built:</strong> in <code>analysis/</code>, preservation proofs for each consecutive pair of iterations, declared revisions and restrictions as data, a status for every guardrail against the final set with retirements shown to fail, the runner moved to the compiler's compiled policy set API, and <code>check.sh</code> at the repository root running every test and every proof in one command. 141 properties proven, 3 expected differences shown.</p>
+<p><strong>Not built:</strong> equivalence of refactorings (a rewritten policy set against its original, which the same machinery supports when a refactoring happens), and any continuous integration, which was declined for this repository.</p></div>
 
-<h2 id="prefetch">3. The pre-fetch, iteration 12</h2>
+<h2 id="preservation">3. Preservation between iterations</h2>
 
-<p>A write by possession cannot be decided without the record, and the record is not in any store. The whole change is two descriptor fields and ten lines in the engine:</p>
+<p>The theorem behind a carried corpus is this: for every action the older iteration had, the newer policy set decides every possible request the way the older one did. The runner proves it pair by pair. Both sets are compiled under the newer iteration's schema, because the older policies mention only what the newer schema still declares, and the comparison runs over each request environment whose action the older schema already had:</p>
 
-<pre><code class="lang-python">extra = []
-if action in self.use_case.prefetch_actions:
-    # The verb needs the record: fetch it through the read path
-    # and decide on its attributes. No record, no call.
-    record = self.use_case.fetch(row_id) if row_id is not None else None
-    if not isinstance(record, dict):
-        return CallDecision(allowed=False, denied_verb=True)
-    extra = [self.entity_from_row(record)]
-if not self.is_allowed(projection, action, resource, context, extra):
-    return CallDecision(allowed=False, denied_verb=True)</code></pre>
+<pre><code>let older_actions: BTreeSet&lt;String&gt; =
+    older_schema.actions().map(|a| a.to_string()).collect();
+let envs: Vec&lt;RequestEnv&gt; = newer_schema
+    .request_envs()
+    .filter(|env| older_actions.contains(&amp;action_of(env)))
+    .collect();</code></pre>
 
-<p>The record's entity is built by the same function the response leg uses, so a policy written against the record reads the same attributes on either leg, and the corpus does not know which leg supplied them. The handler passes the row id through, one line. This is the mechanism's answer to iteration 2's open question, which orders carried for ten iterations: the request leg gets the object's facts by reading the object first, at one read per write, when the use case says the verb needs it.</p>
+<p>New actions have request environments of their own and are left out of the comparison. Non-interference follows without a separate proof: Cedar proves each action's decisions in its own environment, so a policy for <code>RefundOrder</code> cannot change a <code>ReadOrder</code> decision, and no separate proof is needed to say so. The output names what was compared:</p>
 
-<h2 id="parties">4. Parties and presented facts, iteration 13</h2>
+<pre><code>  PASS  bola-reads preserved in bola-writes
+        actions compared: Action::"ReadOrder"
+  PASS  bola-writes preserved in field-reads
+        actions compared: Action::"ReadOrder", Action::"UpdateOrder"
+  PASS  field-reads preserved in field-writes
+        actions compared: Action::"ReadOrder", Action::"ReadOrderField", Action::"UpdateOrder"</code></pre>
 
-<p>Three changes, all in the projection and the handler.</p>
+<p>Five pairs are preserved outright. Two changed something on purpose, because each newer iteration changed something on purpose.</p>
 
-<ul>
-<li><strong>A workload token yields an agent.</strong> The projection types the actor as <code>Agent</code> when the token carries a client id equal to its subject, and as <code>User</code> otherwise. Iteration 6's rule that the actor is the principal is unchanged; applied to an exchanged token it now makes the agent the principal and the specialist the acted-for human, which iteration 6 had left as an open question.</li>
-<li><strong>The acted-for human comes with roles.</strong> The projection builds an entity for the token's subject with the roles from the token's own claim and the store, and the engine puts it in the store for every question. Policies can then ask what the human holds, which is how the specialist's view is granted through the agent.</li>
-<li><strong>Presented facts are optional, and an id may be half of them.</strong> A tool that declares presented facts accepts a call without them, so a specialist's locator-only lookup is decided on the specialist's own grants. The resource id doubles as one half of the pair, and the handler treats a call that supplies only the id as a call without a pair. A partial pair is an error.</li>
-</ul>
+<h2 id="revisions">4. Declared revisions and restrictions</h2>
 
-<h2 id="unchanged">5. What did not change</h2>
+<p>Iteration 5 revised a carried case: support may update any order. A plain preservation proof between iterations 4 and 5 must fail, and it does. The runner therefore takes a declared revision, the policy that carries the widening, adds it to the older set, and proves that the older iteration plus that equals the newer one. The revision is a file, the same text as P10 of the iteration 5 policy set:</p>
 
-<p>The corpus runner, the Gateway event and result formats, the structure of the two legs (verb round, payload round, row round, field round), the replacement of stored entities by the token's parties and the payload's rows, the strict bearer decoding, the fail-closed handling of anything the handler cannot evaluate, stage two of the contract build apart from walking nested properties, and the ODCS document's form. The analysis runner learned chains and generated schemas for use cases, which is bookkeeping about where policies live rather than a change in what is proved.</p>
+<pre><code class="lang-cedar">@id("support-updates-any-order")
+permit(
+  principal in Role::"support",
+  action == Action::"UpdateOrder",
+  resource
+);</code></pre>
 
-<h2 id="size">6. The size of the changes</h2>
+<p>With that file alone the proof still failed, under <code>UpdateOrderField</code>. The counterexample was a support member, an order they do not own, and a writers map in which some field's writer is <code>support</code>. Iteration 5's field policy for the role widens an action iteration 4 already had, for any map that names the role as a writer. Iteration 4's map never did, so the carried corpus never sampled the change, and iteration 5's design document declared one widening where there were two. The second is now declared in its own file, and the pair is proven with both:</p>
+
+<pre><code>  PASS  field-writes preserved in function-level given the declared revision support-updates-any-order, support-updates-support-fields
+        actions compared: Action::"ReadOrder", Action::"ReadOrderField", Action::"UpdateOrder", Action::"UpdateOrderField"
+  SHOWN without the declared revision, field-writes and function-level differ: differs under Action::"UpdateOrder", as expected</code></pre>
+
+<p>The second line is the runner comparing without the revisions and reporting the difference it found. A declared revision is thereby visible: the runner shows both that the pair differs and that the declared files account for all of it.</p>
+
+<p>Iteration 6 revised every policy for mode and promised that no direct-mode decision changed. That promise names a region, and the runner takes a restriction, a forbid added to both sides of the comparison so that the region outside it decides Deny on both and drops out:</p>
+
+<pre><code class="lang-cedar">@id("restriction-direct-mode")
+forbid(
+  principal,
+  action,
+  resource
+) when {
+  context has actingFor
+};</code></pre>
+
+<pre><code>  PASS  function-level preserved in on-behalf-of within direct-mode
+        actions compared: Action::"CancelOrder", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"</code></pre>
+
+<p>Revisions and restrictions are data on the pair, alongside the older and newer names, so a future iteration that widens or promises a region adds a file and a line rather than code.</p>
+
+<h2 id="guardrails">5. Every guardrail against the final set</h2>
+
+<p>Nineteen guardrail files exist across iterations 2 through 9. Each iteration listed the ones it carried, and the retirements were sentences in design documents. The second pass puts every file against the final policy set and prints one of three statuses. Carried: proven a no-op against the final set. Revised: superseded by a file of the same name under a later iteration's guardrail directory, which is the one proven. Retired: listed with the iteration that retired it and the reason, and shown to fail, so the retirement is a checked fact:</p>
+
+<pre><code>  SHOWN retired  guardrails/bola-writes/support-never-updates.cedar: iteration 5 granted the support role an object-level update: differs under Action::"UpdateOrder", as expected
+  PASS  carried  guardrails/field-reads/fail-closed.cedar
+  PASS  carried  guardrails/field-reads/restricted-unreadable.cedar
+  revised guardrails/field-reads/support-confidential.cedar: superseded by guardrails/on-behalf-of/support-confidential.cedar
+  PASS  carried  guardrails/field-writes/mass-assignment-fail-closed.cedar
+  PASS  carried  guardrails/field-writes/system-fields-unwritable.cedar
+  SHOWN retired  guardrails/field-writes/writes-require-ownership.cedar: iteration 5 opened a role-granted write path, bounded by role-writes-only-role-fields: differs under Action::"UpdateOrderField", as expected</code></pre>
 
 <table>
-<tr><th>Iteration</th><th>Files in core</th><th>Lines added</th><th>Lines removed</th><th>What</th></tr>
-<tr><td>11</td><td>seven, new</td><td>about 950</td><td></td><td>the extraction, with the five changes above folded in</td></tr>
-<tr><td>12</td><td>three</td><td>18</td><td>3</td><td>the pre-fetch</td></tr>
-<tr><td>13</td><td>three</td><td>70</td><td>27</td><td>the agent type, the acted-for entity, optional presented facts</td></tr>
+<tr><th>Status</th><th>Count</th><th>Files</th></tr>
+<tr><td>carried</td><td>12</td><td>fail-closed, restricted-unreadable, mass-assignment-fail-closed, system-fields-unwritable, refund-requires-finance, six under <code>guardrails/on-behalf-of/</code>, and acting-bounded-by-ownership under <code>guardrails/row-filtering/</code></td></tr>
+<tr><td>revised</td><td>5</td><td>support-confidential (iteration 3), cancel-requires-owner-or-support, role-writes-only-role-fields, refund-implies-no-read (iteration 5), acting-bounded-by-ownership (iteration 6, revised by iteration 9 to name the order verbs)</td></tr>
+<tr><td>retired</td><td>2</td><td>support-never-updates (iteration 2), writes-require-ownership (iteration 4), both by iteration 5's role-granted update</td></tr>
 </table>
 
-<p>Core is about 970 lines against about 880 in the iteration 10 and iteration 7 files it replaced, and the difference is the nested walk and the build's nested columns. The two later iterations together changed under a hundred lines of it.</p>
+<p>A retired guardrail that unexpectedly held, or a carried one that unexpectedly failed, is a failure of the run. The list of retirements is data in the runner, so retiring a guardrail means adding a line with a reason, and forgetting to means the run fails.</p>
 
-<h2 id="orders">7. What orders gains from them</h2>
-
-<p>Orders runs on core unchanged in policy and at parity in every test, and three of the changes apply to it without any work. Nested order payloads, which iteration 10 refused, are now filtered by path. The per-path mask bounds the field round for lists. And the pre-fetch is the answer to the question the critical review put third for orders: naming <code>UpdateOrder</code> and <code>CancelOrder</code> as prefetch verbs, with a fetch through the order read path, would end the request leg's dependence on a stored entity file. The agent type is there for orders too, unused until a rule wants it.</p>
-
-<h2 id="leaks">8. Two conventions that leaked into core</h2>
-
-<p>Two decisions belong to a use case and sit in core, and should be said so.</p>
+<h2 id="the-iteration">6. The iteration, file by file</h2>
 
 <ul>
-<li><strong>Presented facts are upper-cased.</strong> The handler upper-cases every presented value. That is right for a record locator and an airline's stored last name, and it is a reservation convention. The descriptor should carry a normalizer per presented fact.</li>
-<li><strong>The workload marker is a client id claim equal to the subject.</strong> That is an assumption about the identity setup, recorded as such in the projection, and it belongs in configuration once a real token shows the shape.</li>
+<li><code>analysis/src/main.rs</code> gains <code>PAIRS</code>, the consecutive pairs with their revisions and restrictions; <code>RETIRED</code>, the retired guardrails with reasons; <code>prove_composition</code>, which runs the two passes; and a tally that counts differences shown as expected separately from proofs and failures. The per-iteration proofs are unchanged in what they prove and now use <code>CompiledPolicySet</code> and <code>CompiledPolicy</code>, the compiler's current API, which compiles a set once per request environment and reuses it across queries.</li>
+<li><code>analysis/revisions/function-level/</code> holds the two declared revisions of iteration 5: <code>support-updates-any-order.cedar</code>, declared in its design document, and <code>support-updates-support-fields.cedar</code>, found by the prover.</li>
+<li><code>analysis/restrictions/direct-mode.cedar</code> is the forbid that confines the iteration 5 to 6 comparison to direct mode.</li>
+<li><code>check.sh</code> at the repository root runs the tests and then the proofs and exits nonzero if either fails.</li>
+<li><code>analysis/README.md</code> gains a composition section with the pairs table, the guardrail statuses, and the runner output, and a fifth finding.</li>
 </ul>
 
-<h2 id="next">9. What a third use case would force</h2>
+<h2 id="running">7. Running it</h2>
 
-<ul>
-<li>More than one resource type per use case. The descriptor names one entity type, one id field, one attribute map. A tool whose response joins a reservation with its tickets is two types.</li>
-<li>Attributes from nested paths. An attribute is a top-level field today; a use case whose ownership fact sits inside a nested object would need the attribute map to take a path.</li>
-<li>Positional writes into lists. <code>passengers[].seat</code> permits a seat on any element and says nothing about which passenger the second element is. A use case where elements carry ids should have the payload round require them.</li>
-<li>A bound on a role's reach. The specialist reaches any reservation; a desk serving one region would want a predicate on the record, which is a policy and an attribute, both within the mechanism.</li>
-<li>Chains for a use case that evolves in place. The numbered iterations each kept a directory and the composition proofs compare them; reservations grew one directory across three iterations, and only the carried corpus says each preserved the last. The runner should read a prior policy set from a snapshot or from git.</li>
-</ul>
+<p>From the repository root, every test and every proof in one command:</p>
 
-<h2 id="verdict">10. Whether the mechanism held</h2>
+<pre><code>./check.sh</code></pre>
 
-<p>It held. The reservation case was chosen for its differences from orders, and none of them required a new kind of policy, a new leg, a new event format, or a change to how the contract reaches the enforcement point. The differences were absorbed by the descriptor and by three additions to the engine that were latent in the design already: paths where iteration 3 had fields, the pre-fetch where iteration 2 had a question, and the agent where iteration 6 had one. The customer's absence as an identity, which looked like the hardest difference, turned out to be the simplest: a credential presented in context is what the rules always read, and the possession policies are shorter than the ownership ones. The two conventions above are the whole of what a reviewer would call use-case knowledge in core, and both are a few lines from being configuration.</p>
+<p>The proofs alone run from <code>analysis/</code> and need the cvc5 solver, as described in <code>analysis/README.md</code>:</p>
+
+<pre><code>cd analysis && cargo run</code></pre>
+
+<h2 id="decisions">8. Decisions made in this iteration</h2>
+
+<p><strong>Preservation is proven under the newer schema over the older actions.</strong> The older policies compile under the newer schema because each schema only adds. Comparing per action environment makes non-interference a consequence of the per-action proofs.</p>
+
+<p><strong>Revisions are declared as policy files.</strong> A widening is the policy that carries it, added to the older set. The runner shows the pair differing without it, so a declaration is checked in both directions: it accounts for the whole difference, and there is a difference to account for.</p>
+
+<p><strong>Restrictions are forbids added to both sides.</strong> A promise about a region of the request space is a forbid on its complement. No new query type is needed; equivalence over the remainder is the same equivalence.</p>
+
+<p><strong>Retirements are data and are shown to fail.</strong> A guardrail leaves the proven set only by entering the retired list with a reason, and the runner checks that it really no longer holds.</p>
+
+<p><strong>The compiled API replaces the deprecated one.</strong> Same proofs, one compilation per policy set per environment, and no deprecation allowance in the crate.</p>
+
+<h2 id="open-questions">9. Open questions</h2>
+
+<ol>
+<li>Refactoring equivalence. When a policy set is rewritten without meaning to change any decision, the same equivalence query proves it. Nothing has been refactored yet; the machinery waits for the first case.</li>
+<li>Generated schemas in the chain. Iteration 7's schema is the build output named in <code>SCHEMA_OVERRIDES</code>, and its pair proves the generated schema decides as the hand-written one. Later contracts, or more than one table, will need the override table to become a convention.</li>
+<li>Whether the corpus should sample what the proofs find. The second widening in iteration 5 could be added to iteration 4's carried corpus as a revised case, mirroring the first. The proof already covers it; the question is whether the corpus should record every proven revision or only the ones a design document declared.</li>
+</ol>
+
+<h2 id="glossary">Glossary</h2>
+
+<table>
+<tr><th>Term</th><th>Meaning</th></tr>
+<tr><td>Preservation</td><td>The newer policy set decides every request of every older action as the older set did. Proven per consecutive pair.</td></tr>
+<tr><td>Declared revision</td><td>A policy file carrying a widening the newer iteration made on purpose, added to the older set before comparing.</td></tr>
+<tr><td>Restriction</td><td>A forbid added to both sides of a comparison, confining it to the region the forbid leaves open.</td></tr>
+<tr><td>Non-interference</td><td>A policy for a new action changes no decision for an old one. Follows from proving each action in its own request environment.</td></tr>
+<tr><td>Retired guardrail</td><td>A guardrail that no longer holds, listed with the iteration and reason, and shown by the runner to fail.</td></tr>
+<tr><td>Request environment</td><td>One combination of principal type, action, and resource type from the schema; the unit the symbolic compiler proves over.</td></tr>
+</table>
+
+<h2 id="references">References</h2>
+
+<ol class="sources">
+<li id="r1"><a href="https://crates.io/crates/cedar-policy-symcc">cedar-policy-symcc</a>, Cedar's symbolic compiler, the <code>CompiledPolicySet</code> API and the equivalence and never-errors queries</li>
+<li id="r2"><a href="https://github.com/cedar-policy/cedar-spec">cedar-spec</a>, the Lean formalization in which the symbolic compiler is verified</li>
+<li id="r3"><a href="https://cvc5.github.io/">cvc5</a>, the SMT solver the compiler's queries run on</li>
+<li id="r4"><a href="https://docs.cedarpolicy.com/">Cedar policy language documentation</a></li>
+</ol>
 
 </main>
 <footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>

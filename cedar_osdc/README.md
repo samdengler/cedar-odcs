@@ -34,6 +34,6 @@ A use case directory (`usecases/<name>/`) holds `usecase.py`,
 outputs, `tests/` corpora, `events/` Gateway fixtures, and its tests.
 `uv run python usecases/<name>/build.py` rebuilds the artifacts.
 
-`what-reservations-changed.html` is the writeup of what the mechanism
+`history/what-reservations-changed.html` is the writeup of what the mechanism
 had to change to admit the reservation use case, taken from the diffs
 of iterations 11 through 13.
