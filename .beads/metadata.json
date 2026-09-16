@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "cedar_osdc",
+  "project_id": "3c5664f3-926e-409d-85f6-0a6a985b6238"
+}
