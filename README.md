@@ -127,8 +127,8 @@ Requires [uv](https://docs.astral.sh/uv/). From the repository root, `uv sync` i
 
 ```sh
 uv run cedar-osdc run-tests usecases/reservations
-uv run cedar-osdc check-access usecases/reservations --caller agent.json --presented locator=ABC123 --presented lastName=Smith
-uv run cedar-osdc dry-run usecases/reservations --caller agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
+uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers/agent.json --presented locator=ABC123 --presented lastName=Smith
+uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/callers/agent.json --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Smith --response usecases/reservations/records/ABC123.json
 uv run cedar-osdc share usecases/reservations --case "co-traveler"
 ```
 
