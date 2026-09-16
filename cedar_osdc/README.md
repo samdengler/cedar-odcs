@@ -20,7 +20,8 @@ move.
   the catalog's `type_json`, nested levels from path-scoped tag keys.
 - `engine/corpus.py`: the engine-independent corpus runner.
 - `cli/main.py`: the `cedar-osdc` command (iteration 14): run-tests,
-  authorize, dry-run, check-access, share, build, validate, prove.
+  authorize, dry-run, check-access, share, build, validate, prove,
+  check.
 - `gateway/handlers.py`: the AgentCore Gateway handlers for MCP
   targets, with presented facts copied from tool arguments into
   context; also strict bearer decoding, a Gateway concern.

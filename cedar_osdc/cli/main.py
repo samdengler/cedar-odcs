@@ -11,12 +11,15 @@
     cedar-osdc share        usecases/reservations --case "co-traveler"
     cedar-osdc build        usecases/reservations
     cedar-osdc validate     usecases/reservations
-    cedar-osdc prove
+    cedar-osdc prove        usecases/reservations
+    cedar-osdc check        usecases/reservations
 
 Verbs match the official cedar command where the meaning is the same
 (authorize, validate, run-tests, new) and add the two ideas Cedar has
 no word for: a dry run of one tool call through both legs, and a
-report of what an identity may do. Files are Cedar's own formats:
+report of what an identity may do. check runs build, validate,
+run-tests, and prove in order and stops at the first failure; the
+four stay callable on their own. Files are Cedar's own formats:
 policies.cedar, entities.json, .cedarschema, the corpus in the
 cedar-integration-tests form.
 
@@ -29,6 +32,7 @@ import base64
 import gzip
 import importlib.util
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -387,29 +391,105 @@ def cmd_build(args):
 
 
 def cmd_validate(args):
+    """The policies against the built schema: the official cedar command
+    when it is on the path, otherwise cedarpy.validate_policies, which the
+    installed binding already provides. A missing cedar is not a failure;
+    say which validator ran either way."""
     module = load_use_case(args.directory)
     use_case = module.USE_CASE
     generated = paths(use_case.root).generated
     schema_files = [f for f in sorted(generated.glob("*.cedarschema")) if f.name != "entities.cedarschema"]
     if not schema_files:
         raise Usage("no generated schema; run build first")
+    schema_file = schema_files[0]
+    policies_file = use_case.root / "policies.cedar"
     cedar = shutil.which("cedar")
-    if cedar is None:
-        print("The cedar command is not installed. Install it with")
-        print("    cargo install cedar-policy-cli")
-        print("then run:")
-        print(f"    cedar validate --schema {schema_files[0]} --policies {use_case.root / 'policies.cedar'}")
-        return 2
-    return subprocess.call([cedar, "validate", "--schema", str(schema_files[0]),
-                            "--policies", str(use_case.root / "policies.cedar")])
+    if cedar is not None:
+        print(f"validator  cedar ({cedar})")
+        sys.stdout.flush()
+        return subprocess.call([cedar, "validate", "--schema", str(schema_file),
+                                "--policies", str(policies_file)])
+    print("validator  cedarpy.validate_policies (the cedar command is not on the path; "
+          "install it with `cargo install cedar-policy-cli` for the official validator)")
+    result = cedarpy.validate_policies(policies_file.read_text(), schema_file.read_text())
+    if not result.validation_passed:
+        for error in result.errors:
+            print(f"error: {error}")
+        return 1
+    print("validation passed")
+    return 0
+
+
+def _missing_cvc5() -> bool:
+    """Whether cvc5 is unreachable, checked the same way analysis/src/main.rs's
+    solver() finds it: $CVC5, the bundled copy, then PATH."""
+    if os.environ.get("CVC5"):
+        return False
+    bundled = REPO / "analysis/.tools/cvc5-macOS-arm64-static/bin/cvc5"
+    if bundled.exists():
+        return False
+    return shutil.which("cvc5") is None
 
 
 def cmd_prove(args):
+    """`prove DIR` proves one use case (`cargo run -- prove DIR`); `prove`
+    with no directory, or with the repository root, proves the history
+    chain instead (`cargo run -- prove-history`). Needs cargo and cvc5;
+    when either is missing, say so and exit 2."""
     analysis = REPO / "analysis"
     if shutil.which("cargo") is None:
-        print("The proofs need Rust (cargo) and the cvc5 solver; see analysis/README.md.")
+        print("cargo is not installed. The proofs need Rust and the cvc5 solver; see analysis/README.md (Running).")
         return 2
-    return subprocess.call(["cargo", "run", "--quiet", "--", str(REPO)], cwd=analysis)
+    if _missing_cvc5():
+        print("cvc5 is not installed. See analysis/README.md (Running):")
+        print("    curl -sL -o cvc5.zip https://github.com/cvc5/cvc5/releases/download/cvc5-1.3.1/cvc5-macOS-arm64-static.zip")
+        print("    unzip -q cvc5.zip -d analysis/.tools && rm cvc5.zip")
+        print("    chmod +x analysis/.tools/cvc5-macOS-arm64-static/bin/cvc5")
+        return 2
+    directory = Path(getattr(args, "directory", ".")).resolve()
+    sys.stdout.flush()
+    if directory == REPO:
+        return subprocess.call(["cargo", "run", "--quiet", "--", "prove-history", str(REPO)], cwd=analysis)
+    return subprocess.call(["cargo", "run", "--quiet", "--", "prove", str(directory)], cwd=analysis)
+
+
+def cmd_check(args):
+    """build, validate, run-tests, prove, in order, stopping at the first
+    failure; a one-line heading per step, then the step's own output,
+    then one ok/failed line per step that ran."""
+    directory = args.directory
+    root = Path(directory).resolve()
+    results = []
+
+    print("== build ==")
+    rc = cmd_build(args)
+    if rc == 0:
+        changed = subprocess.call(["git", "diff", "--quiet", "--", str(root)], cwd=REPO) != 0
+        if changed:
+            print(f"generated files under {directory} changed: the committed artifacts were behind their sources")
+        else:
+            print(f"generated files under {directory} unchanged")
+    results.append(("build", rc == 0))
+
+    if rc == 0:
+        print("\n== validate ==")
+        rc = cmd_validate(args)
+        results.append(("validate", rc == 0))
+
+    if rc == 0:
+        print("\n== run-tests ==")
+        rc = cmd_run_tests(argparse.Namespace(directory=directory, cedar_tests=None))
+        results.append(("run-tests", rc == 0))
+
+    if rc == 0:
+        print("\n== prove ==")
+        rc = cmd_prove(args)
+        results.append(("prove", rc == 0))
+
+    print()
+    for name, ok in results:
+        print(f"{name}: {'ok' if ok else 'failed'}")
+    return 0 if all(ok for _, ok in results) else 1
 
 
 def cmd_new(args):
@@ -455,8 +535,9 @@ def main(argv=None) -> int:
     p.set_defaults(func=cmd_share)
 
     with_dir(sub.add_parser("build", help="the contract build: catalog to contract to Cedar")).set_defaults(func=cmd_build)
-    with_dir(sub.add_parser("validate", help="policies against the built schema, with the cedar command")).set_defaults(func=cmd_validate)
-    sub.add_parser("prove", help="the symbolic proofs, with cargo and cvc5").set_defaults(func=cmd_prove)
+    with_dir(sub.add_parser("validate", help="policies against the built schema, with cedar or cedarpy")).set_defaults(func=cmd_validate)
+    with_dir(sub.add_parser("prove", help="the symbolic proofs, with cargo and cvc5 (no directory, or the repository root: the history chain)")).set_defaults(func=cmd_prove)
+    with_dir(sub.add_parser("check", help="build, validate, run-tests, prove, in order, stopping at the first failure")).set_defaults(func=cmd_check)
     with_dir(sub.add_parser("new", help="scaffold a use case (planned)")).set_defaults(func=cmd_new)
 
     args = parser.parse_args(argv)

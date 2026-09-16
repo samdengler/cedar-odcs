@@ -12,6 +12,7 @@ from cedar_osdc.engine.usecase import paths
 
 REPO = Path(__file__).resolve().parents[2]
 R = str(REPO / "usecases/reservations")
+HELLO = str(REPO / "usecases/hello")
 FIXTURES = paths(REPO / "usecases/reservations")
 
 
@@ -97,3 +98,21 @@ def test_playground_link_round_trips():
 
 def test_a_directory_without_a_use_case_is_a_usage_error(capsys, tmp_path):
     assert main(["run-tests", str(tmp_path)]) == 2
+
+
+def test_check_runs_the_four_steps(capsys):
+    code, out = run(capsys, "check", HELLO)
+    assert code == 0
+    for step in ("build", "validate", "run-tests", "prove"):
+        assert f"{step}: ok" in out
+
+
+def test_validate_says_which_validator_ran(capsys):
+    code, out = run(capsys, "validate", HELLO)
+    assert code == 0
+    assert "validator" in out
+
+
+def test_prove_on_a_bogus_directory_fails(capsys, tmp_path):
+    code, _ = run(capsys, "prove", str(tmp_path / "does-not-exist"))
+    assert code != 0
