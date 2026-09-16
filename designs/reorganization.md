@@ -20,7 +20,7 @@ is what the Gateway loads.
 README.md         what it is, run hello in three commands, then the map below
 index.html        one landing page pointing at the README, the path, and the history
 cedar_osdc/       the tool: engine, command line, Gateway handlers (Python)
-prover/           the proof runner (Rust) and the bundled solver
+analysis/         the symbolic analysis runner (Rust) and the bundled solver
 usecases/         one folder per domain, hello among them
 learn/            the path and the guide
 designs/          plans for work not yet done, this document among them
@@ -29,11 +29,14 @@ check.sh  conftest.py  pyproject.toml  uv.lock
 ```
 
 Six directories and five files at the top level, against fourteen
-directories and six files today. The prover sits beside the package
-rather than inside it: a Rust crate inside a Python package puts its
-build directory and the solver into the wheel, which the review
-verified at 1.9 GB (finding 4). The root `conftest.py` stays; it is
-what puts the repository root on the import path for the tests.
+directories and six files today. The analysis crate stays where it
+is and keeps its name: a Rust crate inside the Python package would
+put its build directory and the solver into the wheel, which the
+review verified at 1.9 GB (finding 4), and "analysis" is Cedar's own
+word for what it does; the crate poses questions to the symbolic
+compiler and cvc5, which are what proves them. The root `conftest.py`
+stays; it is what puts the repository root on the import path for the
+tests.
 
 ## The shape of a use case
 
@@ -102,8 +105,8 @@ cedar_osdc/
   gateway/
     handlers.py      interceptor events in, Gateway results out; bearer decoding
     handler.py       the two Lambda entry points, loading a use case by name
-prover/
-  Cargo.toml, src/   today analysis/; the runner takes the directory to prove as an argument
+analysis/
+  Cargo.toml, src/   as today; the runner takes the directory to prove as an argument
 ```
 
 The line: the engine owns everything that decides, including the
@@ -166,7 +169,7 @@ guardrails, is a fact about history. It is proven by `prove-history`,
 which `check.sh` calls, and a newcomer never meets it.
 
 What `prove-history` reads (finding 2): the tables `ITERATIONS`,
-`PAIRS`, `RETIRED`, and `SCHEMA_OVERRIDES`, compiled into the prover
+`PAIRS`, `RETIRED`, and `SCHEMA_OVERRIDES`, compiled into the runner
 with paths rewritten; policies from `history/<name>/policies.cedar`
 and from the live orders use case, which is the chain's final member;
 schemas from `history/chain/schemas/` for iterations 1 through 6 and
@@ -212,7 +215,7 @@ history/
   chain/               schemas/, specs/, revisions/, restrictions/, retired/
 ```
 
-Nine snapshots, not ten: iteration 8 is the prover (finding 16). The
+Nine snapshots, not ten: iteration 8 is the analysis crate (finding 16). The
 snapshot names stay as they are so the moves are pure `git mv` and no
 snapshot is edited except for two cross-snapshot paths in the gateway
 snapshot's tests, which are listed in task 7. A link checker over
@@ -222,7 +225,7 @@ in the learning pages.
 
 ## What is removed
 
-Directories: `core`, `analysis`, and the nine iteration directories
+Directories: `core` and the nine iteration directories
 at the top level, folded into the layout above. Concepts a newcomer
 meets: chains, revisions, restrictions, manifests, the word core, the
 word token for a file, the "revised" status.
@@ -235,18 +238,19 @@ Three overnight runs, not one (review, scope). Each task ends with
 **Run 1, no behavior change.**
 
 1. **Package skeleton.** Create `cedar_osdc/` with `engine/`, `cli/`,
-   `gateway/`; move the Python modules; move `analysis/` to `prover/`;
-   update `pyproject.toml`, the console script, `check.sh`, and every
-   import. Fix the three hard-coded parent paths the move breaks:
-   `repo_root` in the runner, `REPO` in the command line, `REPO` in
-   its tests (finding 3); make the runner take the repository root as
-   an argument. Move the bundled cvc5 by hand.
+   `gateway/`; move the Python modules; update `pyproject.toml`, the
+   console script, `check.sh`, and every import. Fix the two
+   hard-coded parent paths the move breaks, `REPO` in the command
+   line and in its tests (finding 3); make the runner take the
+   repository root as an argument rather than deriving it, so it is
+   ready for `prove DIR`. The analysis crate and the bundled cvc5 stay
+   where they are.
 2. **Engine and interface split.** `engine/calls.py` as specified;
    handlers and command line call it; the agreement test. Depends on 1.
 
 **Run 2, the use case shape.**
 
-3. **Use case shape and prover per use case**, one task, because the
+3. **Use case shape and proofs per use case**, one task, because the
    runner reads the guardrails by their old paths and cannot be green
    between the move and the rewrite (finding 1). Move each use case
    and hello into the shape; move guardrails beside their policies;
@@ -290,7 +294,7 @@ Three overnight runs, not one (review, scope). Each task ends with
   runner with its paths rewritten.
 - Link rewriting is wide; the link checker and the smoke test are
   written before the moves, not after.
-- Hello's policies have never met the prover. `prove usecases/hello`
+- Hello's policies have never met the analysis. `prove usecases/hello`
   is never-errors plus zero guardrails; do not assume it passes.
 - The cvc5 binary is ignored by git; it moves by hand on this machine,
   and the README's install path changes.
