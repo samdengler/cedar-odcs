@@ -3,17 +3,15 @@ learning pages show.
 
 The pages are the specification: each fenced ``sh`` block a reader is
 told to run should actually run. This module finds those command
-lines in the current source (README.md, learn/*.md, and
-usecases/hello/README.md), skips the ones that are syntax references
+lines in the current source (README.md, the HTML pages under learn/,
+and usecases/hello/README.md), skips the ones that are syntax references
 rather than something to type (they carry a placeholder like ``DIR``
 or ``FILE``) or that are slow and covered elsewhere (``uv sync``,
 ``uv run pytest``), and runs the rest from the repository root.
 
-The extractor is split by source type so a second source is adding a
-function, not rewriting this one: ``extract_from_markdown`` today,
-``extract_from_html`` once a later task (3f) gives the HTML pages the
-same fenced examples and ``_command_sources`` is extended to include
-them.
+The extractor is chosen by file suffix: ``extract_from_markdown``
+reads fenced ``sh`` blocks, ``extract_from_html`` reads ``<pre><code
+class="lang-sh">`` blocks, so a page in either form is a source.
 
 Run directly with ``uv run python -m cedar_osdc.checks.commands``, or
 through ``test_commands.py``.
@@ -37,7 +35,9 @@ PLACEHOLDER_TOKENS = (
 )
 
 FENCED_SH_RE = re.compile(r"```sh\n(.*?)```", re.S)
-HTML_PRE_CODE_RE = re.compile(r"<pre[^>]*>\s*<code[^>]*>(.*?)</code>\s*</pre>", re.S | re.I)
+HTML_PRE_CODE_RE = re.compile(
+    r'<pre[^>]*>\s*<code class="lang-sh">(.*?)</code>\s*</pre>', re.S | re.I
+)
 
 TRAILING_COMMENT_RE = re.compile(r"\s+#.*$")
 
@@ -71,12 +71,7 @@ def extract_from_markdown(text: str) -> list[str]:
 
 
 def extract_from_html(text: str) -> list[str]:
-    """Every logical line from every <pre><code> block in text.
-
-    Not wired into a source yet; task 3f adds the HTML pages once they
-    carry the same fenced examples as the Markdown ones, at which point
-    a source using this belongs in _command_sources.
-    """
+    """Every logical line from every <pre><code class="lang-sh"> block in text."""
     lines: list[str] = []
     for block in HTML_PRE_CODE_RE.findall(text):
         lines.extend(_join_continuations(_html.unescape(block).splitlines()))
@@ -85,7 +80,7 @@ def extract_from_html(text: str) -> list[str]:
 
 def _command_sources(root: Path) -> list[Path]:
     paths = [root / "README.md"]
-    paths.extend(sorted((root / "learn").glob("*.md")))
+    paths.extend(sorted((root / "learn").glob("*.html")))
     hello_readme = root / "usecases" / "hello" / "README.md"
     if hello_readme not in paths:
         paths.append(hello_readme)
@@ -125,7 +120,8 @@ def plan_commands(root: Path) -> Plan:
     seen: set[str] = set()
     for path in _command_sources(root):
         text = path.read_text(encoding="utf-8")
-        for raw in extract_from_markdown(text):
+        extract = extract_from_html if path.suffix == ".html" else extract_from_markdown
+        for raw in extract(text):
             line = " ".join(_strip_comment(raw).split())
             if not is_command_line(line):
                 continue

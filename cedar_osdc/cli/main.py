@@ -464,7 +464,8 @@ def cmd_check(args):
     print("== build ==")
     rc = cmd_build(args)
     if rc == 0:
-        changed = subprocess.call(["git", "diff", "--quiet", "--", str(root)], cwd=REPO) != 0
+        generated = [str(root / "contract"), str(root / "entities.json")]
+        changed = subprocess.call(["git", "diff", "--quiet", "--", *generated], cwd=REPO) != 0
         if changed:
             print(f"generated files under {directory} changed: the committed artifacts were behind their sources")
         else:

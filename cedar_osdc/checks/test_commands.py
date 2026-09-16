@@ -12,23 +12,8 @@ from cedar_osdc.checks.commands import plan_commands, run_command
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Commands that are broken on the current tree today. README.md's
-# "## Command line" example for reservations writes the caller and
-# response paths as bare filenames ("agent.json", "record.json"), as
-# if the repository root were the use case directory; core/cli.py's
-# _caller() and cmd_dry_run() read --caller and --response relative to
-# the current directory, so both raise FileNotFoundError (a Traceback)
-# when run from the repository root as literally shown. Task 3a lists
-# this rather than editing the page (a later docs task, 3b/3d, rewrites
-# it); recorded here so the test stays green and the debt stays
-# visible.
-#
-# README.md's "## Start here" block still types `learn/hello`: task 2b
-# moved hello to `usecases/hello` but leaves this page's words for run
-# 3 (2b is a path move only). Both lines now exit 2 ("has no usecase.py;
-# a use case directory is needed") instead of running; recorded here,
-# not fixed by editing the page, for the same reason as the reservations
-# lines above.
+# Commands that are broken on the current tree today, so the test stays
+# green and the debt stays visible. Empty since run 3 rewrote the pages.
 KNOWN_BROKEN_COMMANDS = set()
 
 
