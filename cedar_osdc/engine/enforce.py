@@ -3,6 +3,8 @@
   decide_request   the request leg for a Call (see engine/calls.py)
   decide_response  the response leg for a Call: the rows of a list,
                    or the one object
+  explain          why a refused call was refused, in the one wording
+                   both interfaces use
 
 Both are written in terms of three questions an interface may also
 ask directly:
@@ -47,6 +49,16 @@ class CallDecision:
     allowed: bool
     denied_verb: bool
     denied_fields: list = field(default_factory=list)
+
+
+def explain(call: "Call", decision: CallDecision) -> str:
+    """Why a call was refused, in one sentence. Both interfaces say it
+    in these words: the command line prints it, the interceptor returns
+    it as the JSON-RPC error message."""
+    verb = call.action.split("::", 1)[1].strip('"')
+    if decision.denied_verb:
+        return f"{verb} is not permitted for this caller"
+    return f"{verb} rejected; fields not permitted: {', '.join(decision.denied_fields)}"
 
 
 @dataclass

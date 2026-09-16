@@ -20,7 +20,7 @@ import json
 import logging
 
 from cedar_osdc.engine import calls
-from cedar_osdc.engine.enforce import Engine
+from cedar_osdc.engine.enforce import Engine, explain
 from cedar_osdc.engine.usecase import UseCase
 
 log = logging.getLogger("cedar-osdc")
@@ -137,17 +137,14 @@ class Handlers:
             if tool is None:
                 return _reject(body.get("id"), f"tool {name} is not governed; no policy covers it")
             claims = claims_of(_header(request.get("headers"), "Authorization"))
-            decision = self.engine.decide_request(claims, calls.call(self.use_case, name, arguments))
+            governed = calls.call(self.use_case, name, arguments)
+            decision = self.engine.decide_request(claims, governed)
         except (TokenError, ValueError, KeyError, TypeError) as e:
             log.info("rejected: request could not be evaluated: %s", e)
             return _reject(_request_id(event), f"request could not be evaluated: {e}")
         if decision.allowed:
             return _pass_request(body)
-        verb = tool["action"].split("::", 1)[1].strip('"')
-        if decision.denied_verb:
-            message = f"{verb} is not permitted for this caller"
-        else:
-            message = f"{verb} rejected; fields not permitted: {', '.join(decision.denied_fields)}"
+        message = explain(governed, decision)
         log.info("rejected %s: %s", name, message)
         return _reject(body.get("id"), message)
 

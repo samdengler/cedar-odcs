@@ -38,7 +38,7 @@ from pathlib import Path
 import cedarpy
 
 from cedar_osdc.engine import calls
-from cedar_osdc.engine.enforce import Engine
+from cedar_osdc.engine.enforce import Engine, explain
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -228,11 +228,7 @@ def cmd_dry_run(args):
         print(f"Request    rejected: request could not be evaluated: {e}")
         return 1
     if not decision.allowed:
-        verb = governed.action.split("::", 1)[1].strip('"')
-        if decision.denied_verb:
-            print(f"Request    rejected: {verb} is not permitted for this caller")
-        else:
-            print(f"Request    rejected: {verb} rejected; fields not permitted: {', '.join(decision.denied_fields)}")
+        print(f"Request    rejected: {explain(governed, decision)}")
         return 1
     print("Request    forwarded: the verb round passed"
           + (" and the payload round passed" if governed.payload is not None else ""))
