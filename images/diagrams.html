@@ -63,33 +63,70 @@ code { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: .95
 </figure>
 
 <figure class="figure" id="filter">
-<div data-diagram>
-  <div class="dg-grid" style="grid-template-columns: auto auto auto auto; gap: 36px 110px;">
-    <div class="dg-head" style="grid-area: 1 / 1;">the API returned</div>
-    <div class="dg-head" style="grid-area: 1 / 2;">row round</div>
-    <div class="dg-head" style="grid-area: 1 / 3;">field round</div>
-    <div class="dg-head" style="grid-area: 1 / 4;">the agent receives</div>
-    <div class="dg-node wide" id="r1" style="grid-area: 2 / 1;">order-1001<small>owner alice<br>id, owner, status, total, shippingAddress, cardLast4, internalNotes, fraudScore, estimatedDelivery</small></div>
-    <div class="dg-node wide" id="r2" style="grid-area: 3 / 1;">order-2002<small>owner bob<br>the same nine fields</small></div>
-    <div class="dg-node wide" id="r3" style="grid-area: 4 / 1;">order-3003<small>owner alice<br>the same nine fields</small></div>
-    <div class="dg-node wide" id="row" style="grid-area: 2 / 2 / 5 / 3;">ReadOrder<small>once per row<br>the owner must be alice,<br>the customer carol acts for</small></div>
-    <div class="dg-node red wide" id="dropped" style="grid-area: 5 / 2;">order-2002 dropped<small>read denied: the owner is bob</small></div>
-    <div class="dg-node wide" id="field" style="grid-area: 2 / 3 / 5 / 4;">ReadOrderField<small>once per distinct path<br>the level is <code>Contract::"Order".getTag(field)</code><br>alice holds public and confidential</small></div>
-    <div class="dg-node wide" id="o1" style="grid-area: 2 / 4;">order-1001<small>id, owner, status, total, shippingAddress, cardLast4, estimatedDelivery<br><span class="stripped">stripped: internalNotes, fraudScore</span></small></div>
-    <div class="dg-node wide" id="o3" style="grid-area: 4 / 4;">order-3003<small>id, owner, status, total, shippingAddress, cardLast4, estimatedDelivery<br><span class="stripped">stripped: internalNotes, fraudScore</span></small></div>
-  </div>
-  <script class="dg-edges" type="application/json">
-  [
-    {"from":"r1","to":"row"},
-    {"from":"r2","to":"row"},
-    {"from":"r3","to":"row"},
-    {"from":"row","to":"dropped","style":"dashed"},
-    {"from":"row","to":"field","label":"alice's two rows"},
-    {"from":"field","to":"o1"},
-    {"from":"field","to":"o3"}
-  ]
-  </script>
-</div>
+<!-- Drawn by hand in the style of the design docs: the title states the finding, blue is a Cedar question, red and green are its answers. -->
+<svg viewBox="0 0 760 690" width="760" role="img" aria-label="Each row is kept or dropped, then each field is kept or stripped" font-size="13" font-family="&quot;Segoe UI&quot;, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="tree-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a97a5"/></marker>
+  </defs>
+  <text x="24" y="30" font-size="15" font-weight="600" fill="#26313c">Each row is kept or dropped, then each field is kept or stripped</text>
+
+  <!-- what came back -->
+  <rect x="180" y="52" width="400" height="52" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="380" y="74" text-anchor="middle" font-weight="600" fill="#26313c">the API returned three orders</text>
+  <text x="380" y="93" text-anchor="middle" font-size="11.5" fill="#5b6a7a">order-1001 alice &#183; order-2002 bob &#183; order-3003 alice</text>
+  <path d="M380 104V132" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+
+  <!-- row round -->
+  <rect x="200" y="132" width="360" height="56" rx="8" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="380" y="155" text-anchor="middle" font-weight="600" fill="#26313c">ReadOrder, once per row</text>
+  <text x="380" y="174" text-anchor="middle" font-size="11.5" fill="#5b6a7a">is the owner alice, the customer carol acts for?</text>
+  <path d="M380 188V216H180V244" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+  <path d="M380 216H580V244" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+  <text x="272" y="211" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5b6a7a">no</text>
+  <text x="488" y="211" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5b6a7a">yes</text>
+
+  <rect x="30" y="244" width="300" height="56" rx="8" fill="#FBEDEF" stroke="#C01933" stroke-width="1.25"/>
+  <text x="180" y="267" text-anchor="middle" font-weight="600" fill="#7c0f22">order-2002 dropped</text>
+  <text x="180" y="286" text-anchor="middle" font-size="11.5" fill="#962b3b">read denied: the owner is bob</text>
+
+  <rect x="430" y="244" width="300" height="56" rx="8" fill="#e6f4ea" stroke="#1a7f37" stroke-width="1.25"/>
+  <text x="580" y="267" text-anchor="middle" font-weight="600" fill="#14532d">order-1001 and order-3003 go on</text>
+  <text x="580" y="286" text-anchor="middle" font-size="11.5" fill="#1f6b3a">two rows, both alice's</text>
+  <path d="M580 300V320H380V340" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+
+  <!-- field round -->
+  <rect x="200" y="340" width="360" height="74" rx="8" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="380" y="363" text-anchor="middle" font-weight="600" fill="#26313c">ReadOrderField, once per distinct path</text>
+  <text x="380" y="382" text-anchor="middle" font-size="11.5" fill="#5b6a7a">the level is <tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">Contract::"Order".getTag(field)</tspan></text>
+  <text x="380" y="400" text-anchor="middle" font-size="11.5" fill="#5b6a7a">is it public or confidential, the levels alice holds?</text>
+  <path d="M380 414V442H180V470" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+  <path d="M380 442H580V470" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+  <text x="272" y="437" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5b6a7a">no</text>
+  <text x="488" y="437" text-anchor="middle" font-size="11.5" font-weight="600" fill="#5b6a7a">yes</text>
+
+  <rect x="30" y="470" width="300" height="56" rx="8" fill="#FBEDEF" stroke="#C01933" stroke-width="1.25"/>
+  <text x="180" y="493" text-anchor="middle" font-weight="600" fill="#7c0f22">stripped from both rows</text>
+  <text x="180" y="512" text-anchor="middle" font-size="11.5" fill="#962b3b">internalNotes (internal), fraudScore (restricted)</text>
+
+  <rect x="430" y="470" width="300" height="72" rx="8" fill="#e6f4ea" stroke="#1a7f37" stroke-width="1.25"/>
+  <text x="580" y="493" text-anchor="middle" font-weight="600" fill="#14532d">kept on both rows</text>
+  <text x="580" y="512" text-anchor="middle" font-size="11.5" fill="#1f6b3a">id, owner, status, total,</text>
+  <text x="580" y="529" text-anchor="middle" font-size="11.5" fill="#1f6b3a">shippingAddress, cardLast4, estimatedDelivery</text>
+  <path d="M580 542V562H380V582" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#tree-arrow)"/>
+
+  <!-- what the agent sees -->
+  <rect x="180" y="582" width="400" height="52" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="380" y="604" text-anchor="middle" font-weight="600" fill="#26313c">the agent receives two orders, seven fields each</text>
+  <text x="380" y="623" text-anchor="middle" font-size="11.5" fill="#5b6a7a">one Cedar question per distinct path, whatever the number of rows</text>
+
+  <!-- key -->
+  <rect x="24" y="658" width="14" height="14" rx="3" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="46" y="669" font-size="11.5" fill="#5b6a7a">a question the interceptor asks Cedar</text>
+  <rect x="268" y="658" width="14" height="14" rx="3" fill="#FBEDEF" stroke="#C01933" stroke-width="1.25"/>
+  <text x="290" y="669" font-size="11.5" fill="#5b6a7a">denied, withheld from the agent</text>
+  <rect x="490" y="658" width="14" height="14" rx="3" fill="#e6f4ea" stroke="#1a7f37" stroke-width="1.25"/>
+  <text x="512" y="669" font-size="11.5" fill="#5b6a7a">permitted, passed through</text>
+</svg>
 </figure>
 
 <figure class="figure" id="contract">

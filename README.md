@@ -12,7 +12,7 @@ The agent never holds the API's credential. The Gateway makes the call with a se
 
 Carol is a support specialist acting for the customer alice. The list tool returns three orders, one of them bob's. The row round asks Cedar `ReadOrder` once per row and drops bob's; the field round asks `ReadOrderField` once per distinct path, and the policy looks the path up in the contract's classification map. Alice's grant covers public and confidential, so the internal and restricted fields are stripped from the rows that survive.
 
-![Three orders from the API, the row round and the field round, and the two orders the agent receives](images/list-response-filter.png)
+![Each row is kept or dropped by ReadOrder, then each field is kept or stripped by ReadOrderField; two of three orders reach the agent with seven fields each](images/list-response-filter.png)
 
 The same case from the command line, with the three orders as the response:
 
