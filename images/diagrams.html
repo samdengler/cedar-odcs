@@ -40,26 +40,66 @@ code { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: .95
 <body>
 
 <figure class="figure" id="gateway">
-<div data-diagram>
-  <div class="dg-grid" style="grid-template-columns: auto auto auto; gap: 104px 190px; padding-top: 56px;">
-    <div class="dg-node" id="agent" style="grid-area: 1 / 1;">Agent<small>holds the caller's token,<br>never the API's credential</small></div>
-    <div class="dg-node" id="gw" style="grid-area: 1 / 2;">AgentCore Gateway<small>MCP target <code>orders___list_orders</code></small></div>
-    <div class="dg-node" id="api" style="grid-area: 1 / 3;">Orders API<small>answers the service credential</small></div>
-    <div class="dg-node" id="pep" style="grid-area: 2 / 2;">Response interceptor<small>a Lambda, <code>cedar_osdc.gateway.handler.response</code></small></div>
-    <div class="dg-node" id="folder" style="grid-area: 3 / 2;">usecases/orders<small>policies.cedar, entities, contract tag maps</small></div>
-  </div>
-  <script class="dg-edges" type="application/json">
-  [
-    {"from":"agent","to":"gw","label":"1  tools/call, bearer token"},
-    {"from":"gw","to":"api","label":"2  the call, service credential"},
-    {"from":"api","to":"gw","label":"3  every field of every order","style":"dashed","fromSide":"top","toSide":"top"},
-    {"from":"gw","to":"pep","label":"4  request and response"},
-    {"from":"pep","to":"gw","label":"5  the filtered response","style":"dashed","labelAt":"start"},
-    {"from":"gw","to":"agent","label":"6  what this caller may see","style":"dashed","fromSide":"top","toSide":"top"},
-    {"from":"folder","to":"pep","label":"loaded once, CEDAR_OSDC_USE_CASE","style":"dashed"}
-  ]
-  </script>
-</div>
+<svg viewBox="0 0 760 470" width="760" role="img" aria-label="The API answers in full; the interceptor decides what the agent sees" font-size="13" font-family="&quot;Segoe UI&quot;, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="gw-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a97a5"/></marker>
+  </defs>
+  <text x="24" y="30" font-size="15" font-weight="600" fill="#26313c">The API answers in full; the interceptor decides what the agent sees</text>
+
+  <!-- the Gateway -->
+  <rect x="220" y="52" width="340" height="268" rx="10" fill="none" stroke="#8a97a5" stroke-width="1.25" stroke-dasharray="5 4"/>
+  <text x="236" y="78" font-weight="600" fill="#26313c">AgentCore Gateway</text>
+
+  <rect x="240" y="100" width="300" height="56" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="385" y="122" text-anchor="middle" font-weight="600" fill="#26313c">MCP target</text>
+  <text x="385" y="141" text-anchor="middle" font-size="11.5" fill="#5b6a7a"><tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">orders___list_orders</tspan> &#183; the service credential</text>
+
+  <rect x="240" y="228" width="300" height="70" rx="8" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="385" y="251" text-anchor="middle" font-weight="600" fill="#26313c">Response interceptor</text>
+  <text x="385" y="270" text-anchor="middle" font-size="11.5" fill="#5b6a7a">a Lambda, <tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">gateway.handler.response</tspan></text>
+  <text x="385" y="287" text-anchor="middle" font-size="11.5" fill="#5b6a7a">keeps the rows and fields the caller may see</text>
+
+  <!-- the agent -->
+  <rect x="24" y="100" width="100" height="56" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="74" y="122" text-anchor="middle" font-weight="600" fill="#26313c">Agent</text>
+  <text x="74" y="141" text-anchor="middle" font-size="11.5" fill="#5b6a7a">the caller's token</text>
+
+  <!-- the API -->
+  <rect x="620" y="100" width="116" height="56" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="678" y="122" text-anchor="middle" font-weight="600" fill="#26313c">Orders API</text>
+  <text x="678" y="139" text-anchor="middle" font-size="11.5" fill="#5b6a7a">answers in full</text>
+
+  <!-- the use case folder -->
+  <rect x="240" y="350" width="300" height="56" rx="8" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="385" y="372" text-anchor="middle" font-weight="600" fill="#26313c">usecases/orders</text>
+  <text x="385" y="391" text-anchor="middle" font-size="11.5" fill="#5b6a7a">policies.cedar, entities, the contract's tag maps</text>
+
+  <!-- 1 and 6: agent and target -->
+  <path d="M124 118H240" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#gw-arrow)"/>
+  <text x="182" y="111" text-anchor="middle" font-size="11.5" fill="#5b6a7a">1 tools/call</text>
+  <path d="M240 140H124" fill="none" stroke="#8a97a5" stroke-width="1.25" stroke-dasharray="5 4" marker-end="url(#gw-arrow)"/>
+  <text x="182" y="156" text-anchor="middle" font-size="11.5" fill="#5b6a7a">6 the filtered rows</text>
+
+  <!-- 2 and 3: target and API -->
+  <path d="M540 118H620" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#gw-arrow)"/>
+  <text x="580" y="111" text-anchor="middle" font-size="11.5" fill="#5b6a7a">2 the call</text>
+  <path d="M620 140H540" fill="none" stroke="#8a97a5" stroke-width="1.25" stroke-dasharray="5 4" marker-end="url(#gw-arrow)"/>
+  <text x="580" y="156" text-anchor="middle" font-size="11.5" fill="#5b6a7a">3 every field</text>
+
+  <!-- 4 and 5: target and interceptor -->
+  <path d="M370 156V228" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#gw-arrow)"/>
+  <text x="360" y="196" text-anchor="end" font-size="11.5" fill="#5b6a7a">4 request and response</text>
+  <path d="M410 228V156" fill="none" stroke="#8a97a5" stroke-width="1.25" stroke-dasharray="5 4" marker-end="url(#gw-arrow)"/>
+  <text x="420" y="196" font-size="11.5" fill="#5b6a7a">5 the filtered response</text>
+
+  <!-- the folder is loaded once -->
+  <path d="M385 350V298" fill="none" stroke="#8a97a5" stroke-width="1.25" stroke-dasharray="5 4" marker-end="url(#gw-arrow)"/>
+  <text x="395" y="330" font-size="11.5" fill="#5b6a7a">loaded once, <tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">CEDAR_OSDC_USE_CASE</tspan></text>
+
+  <!-- key -->
+  <rect x="24" y="438" width="14" height="14" rx="3" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="46" y="449" font-size="11.5" fill="#5b6a7a">what this repository provides; the request interceptor sits on the same path and is not drawn</text>
+</svg>
 </figure>
 
 <figure class="figure" id="filter">

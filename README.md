@@ -6,7 +6,7 @@ Data governance for an agent's tool calls. The agent reaches an API through an M
 
 The agent never holds the API's credential. The Gateway makes the call with a service credential, so the API answers with every field of every record; the response interceptor, a Lambda the Gateway invokes before the result leaves, keeps the rows the caller may read and the fields the caller may see. The request interceptor sits on the same path before step 2 and is not drawn here.
 
-![The agent, the AgentCore Gateway, the Orders API, and the response interceptor the Gateway invokes before the result leaves](images/gateway-response-interceptor.png)
+![The agent calls an MCP target in the AgentCore Gateway with its own token; the Gateway calls the Orders API with a service credential, hands the full response to the response interceptor, and returns what the caller may see](images/gateway-response-interceptor.png)
 
 ## One list response through the response leg
 
