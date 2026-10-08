@@ -1,0 +1,35 @@
+[
+  {
+    "id": "order-1001",
+    "owner": "alice",
+    "status": "shipped",
+    "total": 120.0,
+    "shippingAddress": "1 Oak Ln",
+    "cardLast4": "4242",
+    "internalNotes": "called back",
+    "fraudScore": 0.02,
+    "estimatedDelivery": "2026-09-20"
+  },
+  {
+    "id": "order-2002",
+    "owner": "bob",
+    "status": "processing",
+    "total": 45.5,
+    "shippingAddress": "9 Elm St",
+    "cardLast4": "1111",
+    "internalNotes": "",
+    "fraudScore": 0.4,
+    "estimatedDelivery": "2026-09-22"
+  },
+  {
+    "id": "order-3003",
+    "owner": "alice",
+    "status": "processing",
+    "total": 8.0,
+    "shippingAddress": "1 Oak Ln",
+    "cardLast4": "4242",
+    "internalNotes": "gift",
+    "fraudScore": 0.01,
+    "estimatedDelivery": "2026-09-25"
+  }
+]
