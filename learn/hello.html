@@ -195,8 +195,8 @@ uv run cedar-odcs check-access usecases/hello --caller usecases/hello/tests/iden
 
 <table>
 <tr><th>File</th><th>What it is</th></tr>
-<tr><td><code>contract/unity/notes.table.json</code>, <code>contract/unity/notes.column_tags.json</code></td><td>the source of truth: a table's columns and their tags, as Unity Catalog returns them</td></tr>
-<tr><td><code>contract/note.odcs.yaml</code></td><td>the data contract generated from those, ODCS v3.2.0</td></tr>
+<tr><td><code>contract/unity/notes.table.json</code>, <code>contract/unity/notes.column_tags.json</code></td><td>the catalog's answers, a table's columns and their tags as Unity Catalog returns them; what <code>cedar-odcs pull</code> reads</td></tr>
+<tr><td><code>contract/note.odcs.yaml</code></td><td>the data contract, ODCS v3.2.0, pulled from those by <code>cedar-odcs pull</code>; a use case with no catalog writes it by hand; what <code>cedar-odcs build</code> reads</td></tr>
 <tr><td><code>contract/generated/contract.entities.json</code></td><td>the classification map and the writers map, generated from the contract</td></tr>
 <tr><td><code>contract/generated/note.cedarschema</code></td><td>the Cedar schema, generated</td></tr>
 <tr><td><code>principals.cedarschema</code>, <code>actions.cedarschema</code></td><td>hand-written: who can be a principal, and the verbs with their context; the build joins them with the generated schema</td></tr>
@@ -208,7 +208,7 @@ uv run cedar-odcs check-access usecases/hello --caller usecases/hello/tests/iden
 <tr><td><code>tests/identities/ada.json</code>, <code>rae.json</code></td><td>one identity each: the claims of that caller's credential, standing in for a decoded, verified JWT</td></tr>
 <tr><td><code>tests/responses/note-1.json</code></td><td>what the notes API returns for note 1, saved</td></tr>
 <tr><td><code>usecase.py</code></td><td>the descriptor: entity type, which field is the owner, the verbs, the tool table</td></tr>
-<tr><td><code>build.py</code>, <code>tests/test_*.py</code>, <code>tests/events/</code></td><td>the build hook, the pytest wrappers, and Gateway events for the handler tests; step 2 uses events</td></tr>
+<tr><td><code>build.py</code>, <code>tests/test_*.py</code>, <code>tests/events/</code></td><td>the build hook, pull then build; the pytest wrappers; and Gateway events for the handler tests; step 2 uses events</td></tr>
 </table>
 
 <h2 id="map">4. The policies read a map</h2>
@@ -232,12 +232,13 @@ permit(
 
 <h2 id="break">5. Break it</h2>
 
-<p>Open <code>contract/unity/notes.column_tags.json</code> and change the <code>body</code> column's classification from <code>confidential</code> to <code>internal</code>. Rebuild and rerun:</p>
+<p>Open <code>contract/unity/notes.column_tags.json</code> and change the <code>body</code> column's classification from <code>confidential</code> to <code>internal</code>. Pull the contract again, rebuild, and rerun:</p>
 
-<pre><code class="lang-sh">uv run cedar-odcs build usecases/hello
+<pre><code class="lang-sh">uv run cedar-odcs pull usecases/hello
+uv run cedar-odcs build usecases/hello
 uv run cedar-odcs run-tests usecases/hello</code></pre>
 
-<p>Two cases fail: ada can no longer read her own body, and rae now can. The corpus recorded who may read what before the tag changed, so the tag change fails a test instead of quietly moving a field between readers. Put the tag back and rebuild.</p>
+<p>Two cases fail: ada can no longer read her own body, and rae now can. The corpus recorded who may read what before the tag changed, so the tag change fails a test instead of quietly moving a field between readers. Put the tag back, pull, and rebuild. The same change made in <code>contract/note.odcs.yaml</code> by hand breaks the same two cases; the build does not care which way the contract was written.</p>
 
 <p>Then try the other direction: add a field. Give the table a new column, tag it <code>public</code>, rebuild, and run <code>check-access</code> again. The field is on for both callers with no policy edit, because the map grew and the policies read the map.</p>
 

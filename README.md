@@ -1,6 +1,6 @@
 # cedar-odcs
 
-Data governance for an agent's tool calls. The agent reaches an API through an MCP tool in AgentCore Gateway with a service credential, so the API answers whatever is asked; two Gateway interceptors decide every call with [Cedar](https://docs.cedarpolicy.com/) policies instead. What a field means and who may see it come from the data contract, generated from the catalog. A use case is a folder with four things, a data contract, policies, tests, and guardrails; one command checks the folder; the same folder is what the Gateway loads.
+Data governance for an agent's tool calls. The agent reaches an API through an MCP tool in AgentCore Gateway with a service credential, so the API answers whatever is asked; two Gateway interceptors decide every call with [Cedar](https://docs.cedarpolicy.com/) policies instead. What a field means and who may see it come from the data contract, an ODCS document pulled from the catalog or written by hand. A use case is a folder with four things, a data contract, policies, tests, and guardrails; one command checks the folder; the same folder is what the Gateway loads.
 
 ## The Gateway and the response interceptor
 
@@ -20,11 +20,40 @@ The same case from the command line, with the three orders as the response:
 uv run cedar-odcs dry-run usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json --tool orders___list_orders --response usecases/orders/tests/lists/orders.json
 ```
 
-## From catalog tags to a policy decision
+## The contract is the file the build reads
 
-A policy never names a field. The data steward classifies columns in Unity Catalog; the build turns the catalog's answers into an ODCS data contract and then into a Cedar entity whose tags map each field path to its level; the policy grants levels and reads the tag at decision time. Changing a column's classification in the catalog and rebuilding changes what every policy permits, with no policy edited.
+A policy never names a field. Each field's level and writer live in the use case's data contract, an [ODCS](https://bitol-io.github.io/open-data-contract-standard/) v3.2.0 document under `contract/`. Two things read it: the build, which turns it into the tag maps and the schema the policies use, and a person reviewing a diff. From the orders contract, the two properties the build cares most about:
 
-![From column tags in Unity Catalog, through the contract build, to the policy reading a tag at decision time](images/catalog-tags-to-policy.png)
+```yaml
+schema:
+- name: Order
+  properties:
+  - name: owner
+    logicalType: string
+    classification: public
+    customProperties:
+    - property: writer
+      value: system
+    - property: cedarEntityType      # becomes an attribute of Order in the schema
+      value: User
+  - name: internalNotes
+    logicalType: string
+    classification: internal         # public | internal | confidential | restricted
+    customProperties:
+    - property: writer               # owner | system | a role name
+      value: support
+```
+
+The contract gets there in one of two ways. A use case with a catalog pulls it: today that is Unity Catalog, whose table and column tags are the fixtures under `contract/unity/`, and another catalog is another importer. A use case with no catalog writes the contract by hand in the same format, and the build cannot tell the difference. Either way the file is committed and the build reads it:
+
+```sh
+uv run cedar-odcs pull usecases/orders     # the catalog to contract/order.odcs.yaml, when there is a catalog
+uv run cedar-odcs build usecases/orders    # the contract to the tag maps, the schema, and entities.json
+```
+
+![Unity Catalog, or a hand-written file, produces the ODCS contract; the build turns the contract into the tag maps and the schema; the policies grant levels and the interceptor reads a field's tag at decision time](images/catalog-tags-to-policy.png)
+
+Changing a column's classification in the catalog and pulling again, or editing the level in a hand-written contract, changes what every policy permits with no policy edited. A level outside the four, a leaf with no level, or a writer that names no role fails the build rather than the policies.
 
 ## What you can do
 
@@ -34,7 +63,7 @@ Clone, then from the repository root with [uv](https://docs.astral.sh/uv/) insta
 uv sync
 ```
 
-**Check a use case.** Build its contract, validate its policies, run its tests, prove its guardrails:
+**Check a use case.** Pull its contract from the catalog files where it has them, build the Cedar files from the contract, validate its policies, run its tests, prove its guardrails:
 
 ```sh
 uv run cedar-odcs check usecases/hello

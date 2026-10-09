@@ -246,35 +246,54 @@ code { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: .95
 </figure>
 
 <figure class="figure" id="contract">
-<div data-sequence>
-<script class="dg-seq" type="application/json">
-{
-  "participants": [
-    {"id": "steward", "label": "Data steward"},
-    {"id": "unity", "label": "Unity Catalog"},
-    {"id": "build", "label": "build.py"},
-    {"id": "folder", "label": "usecases/hello"},
-    {"id": "author", "label": "Policy author"},
-    {"id": "pep", "label": "Response interceptor"}
-  ],
-  "messages": [
-    {"from": "steward", "to": "unity", "label": "notes.body: classification=confidential"},
-    {"from": "steward", "to": "unity", "label": "notes.author_id: cedar_entity_type=User"},
-    {"from": "build", "to": "unity", "label": "table and column tag assignments"},
-    {"from": "unity", "to": "build", "label": "notes.table.json, notes.column_tags.json", "style": "return"},
-    {"from": "build", "to": "build", "label": "merge into ODCS v3.2.0, validate"},
-    {"type": "note", "at": "build", "label": "an unclassified leaf fails the build"},
-    {"from": "build", "to": "folder", "label": "contract/note.odcs.yaml"},
-    {"from": "build", "to": "folder", "label": "contract.entities.json: Contract::\"Note\" tags"},
-    {"from": "build", "to": "folder", "label": "note.cedarschema, entities.cedarschema"},
-    {"from": "author", "to": "folder", "label": "policies.cedar: levels via getTag(context.field)"},
-    {"from": "pep", "to": "folder", "label": "load policies and entities at cold start"},
-    {"from": "pep", "to": "pep", "label": "ReadNoteField, field = body: read the tag"},
-    {"type": "note", "at": "pep", "label": "Allow for the owner, Deny for the reviewer"}
-  ]
-}
-</script>
-</div>
+<svg viewBox="0 0 760 614" width="760" role="img" aria-label="The contract is the file the build reads; a catalog is one way to write it" font-size="13" font-family="&quot;Segoe UI&quot;, system-ui, -apple-system, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="con-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8a97a5"/></marker>
+  </defs>
+  <text x="24" y="30" font-size="15" font-weight="600" fill="#26313c">The contract is the file the build reads; a catalog is one way to write it</text>
+
+  <rect x="24" y="56" width="250" height="60" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="149" y="78" text-anchor="middle" font-weight="600" fill="#26313c">Unity Catalog</text>
+  <text x="149" y="96" text-anchor="middle" font-size="11.5" fill="#5b6a7a">a table and its column tags; another</text>
+  <text x="149" y="110" text-anchor="middle" font-size="11.5" fill="#5b6a7a">catalog is another importer</text>
+  <rect x="486" y="56" width="250" height="60" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="611" y="78" text-anchor="middle" font-weight="600" fill="#26313c">by hand</text>
+  <text x="611" y="96" text-anchor="middle" font-size="11.5" fill="#5b6a7a">the same document, written directly,</text>
+  <text x="611" y="110" text-anchor="middle" font-size="11.5" fill="#5b6a7a">when there is no catalog to pull from</text>
+  <path d="M149 116V146H330V176" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#con-arrow)"/>
+  <text x="240" y="141" text-anchor="middle" font-size="11.5" fill="#5b6a7a"><tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">cedar-odcs pull</tspan></text>
+  <path d="M611 116V146H430V176" fill="none" stroke="#8a97a5" stroke-width="1.25" stroke-dasharray="5 4" marker-end="url(#con-arrow)"/>
+  <text x="520" y="141" text-anchor="middle" font-size="11.5" fill="#5b6a7a">written and committed</text>
+
+  <rect x="200" y="176" width="360" height="74" rx="8" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="380" y="199" text-anchor="middle" font-weight="600" fill="#26313c">contract/order.odcs.yaml</text>
+  <text x="380" y="218" text-anchor="middle" font-size="11.5" fill="#5b6a7a">ODCS v3.2.0, committed and reviewed as a diff</text>
+  <text x="380" y="235" text-anchor="middle" font-size="11.5" fill="#5b6a7a">per field: classification, writer, and the Cedar type</text>
+  <path d="M380 250V286" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#con-arrow)"/>
+  <text x="392" y="272" text-anchor="start" font-size="11.5" fill="#5b6a7a"><tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">cedar-odcs build</tspan>, which fails on a leaf with no level</text>
+
+  <rect x="200" y="286" width="360" height="74" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="380" y="309" text-anchor="middle" font-weight="600" fill="#26313c">contract/generated/ and entities.json</text>
+  <text x="380" y="328" text-anchor="middle" font-size="11.5" fill="#5b6a7a">tags: shippingAddress confidential, internalNotes internal, ...</text>
+  <text x="380" y="345" text-anchor="middle" font-size="11.5" fill="#5b6a7a">schema: <tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">entity Order { owner: User }</tspan></text>
+
+  <rect x="24" y="420" width="316" height="90" rx="8" fill="none" stroke="#8a97a5" stroke-width="1.25"/>
+  <text x="182" y="443" text-anchor="middle" font-weight="600" fill="#26313c">policies.cedar</text>
+  <text x="182" y="462" text-anchor="middle" font-size="11.5" fill="#5b6a7a">written by hand; grants levels, never fields:</text>
+  <text x="182" y="479" text-anchor="middle" font-size="10.5" fill="#5b6a7a"><tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">["public", "confidential"]</tspan></text>
+  <text x="182" y="495" text-anchor="middle" font-size="10.5" fill="#5b6a7a"><tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">.contains(Contract::"Order".getTag(context.field))</tspan></text>
+  <rect x="420" y="420" width="316" height="92" rx="8" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="578" y="443" text-anchor="middle" font-weight="600" fill="#26313c">the interceptor, at decision time</text>
+  <text x="578" y="462" text-anchor="middle" font-size="11.5" fill="#5b6a7a"><tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">ReadOrderField</tspan>, field <tspan font-family="ui-monospace, &quot;SF Mono&quot;, Consolas, monospace">internalNotes</tspan></text>
+  <text x="578" y="479" text-anchor="middle" font-size="11.5" fill="#5b6a7a">the policy reads the tag: internal</text>
+  <text x="578" y="496" text-anchor="middle" font-size="11.5" fill="#5b6a7a">not a level alice holds, so the field is stripped</text>
+  <path d="M380 360V390H578V420" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#con-arrow)"/>
+  <text x="482" y="385" text-anchor="middle" font-size="11.5" fill="#5b6a7a">loaded once</text>
+  <path d="M340 457H420" fill="none" stroke="#8a97a5" stroke-width="1.25" marker-end="url(#con-arrow)"/>
+
+  <rect x="24" y="560" width="14" height="14" rx="3" fill="#2f6fdb" fill-opacity="0.1" stroke="#2f6fdb" stroke-width="2"/>
+  <text x="46" y="571" text-anchor="start" font-size="11.5" fill="#5b6a7a">the two places a field's level is read: the contract that states it, the interceptor that acts on it, loading both files once</text>
+</svg>
 </figure>
 
 <script>
