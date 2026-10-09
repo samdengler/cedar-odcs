@@ -41,5 +41,6 @@ USE_CASE = UseCase(
     fetch=responses_fetch(ROOT),
 )
 
-BUILD = dict(entity_name="Reservation", contract_id="c0a8f1e2-5b3d-4e6f-9a7b-8c9d0e1f2a3b",
-             table_file="reservations.table.json", tags_file="reservations.column_tags.json")
+CONTRACT = "Reservation"  # the entity the contract describes: contract/reservation.odcs.yaml
+PULL = dict(contract_id="c0a8f1e2-5b3d-4e6f-9a7b-8c9d0e1f2a3b",
+            table_file="reservations.table.json", tags_file="reservations.column_tags.json")  # the catalog source of that file, for pull

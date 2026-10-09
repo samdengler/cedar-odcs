@@ -3,13 +3,18 @@ carry every entry the hand-written iterations had."""
 
 import json
 
-from cedar_odcs.engine.contract import build
-from usecases.orders.usecase import BUILD, ROOT
+from cedar_odcs.engine.contract import build, pull
+from usecases.orders.usecase import CONTRACT, PULL, ROOT
 
 
-def test_committed_artifacts_are_current():
-    for rel, text in build(ROOT, **BUILD).items():
-        assert (ROOT / rel).read_text() == text, f"{rel} is behind its sources; run build.py"
+def test_committed_contract_is_what_the_catalog_fixtures_give():
+    for rel, text in pull(ROOT, CONTRACT, **PULL).items():
+        assert (ROOT / rel).read_text() == text, f"{rel} is behind the catalog fixtures; run build.py"
+
+
+def test_committed_artifacts_are_what_the_contract_gives():
+    for rel, text in build(ROOT, CONTRACT).items():
+        assert (ROOT / rel).read_text() == text, f"{rel} is behind the contract; run build.py"
 
 
 def test_maps_carry_iteration_7():

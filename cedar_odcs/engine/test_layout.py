@@ -15,10 +15,10 @@ from pathlib import Path
 
 import pytest
 
-from cedar_odcs.engine.contract import build
+from cedar_odcs.engine.contract import build, pull
 from cedar_odcs.engine.corpus import cases
 from cedar_odcs.engine.usecase import layout, paths, responses_fetch
-from usecases.reservations.usecase import BUILD
+from usecases.reservations.usecase import CONTRACT, PULL
 
 NEW = Path(__file__).resolve().parents[2] / "usecases/reservations"
 
@@ -50,8 +50,8 @@ def test_the_contract_directory_is_what_tells_the_shapes_apart(old):
 
 
 def test_the_build_writes_under_contract_in_the_new_shape_and_at_the_root_in_the_old(old):
-    new_outputs = build(NEW, **BUILD)
-    old_outputs = build(old, **BUILD)
+    new_outputs = {**pull(NEW, CONTRACT, **PULL), **build(NEW, CONTRACT)}
+    old_outputs = {**pull(old, CONTRACT, **PULL), **build(old, CONTRACT)}
     assert set(new_outputs) == {
         "contract/reservation.odcs.yaml",
         "contract/generated/contract.entities.json",

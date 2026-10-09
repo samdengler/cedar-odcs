@@ -22,5 +22,6 @@ USE_CASE = UseCase(
     tools=TOOLS,
 )
 
-BUILD = dict(entity_name="Note", contract_id="0f1e2d3c-4b5a-4697-8877-665544332211",
-             table_file="notes.table.json", tags_file="notes.column_tags.json")
+CONTRACT = "Note"  # the entity the contract describes: contract/note.odcs.yaml
+PULL = dict(contract_id="0f1e2d3c-4b5a-4697-8877-665544332211",
+            table_file="notes.table.json", tags_file="notes.column_tags.json")  # the catalog source of that file, for pull

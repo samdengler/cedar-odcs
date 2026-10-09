@@ -9,6 +9,7 @@
     cedar-odcs check-access usecases/reservations --caller agent.json \\
                               --presented locator=ABC123 --presented lastName=SMITH
     cedar-odcs share        usecases/reservations --case "co-traveler"
+    cedar-odcs pull         usecases/reservations
     cedar-odcs build        usecases/reservations
     cedar-odcs validate     usecases/reservations
     cedar-odcs prove        usecases/reservations
@@ -17,9 +18,11 @@
 Verbs match the official cedar command where the meaning is the same
 (authorize, validate, run-tests, new) and add the two ideas Cedar has
 no word for: a dry run of one tool call through both legs, and a
-report of what an identity may do. check runs build, validate,
-run-tests, and prove in order and stops at the first failure; the
-four stay callable on their own. Files are Cedar's own formats:
+report of what an identity may do. pull writes the ODCS contract from
+the catalog, for a use case that has one; build reads the contract and
+writes the Cedar files. check runs pull where there is a catalog, then
+build, validate, run-tests, and prove in order and stops at the first
+failure; each stays callable on its own. Files are Cedar's own formats:
 policies.cedar, entities.json, .cedarschema, the corpus in the
 cedar-integration-tests form.
 
@@ -380,10 +383,30 @@ def cmd_share(args):
 
 # ---------------------------------------------------------------- build, validate, prove
 
-def cmd_build(args):
+def cmd_pull(args):
+    """Stage one: the catalog's answers to the ODCS contract. Only a use
+    case with a PULL descriptor has a catalog; the others write the
+    contract by hand."""
     module = load_use_case(args.directory)
-    from cedar_odcs.engine.contract import build, write
-    outputs = build(module.USE_CASE.root, **module.BUILD)
+    source = getattr(module, "PULL", None)
+    if source is None:
+        raise Usage(f"{args.directory} names no catalog source (no PULL in usecase.py); its contract is written by hand")
+    from cedar_odcs.engine.contract import pull, write
+    outputs = pull(module.USE_CASE.root, module.CONTRACT, **source)
+    write(module.USE_CASE.root, outputs)
+    for rel in outputs:
+        print("wrote", rel)
+    return 0
+
+
+def cmd_build(args):
+    """Stage two: the committed ODCS contract to the Cedar files."""
+    module = load_use_case(args.directory)
+    from cedar_odcs.engine.contract import ContractError, build, write
+    try:
+        outputs = build(module.USE_CASE.root, module.CONTRACT)
+    except ContractError as e:
+        raise Usage(f"the contract does not build: {e}") from e
     write(module.USE_CASE.root, outputs)
     for rel in outputs:
         print("wrote", rel)
@@ -454,15 +477,24 @@ def cmd_prove(args):
 
 
 def cmd_check(args):
-    """build, validate, run-tests, prove, in order, stopping at the first
-    failure; a one-line heading per step, then the step's own output,
-    then one ok/failed line per step that ran."""
+    """pull where the use case has a catalog, then build, validate,
+    run-tests, prove, in order, stopping at the first failure; a
+    one-line heading per step, then the step's own output, then one
+    ok/failed line per step that ran."""
     directory = args.directory
     root = Path(directory).resolve()
     results = []
+    rc = 0
 
-    print("== build ==")
-    rc = cmd_build(args)
+    if getattr(load_use_case(directory), "PULL", None) is not None:
+        print("== pull ==")
+        rc = cmd_pull(args)
+        results.append(("pull", rc == 0))
+        print()
+
+    if rc == 0:
+        print("== build ==")
+        rc = cmd_build(args)
     if rc == 0:
         generated = [str(root / "contract"), str(root / "entities.json")]
         changed = subprocess.call(["git", "diff", "--quiet", "--", *generated], cwd=REPO) != 0
@@ -535,10 +567,11 @@ def main(argv=None) -> int:
     p.add_argument("--request-json", metavar="FILE")
     p.set_defaults(func=cmd_share)
 
-    with_dir(sub.add_parser("build", help="the contract build: catalog to contract to Cedar")).set_defaults(func=cmd_build)
+    with_dir(sub.add_parser("pull", help="the catalog to the ODCS contract, for a use case with a catalog source")).set_defaults(func=cmd_pull)
+    with_dir(sub.add_parser("build", help="the ODCS contract to Cedar: the tag maps, the schema, entities.json")).set_defaults(func=cmd_build)
     with_dir(sub.add_parser("validate", help="policies against the built schema, with cedar or cedarpy")).set_defaults(func=cmd_validate)
     with_dir(sub.add_parser("prove", help="the symbolic proofs, with cargo and cvc5 (no directory, or the repository root: the history chain)")).set_defaults(func=cmd_prove)
-    with_dir(sub.add_parser("check", help="build, validate, run-tests, prove, in order, stopping at the first failure")).set_defaults(func=cmd_check)
+    with_dir(sub.add_parser("check", help="pull (with a catalog), build, validate, run-tests, prove, in order, stopping at the first failure")).set_defaults(func=cmd_check)
     with_dir(sub.add_parser("new", help="scaffold a use case (planned)")).set_defaults(func=cmd_new)
 
     args = parser.parse_args(argv)

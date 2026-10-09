@@ -27,5 +27,6 @@ USE_CASE = UseCase(
 )
 
 # The contract build's inputs for this use case.
-BUILD = dict(entity_name="Order", contract_id="7d1d6b2e-2f7a-4d4b-9a1e-3c5e8f0a1b2c",
-             table_file="orders.table.json", tags_file="orders.column_tags.json")
+CONTRACT = "Order"  # the entity the contract describes: contract/order.odcs.yaml
+PULL = dict(contract_id="7d1d6b2e-2f7a-4d4b-9a1e-3c5e8f0a1b2c",
+            table_file="orders.table.json", tags_file="orders.column_tags.json")  # the catalog source of that file, for pull

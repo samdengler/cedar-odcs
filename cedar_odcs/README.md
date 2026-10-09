@@ -15,12 +15,14 @@ move.
   the response leg (row round, field round), leaf by leaf, by path,
   with one decision per distinct path per call. Resource entities come
   from the payload.
-- `engine/contract.py`: the build, Unity Catalog to ODCS to path-keyed
-  tag maps and the resource entity declaration; nested columns from
-  the catalog's `type_json`, nested levels from path-scoped tag keys.
+- `engine/contract.py`: the two build stages. `pull`, Unity Catalog to
+  the ODCS contract, for a use case that has a catalog; `build`, the
+  committed contract to path-keyed tag maps and the resource entity
+  declaration. Nested columns from the catalog's `type_json`, nested
+  levels from path-scoped tag keys.
 - `engine/corpus.py`: the engine-independent corpus runner.
 - `cli/main.py`: the `cedar-odcs` command (iteration 14): run-tests,
-  authorize, dry-run, check-access, share, build, validate, prove,
+  authorize, dry-run, check-access, share, pull, build, validate, prove,
   check.
 - `gateway/handlers.py`: the AgentCore Gateway handlers for MCP
   targets, with presented facts copied from tool arguments into
@@ -30,7 +32,8 @@ move.
 
 A use case directory (`usecases/<name>/`) holds `usecase.py`,
 `policies.cedar`, `facts.json`, `principals.cedarschema`,
-`actions.cedarschema`, `unity/` fixtures, the build's committed
+`actions.cedarschema`, the ODCS contract, `unity/` fixtures when a
+catalog is its source, the build's committed
 outputs, `tests/` corpora, `events/` Gateway fixtures, and its tests.
 `uv run python usecases/<name>/build.py` rebuilds the artifacts.
 
