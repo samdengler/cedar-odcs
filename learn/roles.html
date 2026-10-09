@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Roles, verbs, and acting for someone &middot; Cedar OSDC</title>
+<title>Roles, verbs, and acting for someone &middot; Cedar ODCS</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -149,13 +149,13 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="run">1. Run it</h2>
 
-<pre><code class="lang-sh">uv run cedar-osdc check usecases/orders</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs check usecases/orders</code></pre>
 
 <p>Seventy-five cases carried from nine iterations, twelve guardrails proven. Then compare what three identities may do on bob's order:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/alice.json
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/carol.json
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/dave.json</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/alice.json
+uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/carol.json
+uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/dave.json</code></pre>
 
 <p>Alice, a customer, holds no verb on an order she does not own. Carol, on the support desk, reads any order, cancels any order, updates any order, and may set exactly one field, <code>internalNotes</code>. Dave in finance holds <code>RefundOrder</code> and the list verb, and no read of a single order, because a verb held implies no other.</p>
 
@@ -181,7 +181,7 @@ permit(
 
 <p>Try the refund as alice, who owns the order:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/tests/identities/alice.json \
+<pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/orders --caller usecases/orders/tests/identities/alice.json \
     --tool orders___refund_order --arg orderId=order-1001</code></pre>
 
 <p>Rejected: ownership grants no refund. That is OWASP's broken function level authorization, met by the absence of a policy.</p>
@@ -190,7 +190,7 @@ permit(
 
 <p>Carol may update any order, but the writers map bounds what she may set. Put a payload through the request leg:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/tests/identities/carol.json \
+<pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/orders --caller usecases/orders/tests/identities/carol.json \
     --tool orders___update_order --arg orderId=order-2002 \
     --arg 'changes={"internalNotes": "called back", "shippingAddress": "9 Elm St"}'</code></pre>
 
@@ -224,18 +224,18 @@ permit(
 
 <p>Carol acting for alice holds alice's access, and her own role is off:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json</code></pre>
 
-<p>The confidential fields of alice's order are readable, the internal ones are not, and bob's order is out of reach. The token is an exchanged one: alice is its subject, carol its actor, and the projection in <code>cedar_osdc/engine/identities.py</code> turns that into a principal and an <code>actingFor</code> in context.</p>
+<p>The confidential fields of alice's order are readable, the internal ones are not, and bob's order is out of reach. The token is an exchanged one: alice is its subject, carol its actor, and the projection in <code>cedar_odcs/engine/identities.py</code> turns that into a principal and an <code>actingFor</code> in context.</p>
 
 <h2 id="break">5. Break it</h2>
 
 <p>Open <code>usecases/orders/contract/unity/orders.column_tags.json</code>, find the <code>internal_notes</code> column, and change its <code>writer</code> tag from <code>support</code> to <code>system</code>. Rebuild and rerun:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc build usecases/orders
-uv run cedar-osdc run-tests usecases/orders</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs build usecases/orders
+uv run cedar-odcs run-tests usecases/orders</code></pre>
 
-<p>The case "support agent updates internalNotes on any order" fails. Put it back. Then the harder one: in <code>policies.cedar</code>, delete the line <code>!(context has actingFor) &&</code> from <code>support-fields-on-any-order</code> and run the tests. Carol acting for alice now reads alice's internal notes, and the case that pinned the acting mode fails. With Rust and cvc5 installed, <code>uv run cedar-osdc prove usecases/orders</code> fails the same edit against every possible request, not just the one the corpus sampled; the <a href="proofs.html">proofs page</a> explains what that adds.</p>
+<p>The case "support agent updates internalNotes on any order" fails. Put it back. Then the harder one: in <code>policies.cedar</code>, delete the line <code>!(context has actingFor) &&</code> from <code>support-fields-on-any-order</code> and run the tests. Carol acting for alice now reads alice's internal notes, and the case that pinned the acting mode fails. With Rust and cvc5 installed, <code>uv run cedar-odcs prove usecases/orders</code> fails the same edit against every possible request, not just the one the corpus sampled; the <a href="proofs.html">proofs page</a> explains what that adds.</p>
 
 <h2 id="more">6. Where to read more</h2>
 
@@ -244,7 +244,7 @@ uv run cedar-osdc run-tests usecases/orders</code></pre>
 <p>Next: <a href="possession.html">step 3, possession, nesting, and three parties</a>.</p>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

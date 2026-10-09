@@ -6,7 +6,7 @@ from dataclasses import replace
 
 import pytest
 
-from cedar_osdc.engine.calls import call
+from cedar_odcs.engine.calls import call
 from usecases.reservations.usecase import USE_CASE
 
 

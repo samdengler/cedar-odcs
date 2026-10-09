@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from cedar_osdc.engine.contract import build
-from cedar_osdc.engine.corpus import cases
-from cedar_osdc.engine.usecase import layout, paths, responses_fetch
+from cedar_odcs.engine.contract import build
+from cedar_odcs.engine.corpus import cases
+from cedar_odcs.engine.usecase import layout, paths, responses_fetch
 from usecases.reservations.usecase import BUILD
 
 NEW = Path(__file__).resolve().parents[2] / "usecases/reservations"

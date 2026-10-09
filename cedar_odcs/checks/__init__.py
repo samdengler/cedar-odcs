@@ -4,5 +4,5 @@
 fragments; ``commands`` extracts and runs the command lines the
 learning pages show. Both are plain modules with a ``main()``, run
 either through pytest (``test_links.py``, ``test_commands.py``) or
-directly (``uv run python -m cedar_osdc.checks.links``).
+directly (``uv run python -m cedar_odcs.checks.links``).
 """

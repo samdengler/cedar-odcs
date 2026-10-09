@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Possession, nesting, and three parties &middot; Cedar OSDC</title>
+<title>Possession, nesting, and three parties &middot; Cedar ODCS</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -148,11 +148,11 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="run">1. Run it</h2>
 
-<pre><code class="lang-sh">uv run cedar-osdc check usecases/reservations</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs check usecases/reservations</code></pre>
 
 <p>Forty-three cases, fifteen guardrails. Then the customer's view, which is nobody's identity and only the pair:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
+<pre><code class="lang-sh">uv run cedar-odcs check-access usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --presented locator=ABC123 --presented lastName=Smith</code></pre>
 
 <p>The credential is the agent's own, a workload identity; the customer is the two presented facts. The record's leaves are readable by path, <code>passengers[].seat</code> and <code>contact.email</code> among them, and the passport numbers and special service requests are not, for anyone.</p>
@@ -174,7 +174,7 @@ permit(
 
 <p>Nothing about the pair can be checked before the record exists, so a read is decided on the response leg against the record that came back. Try a wrong name:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
+<pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --tool reservations___get_reservation --arg recordLocator=ABC123 --arg lastName=Jones \
     --response usecases/reservations/tests/responses/ABC123.json</code></pre>
 
@@ -182,7 +182,7 @@ permit(
 
 <p>A write cannot wait. Cancel with the wrong name:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
+<pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --tool reservations___cancel_reservation --arg recordLocator=ABC123 --arg lastName=Jones</code></pre>
 
 <p>Rejected before anything is forwarded: the request leg fetched the record first, through the read path, and decided on it. The descriptor names the verbs that need this, and the fetch that supplies the record, which in this repository reads the saved response under <code>tests/responses/</code>.</p>
@@ -213,11 +213,11 @@ permit(
 
 <h2 id="parties">3. Three parties</h2>
 
-<pre><code class="lang-sh">uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/sam-through-agent.json</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs check-access usecases/reservations --caller usecases/reservations/tests/identities/sam-through-agent.json</code></pre>
 
 <p>The credential is an exchanged token: the specialist is its subject, the agent its actor. The agent is the principal, typed <code>Agent</code>; the specialist is the acted-for human whose roles decide; the specialist reads the remarks, writes them, and lists reservations. Add the pair:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/tests/identities/sam-through-agent.json \
+<pre><code class="lang-sh">uv run cedar-odcs check-access usecases/reservations --caller usecases/reservations/tests/identities/sam-through-agent.json \
     --presented locator=ABC123 --presented lastName=Smith</code></pre>
 
 <p>The specialist's view is off. Presenting a pair means working the customer's case and being held to the customer's view.</p>
@@ -245,7 +245,7 @@ permit(
 
 <h2 id="break">4. Break it</h2>
 
-<p>In <code>usecases/reservations/policies.cedar</code>, remove the line <code>!(context has presented) &&</code> from <code>specialist-fields-on-any-reservation</code> and run the tests. The case "a specialist presenting a pair does not read remarks" fails. With Rust and cvc5, <code>uv run cedar-osdc prove usecases/reservations</code> also fails the guardrail "specialist levels off with pair", over every record and every tag map at once.</p>
+<p>In <code>usecases/reservations/policies.cedar</code>, remove the line <code>!(context has presented) &&</code> from <code>specialist-fields-on-any-reservation</code> and run the tests. The case "a specialist presenting a pair does not read remarks" fails. With Rust and cvc5, <code>uv run cedar-odcs prove usecases/reservations</code> also fails the guardrail "specialist levels off with pair", over every record and every tag map at once.</p>
 
 <p>Then a contract change: in <code>usecases/reservations/contract/unity/reservations.column_tags.json</code>, change the <code>passengers</code> column's <code>classification__passport_number</code> from <code>restricted</code> to <code>confidential</code>, rebuild, and run <code>check-access</code> for the pair. Passport numbers are now readable by possession, and the corpus case that said restricted stays nobody's fails.</p>
 
@@ -256,7 +256,7 @@ permit(
 <p>You have now seen everything the mechanism does. The <a href="guide.html">guide</a> says how to fill in a use case of your own.</p>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

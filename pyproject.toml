@@ -2,11 +2,11 @@
 # collect every iteration's corpus runner. Each iteration directory has
 # its own pyproject.toml and remains runnable on its own.
 [project]
-name = "cedar-osdc"
+name = "cedar-odcs"
 version = "0.1.0"
 description = "Data governance for agent tool calls with Cedar policies"
 requires-python = ">=3.10"
-# cedar_osdc/ and the cedar-osdc command need these; the numbered
+# cedar_odcs/ and the cedar-odcs command need these; the numbered
 # iterations carry their own copies in their own projects.
 dependencies = [
     "cedarpy>=4.0",
@@ -15,14 +15,14 @@ dependencies = [
 ]
 
 [project.scripts]
-cedar-osdc = "cedar_osdc.cli.main:main"
+cedar-odcs = "cedar_odcs.cli.main:main"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["cedar_osdc"]
+packages = ["cedar_odcs"]
 
 [dependency-groups]
 dev = [

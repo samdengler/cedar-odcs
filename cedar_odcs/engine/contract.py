@@ -29,7 +29,7 @@ from pathlib import Path
 import yaml
 from open_data_contract_standard.model import OpenDataContractStandard
 
-from cedar_osdc.engine.usecase import paths
+from cedar_odcs.engine.usecase import paths
 
 LEVELS = ("public", "internal", "confidential", "restricted")
 FIXED_WRITERS = ("owner", "system")

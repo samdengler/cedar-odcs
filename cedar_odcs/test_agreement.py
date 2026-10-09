@@ -17,11 +17,11 @@ from pathlib import Path
 
 import pytest
 
-from cedar_osdc.cli.main import _pairs, load_use_case, main
-from cedar_osdc.engine import calls
-from cedar_osdc.engine.enforce import Engine, explain
-from cedar_osdc.engine.usecase import paths
-from cedar_osdc.gateway import handlers
+from cedar_odcs.cli.main import _pairs, load_use_case, main
+from cedar_odcs.engine import calls
+from cedar_odcs.engine.enforce import Engine, explain
+from cedar_odcs.engine.usecase import paths
+from cedar_odcs.gateway import handlers
 
 REPO = Path(__file__).resolve().parents[1]
 
@@ -94,7 +94,7 @@ TEMPLATES = ("is not permitted for this caller", "fields not permitted:")
 
 
 def test_the_handlers_take_their_refusal_words_from_the_engine():
-    source = (REPO / "cedar_osdc/gateway/handlers.py").read_text()
+    source = (REPO / "cedar_odcs/gateway/handlers.py").read_text()
     for template in TEMPLATES:
         assert template not in source, f"handlers.py spells {template!r} itself"
 
@@ -114,7 +114,7 @@ def test_the_handlers_take_their_refusal_words_from_the_engine():
 
 
 def test_the_command_line_takes_its_refusal_words_from_the_engine(capsys):
-    source = (REPO / "cedar_osdc/cli/main.py").read_text()
+    source = (REPO / "cedar_odcs/cli/main.py").read_text()
     for template in TEMPLATES:
         assert template not in source, f"cli/main.py spells {template!r} itself"
 
@@ -142,6 +142,6 @@ def test_the_command_line_takes_its_refusal_words_from_the_engine(capsys):
 
 
 def test_the_engine_is_where_the_words_are_spelled():
-    source = (REPO / "cedar_osdc/engine/enforce.py").read_text()
+    source = (REPO / "cedar_odcs/engine/enforce.py").read_text()
     for template in TEMPLATES:
         assert source.count(template) == 1

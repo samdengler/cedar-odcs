@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The learning path &middot; Cedar OSDC</title>
+<title>The learning path &middot; Cedar ODCS</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -137,7 +137,7 @@ h2:hover .anchor { opacity: 1; }
 </nav>
 <div class="page">
 <header class="doc">
-  <div class="kicker">Learn &middot; Cedar OSDC</div>
+  <div class="kicker">Learn &middot; Cedar ODCS</div>
   <h1>The learning path</h1>
   <p>Three steps, each a use case you can run, change, and break. The path begins where Cedar's own tutorial ends: you can write a permit, an entity, and a schema, and you want to know how those become data governance for an agent's tool calls.</p>
 </header>
@@ -150,7 +150,7 @@ h2:hover .anchor { opacity: 1; }
 <p>Then, from the repository root, with <a href="https://docs.astral.sh/uv/">uv</a> installed:</p>
 
 <pre><code class="lang-sh">uv sync
-uv run cedar-osdc check usecases/hello</code></pre>
+uv run cedar-odcs check usecases/hello</code></pre>
 
 <p>Four steps run, each printing its result: the contract is built, the policies validate, the tests pass, the policies are proven never to error. The fourth needs Rust and the cvc5 solver, which <code>analysis/README.md</code> says how to install; without them it prints those steps and exits 1, and the three steps of this path need only the first three gates. Hello has no guardrails yet; from step 2 on, the last gate proves each guardrail too. That is the whole loop, and every step of the path uses it.</p>
 
@@ -177,7 +177,7 @@ uv run cedar-osdc check usecases/hello</code></pre>
     <div class="dg-node" id="policies" style="grid-area: 2 / 2;">policies.cedar<small>the grants; no policy names a field</small></div>
     <div class="dg-node" id="guardrails" style="grid-area: 2 / 3;">guardrails/<small>invariants: forbids that must change nothing</small></div>
     <div class="dg-node" id="tests" style="grid-area: 3 / 2;">tests/<small>test-cases, identities, responses, events</small></div>
-    <div class="dg-node" id="check" style="grid-area: 4 / 2;">cedar-osdc check<small>build, validate, run-tests, prove</small></div>
+    <div class="dg-node" id="check" style="grid-area: 4 / 2;">cedar-odcs check<small>build, validate, run-tests, prove</small></div>
   </div>
   <script class="dg-edges" type="application/json">
   [
@@ -200,14 +200,14 @@ uv run cedar-osdc check usecases/hello</code></pre>
 <ul>
 <li><a href="guide.html">The guide</a>: what to know about your own domain to fill in a use case, what each file is for, the three policy shapes, and the command line.</li>
 <li><a href="proofs.html">How the proofs are used, and what they do not cover</a>.</li>
-<li><a href="https://www.cedarpolicy.com/en/playground">Cedar's playground</a>: <code>cedar-osdc share</code> opens any case there.</li>
+<li><a href="https://www.cedarpolicy.com/en/playground">Cedar's playground</a>: <code>cedar-odcs share</code> opens any case there.</li>
 <li><a href="../history/index.html">The history</a>: how it was built, one narrative per iteration.</li>
 </ul>
 
-<p>What is not here yet: scaffolding a use case of your own with <code>cedar-osdc new</code>, and building from a plain list of fields instead of a Unity Catalog export. Until then, copy <code>usecases/hello</code> and edit; the guide says what to change.</p>
+<p>What is not here yet: scaffolding a use case of your own with <code>cedar-odcs new</code>, and building from a plain list of fields instead of a Unity Catalog export. Until then, copy <code>usecases/hello</code> and edit; the guide says what to change.</p>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

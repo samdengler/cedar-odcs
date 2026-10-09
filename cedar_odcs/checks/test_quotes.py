@@ -1,9 +1,9 @@
-"""pytest wrapper over cedar_osdc/checks/quotes.py: every policy the
+"""pytest wrapper over cedar_odcs/checks/quotes.py: every policy the
 pages quote by @id is a verbatim copy of one in the tree."""
 
 from pathlib import Path
 
-from cedar_osdc.checks.quotes import check
+from cedar_odcs.checks.quotes import check
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

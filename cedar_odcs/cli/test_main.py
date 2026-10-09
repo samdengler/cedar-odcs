@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from cedar_osdc.cli.main import main, playground_link
-from cedar_osdc.engine.usecase import paths
+from cedar_odcs.cli.main import main, playground_link
+from cedar_odcs.engine.usecase import paths
 
 REPO = Path(__file__).resolve().parents[2]
 R = str(REPO / "usecases/reservations")

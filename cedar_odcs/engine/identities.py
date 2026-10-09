@@ -10,7 +10,7 @@ token may carry none. A role claim of any shape other than a list of
 strings is an error.
 
 Decoding the bearer token itself (claims_of, TokenError) is a Gateway
-concern and lives in cedar_osdc.gateway.handlers; this module takes
+concern and lives in cedar_odcs.gateway.handlers; this module takes
 already-decoded claims.
 """
 

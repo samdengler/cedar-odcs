@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from cedar_osdc.engine.usecase import UseCase, responses_fetch
+from cedar_odcs.engine.usecase import UseCase, responses_fetch
 
 ROOT = Path(__file__).parent
 

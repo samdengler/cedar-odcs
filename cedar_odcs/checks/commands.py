@@ -13,7 +13,7 @@ The extractor is chosen by file suffix: ``extract_from_markdown``
 reads fenced ``sh`` blocks, ``extract_from_html`` reads ``<pre><code
 class="lang-sh">`` blocks, so a page in either form is a source.
 
-Run directly with ``uv run python -m cedar_osdc.checks.commands``, or
+Run directly with ``uv run python -m cedar_odcs.checks.commands``, or
 through ``test_commands.py``.
 """
 
@@ -26,7 +26,7 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-COMMAND_PREFIXES = ("uv run cedar-osdc", "uv sync", "uv run pytest")
+COMMAND_PREFIXES = ("uv run cedar-odcs", "uv sync", "uv run pytest")
 
 # Tokens that mark a line as a syntax reference rather than a command to
 # run: a placeholder standing in for a real value.
@@ -135,7 +135,7 @@ def plan_commands(root: Path) -> Plan:
             if line.startswith("uv run pytest"):
                 plan.skipped.append((line, "uv run pytest is slow and recursive; skipped here"))
                 continue
-            if line.startswith("uv run cedar-osdc prove"):
+            if line.startswith("uv run cedar-odcs prove"):
                 plan.skipped.append((line, "prove runs the whole analysis; check.sh runs it once, outside pytest"))
                 continue
             plan.to_run.append(line)

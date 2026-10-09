@@ -144,7 +144,7 @@ h2:hover .anchor { opacity: 1; }
 </nav>
 <div class="page">
 <header class="doc">
-  <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
+  <div class="kicker">Design &middot; Cedar ODCS &middot; September 2026</div>
   <h1>Cedar authorization for MCP tools, iteration 15: the learning path</h1>
   <p>Three runnable steps that begin where Cedar's own tutorial ends, a guide that says what to know about a domain before filling in a use case, and a page on what the proofs give and what they do not. Written for a colleague with a different domain who has just cloned the repository.</p>
 </header>
@@ -174,7 +174,7 @@ h2:hover .anchor { opacity: 1; }
 <h2 id="scope">2. Scope of this iteration</h2>
 
 <div class="callout"><p><strong>Built:</strong> the <code>learn</code> directory: a path of three steps, the first a new use case of five fields and four policies, the other two exercises on the orders and reservations use cases; a guide built from the onboarding questions, with the three policy shapes in real Cedar and the command line reference; a page on how the proofs are used and what they do not cover, with the same assumptions written into the analysis README where an over-claim stood; and caller files, one per caller, for every use case. The root README leads with the path.</p>
-<p><strong>Not built:</strong> scaffolding a use case with <code>cedar-osdc new</code>, and building from a plain fields file (iteration 16). Until then the guide says to copy the hello use case.</p></div>
+<p><strong>Not built:</strong> scaffolding a use case with <code>cedar-odcs new</code>, and building from a plain fields file (iteration 16). Until then the guide says to copy the hello use case.</p></div>
 
 <h2 id="path">3. Three steps, after Cedar's own</h2>
 
@@ -193,7 +193,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>A note has an owner; a reviewer may read any note; five fields carry three levels. Four policies, nine corpus cases, two callers, one tool, and the same build pipeline as the real use cases, from a Unity Catalog table fixture through an ODCS document to the generated maps. Nothing is simplified in kind, only in size: the first thing a learner rebuilds is the same artifact a deployment would.</p>
 
-<pre><code>$ uv run cedar-osdc check-access learn/hello --caller learn/hello/callers/ada.json
+<pre><code>$ uv run cedar-odcs check-access learn/hello --caller learn/hello/callers/ada.json
 Access of User::"ada" (customer-direct)
 On Note::"note-1" with attributes {"owner": {"__entity": {"type": "User", "id": "ada"}}}
 
@@ -228,7 +228,7 @@ Not readable    reviewerNotes (internal)</code></pre>
 <h2 id="running">8. Running it</h2>
 
 <pre><code>uv sync
-uv run cedar-osdc run-tests learn/hello</code></pre>
+uv run cedar-odcs run-tests learn/hello</code></pre>
 
 <h2 id="decisions">9. Decisions made in this iteration</h2>
 
@@ -260,7 +260,7 @@ uv run cedar-osdc run-tests learn/hello</code></pre>
 </ol>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

@@ -1,4 +1,4 @@
-"""pytest wrapper over cedar_osdc/checks/commands.py.
+"""pytest wrapper over cedar_odcs/checks/commands.py.
 
 Runs every command line the learning pages show (minus placeholders
 and the two slow, recursive ones) from the repository root, and
@@ -8,7 +8,7 @@ requires each to exit 0 or 1 with no Traceback and no argparse
 
 from pathlib import Path
 
-from cedar_osdc.checks.commands import plan_commands, run_command
+from cedar_odcs.checks.commands import plan_commands, run_command
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

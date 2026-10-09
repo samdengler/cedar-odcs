@@ -35,11 +35,11 @@ from typing import TYPE_CHECKING
 
 import cedarpy
 
-from cedar_osdc.engine.identities import Projection, project
-from cedar_osdc.engine.usecase import UseCase
+from cedar_odcs.engine.identities import Projection, project
+from cedar_odcs.engine.usecase import UseCase
 
 if TYPE_CHECKING:  # calls.py imports this module; the name is for readers
-    from cedar_osdc.engine.calls import Call
+    from cedar_odcs.engine.calls import Call
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9_.:@/-]+$")
 

@@ -1,6 +1,6 @@
 """AWS Lambda entry points for the AgentCore Gateway interceptors.
 
-CEDAR_OSDC_USE_CASE names a use case directory (e.g.
+CEDAR_ODCS_USE_CASE names a use case directory (e.g.
 usecases/reservations). Handlers(use_case) is built once at import
 time, and request/response delegate to its two interception points.
 """
@@ -10,7 +10,7 @@ import os
 import sys
 from pathlib import Path
 
-from cedar_osdc.gateway.handlers import Handlers
+from cedar_odcs.gateway.handlers import Handlers
 
 
 def _load_use_case(directory: str):
@@ -22,7 +22,7 @@ def _load_use_case(directory: str):
     return module.USE_CASE
 
 
-_HANDLERS = Handlers(_load_use_case(os.environ["CEDAR_OSDC_USE_CASE"]))
+_HANDLERS = Handlers(_load_use_case(os.environ["CEDAR_ODCS_USE_CASE"]))
 
 
 def request(event, context):

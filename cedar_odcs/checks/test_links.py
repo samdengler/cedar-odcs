@@ -1,4 +1,4 @@
-"""pytest wrapper over cedar_osdc/checks/links.py.
+"""pytest wrapper over cedar_odcs/checks/links.py.
 
 Collects every broken relative link and fragment in the tree's
 Markdown and HTML pages into one assertion, so a run names every
@@ -7,7 +7,7 @@ break at once rather than stopping at the first.
 
 from pathlib import Path
 
-from cedar_osdc.checks.links import find_broken_links
+from cedar_odcs.checks.links import find_broken_links
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 

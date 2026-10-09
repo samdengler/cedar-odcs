@@ -21,8 +21,8 @@ anything that cannot be evaluated is not forwarded.
 
 from dataclasses import dataclass
 
-from cedar_osdc.engine.enforce import ID_PATTERN
-from cedar_osdc.engine.usecase import UseCase
+from cedar_odcs.engine.enforce import ID_PATTERN
+from cedar_odcs.engine.usecase import UseCase
 
 
 @dataclass

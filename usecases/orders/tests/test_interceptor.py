@@ -11,7 +11,7 @@ both the structured content and the text content.
 import json
 from pathlib import Path
 
-from cedar_osdc.gateway.handlers import handlers
+from cedar_odcs.gateway.handlers import handlers
 from usecases.orders.usecase import TOOLS, USE_CASE
 
 HERE = Path(__file__).parent

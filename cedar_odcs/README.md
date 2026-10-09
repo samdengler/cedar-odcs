@@ -1,4 +1,4 @@
-# cedar_osdc
+# cedar_odcs
 
 The mechanism, with no use case named in it: an engine and two
 interfaces. Extracted from iterations 6 through 10 as the reservations
@@ -19,14 +19,14 @@ move.
   tag maps and the resource entity declaration; nested columns from
   the catalog's `type_json`, nested levels from path-scoped tag keys.
 - `engine/corpus.py`: the engine-independent corpus runner.
-- `cli/main.py`: the `cedar-osdc` command (iteration 14): run-tests,
+- `cli/main.py`: the `cedar-odcs` command (iteration 14): run-tests,
   authorize, dry-run, check-access, share, build, validate, prove,
   check.
 - `gateway/handlers.py`: the AgentCore Gateway handlers for MCP
   targets, with presented facts copied from tool arguments into
   context; also strict bearer decoding, a Gateway concern.
 - `gateway/handler.py`: the two AWS Lambda entry points, loading a use
-  case by the `CEDAR_OSDC_USE_CASE` environment variable.
+  case by the `CEDAR_ODCS_USE_CASE` environment variable.
 
 A use case directory (`usecases/<name>/`) holds `usecase.py`,
 `policies.cedar`, `facts.json`, `principals.cedarschema`,

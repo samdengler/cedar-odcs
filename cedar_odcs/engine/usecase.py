@@ -114,7 +114,7 @@ class UseCase:
     # Request-leg verbs whose payload gets the field round: verb to
     # field verb, e.g. {'Action::"UpdateOrder"': 'Action::"UpdateOrderField"'}.
     field_actions: dict
-    # MCP tool name to how the handlers treat it (see cedar_osdc.gateway.handlers).
+    # MCP tool name to how the handlers treat it (see cedar_odcs.gateway.handlers).
     tools: dict = field(default_factory=dict)
     # Request-leg verbs that cannot be decided without the record: the
     # engine fetches it through `fetch` (row id to payload, or None)

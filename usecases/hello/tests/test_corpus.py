@@ -1,6 +1,6 @@
 import pytest
 
-from cedar_osdc.engine.corpus import cases, check
+from cedar_odcs.engine.corpus import cases, check
 from usecases.hello.usecase import ROOT
 
 

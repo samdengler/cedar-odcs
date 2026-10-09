@@ -19,11 +19,11 @@ import base64
 import json
 import logging
 
-from cedar_osdc.engine import calls
-from cedar_osdc.engine.enforce import Engine, explain
-from cedar_osdc.engine.usecase import UseCase
+from cedar_odcs.engine import calls
+from cedar_odcs.engine.enforce import Engine, explain
+from cedar_odcs.engine.usecase import UseCase
 
-log = logging.getLogger("cedar-osdc")
+log = logging.getLogger("cedar-odcs")
 OUTPUT_VERSION = "1.0"
 
 

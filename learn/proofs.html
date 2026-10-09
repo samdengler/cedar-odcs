@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How the proofs are used, and what they do not cover &middot; Cedar OSDC</title>
+<title>How the proofs are used, and what they do not cover &middot; Cedar ODCS</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -208,10 +208,10 @@ forbid(
 
 <h2 id="run">3. Running them</h2>
 
-<pre><code class="lang-sh">uv run cedar-osdc prove usecases/orders    # one use case
-uv run cedar-osdc prove                    # the history chain</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs prove usecases/orders    # one use case
+uv run cedar-odcs prove                    # the history chain</code></pre>
 
-<p>Both need Rust and cvc5 installed as <code>analysis/README.md</code> describes. <code>cedar-osdc check</code> runs the first as its last gate. The findings list in that README is the record of what the analysis caught that the tests had missed.</p>
+<p>Both need Rust and cvc5 installed as <code>analysis/README.md</code> describes. <code>cedar-odcs check</code> runs the first as its last gate. The findings list in that README is the record of what the analysis caught that the tests had missed.</p>
 
 <h2 id="limits">4. What the proofs do not cover</h2>
 
@@ -251,7 +251,7 @@ uv run cedar-osdc prove                    # the history chain</code></pre>
 <p>Write a guardrail for each sentence you would put in a governance document: "nobody outside finance refunds", "a passport number is readable by nobody". Put it in a file of its own under <code>usecases/&lt;name&gt;/guardrails/</code> and run <code>check</code>; nothing else needs registering. When it fails, read the counterexample: it is either a bug in the policies or a sentence that was never true, and both are worth knowing before a deployment.</p>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

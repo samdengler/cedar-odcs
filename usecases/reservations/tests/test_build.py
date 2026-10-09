@@ -3,8 +3,8 @@ attributes the descriptor reads, and the committed artifacts current."""
 
 import json
 
-from cedar_osdc.engine.contract import attributes_of, build, load_contract
-from cedar_osdc.engine.usecase import paths
+from cedar_odcs.engine.contract import attributes_of, build, load_contract
+from cedar_odcs.engine.usecase import paths
 from usecases.reservations.usecase import BUILD, ROOT, USE_CASE
 
 

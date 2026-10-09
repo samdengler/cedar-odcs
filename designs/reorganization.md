@@ -19,7 +19,7 @@ is what the Gateway loads.
 ```
 README.md         what it is, run hello in three commands, then the map below
 index.html        one landing page pointing at the README, the path, and the history
-cedar_osdc/       the tool: engine, command line, Gateway handlers (Python)
+cedar_odcs/       the tool: engine, command line, Gateway handlers (Python)
 analysis/         the symbolic analysis runner (Rust) and the bundled solver
 usecases/         one folder per domain, hello among them
 learn/            the path and the guide
@@ -75,7 +75,7 @@ API, and is replaced by a real read at deployment. Today's
 ## One command
 
 ```sh
-cedar-osdc check usecases/reservations
+cedar-odcs check usecases/reservations
 ```
 
 Runs, in order, stopping at the first failure:
@@ -92,7 +92,7 @@ says to copy hello.
 ## The tool: one package, an engine and two interfaces
 
 ```
-cedar_osdc/
+cedar_odcs/
   engine/
     contract.py      the build: Unity Catalog to ODCS to maps and schema
     identities.py    the projection from claims to the Cedar parties (today claims.py)
@@ -237,7 +237,7 @@ Three overnight runs, not one (review, scope). Each task ends with
 
 **Run 1, no behavior change.**
 
-1. **Package skeleton.** Create `cedar_osdc/` with `engine/`, `cli/`,
+1. **Package skeleton.** Create `cedar_odcs/` with `engine/`, `cli/`,
    `gateway/`; move the Python modules; update `pyproject.toml`, the
    console script, `check.sh`, and every import. Fix the two
    hard-coded parent paths the move breaks, `REPO` in the command
@@ -301,6 +301,6 @@ Three overnight runs, not one (review, scope). Each task ends with
 
 ## Out of scope
 
-`cedar-osdc new`, building from a plain fields file, an `add-case`
+`cedar-odcs new`, building from a plain fields file, an `add-case`
 helper, YAML authoring of cases, CI, dropping the corpus header, and
 any change to what the policies decide.

@@ -8,7 +8,7 @@ GitHub-style slug in Markdown). Links starting with ``http:``,
 ``https:``, or ``mailto:`` are not checked, and a bare ``#frag`` is
 checked against the file it appears in.
 
-Run directly with ``uv run python -m cedar_osdc.checks.links``, or
+Run directly with ``uv run python -m cedar_odcs.checks.links``, or
 through ``test_links.py``.
 """
 

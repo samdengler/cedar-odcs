@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hello &middot; Cedar OSDC</title>
+<title>Hello &middot; Cedar ODCS</title>
 <style>
 /* dg core styles — copy verbatim into a <style> tag */
 [data-diagram] { position: relative; --dg-stroke: #546170; --dg-bg: #ffffff; --dg-accent: #eef2f7; }
@@ -149,16 +149,16 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="run">1. Run it</h2>
 
-<pre><code class="lang-sh">uv run cedar-osdc run-tests usecases/hello</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs run-tests usecases/hello</code></pre>
 
 <p>Nine cases pass. Each is a Cedar authorization request with the decision it should get, in <code>tests/test-cases/hello.json</code>; the cases of a use case together are its corpus. Now ask what each identity may do:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/ada.json
-uv run cedar-osdc check-access usecases/hello --caller usecases/hello/tests/identities/rae.json</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs check-access usecases/hello --caller usecases/hello/tests/identities/ada.json
+uv run cedar-odcs check-access usecases/hello --caller usecases/hello/tests/identities/rae.json</code></pre>
 
 <p>Ada, the owner, reads the body and not the reviewer's notes. Rae, the reviewer, reads the reviewer's notes and not the body. Then put one tool call through the two legs, without calling any tool:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc dry-run usecases/hello --caller usecases/hello/tests/identities/rae.json \
+<pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/hello --caller usecases/hello/tests/identities/rae.json \
     --tool notes___get_note --arg noteId=note-1 --response usecases/hello/tests/responses/note-1.json</code></pre>
 
 <p>The request leg forwards the call; the response leg strips <code>body</code> before the note goes back. That is what the two Gateway interceptors do in production, with the same engine.</p>
@@ -234,8 +234,8 @@ permit(
 
 <p>Open <code>contract/unity/notes.column_tags.json</code> and change the <code>body</code> column's classification from <code>confidential</code> to <code>internal</code>. Rebuild and rerun:</p>
 
-<pre><code class="lang-sh">uv run cedar-osdc build usecases/hello
-uv run cedar-osdc run-tests usecases/hello</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs build usecases/hello
+uv run cedar-odcs run-tests usecases/hello</code></pre>
 
 <p>Two cases fail: ada can no longer read her own body, and rae now can. The corpus recorded who may read what before the tag changed, so the tag change fails a test instead of quietly moving a field between readers. Put the tag back and rebuild.</p>
 
@@ -243,14 +243,14 @@ uv run cedar-osdc run-tests usecases/hello</code></pre>
 
 <h2 id="playground">6. See it in Cedar's playground</h2>
 
-<pre><code class="lang-sh">uv run cedar-osdc share usecases/hello --case "rae may not read the body"</code></pre>
+<pre><code class="lang-sh">uv run cedar-odcs share usecases/hello --case "rae may not read the body"</code></pre>
 
 <p>Open the link. The playground shows the same request, entities, and policies, and evaluates to denied. Edit the reviewer's field policy there to include <code>"confidential"</code> and evaluate again.</p>
 
 <p>Next: <a href="roles.html">step 2, roles, verbs, and acting for someone</a>.</p>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

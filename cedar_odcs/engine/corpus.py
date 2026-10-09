@@ -23,7 +23,7 @@ from pathlib import Path
 import cedarpy
 import pytest
 
-from cedar_osdc.engine.usecase import paths
+from cedar_odcs.engine.usecase import paths
 
 
 def _ref(value):

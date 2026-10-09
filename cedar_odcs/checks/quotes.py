@@ -8,7 +8,7 @@ from the file it came from teaches the wrong policy. For every
 normalized, must appear in ``policies.cedar`` or a ``guardrails/*.cedar``
 file of some use case.
 
-Run directly with ``uv run python -m cedar_osdc.checks.quotes``, or
+Run directly with ``uv run python -m cedar_odcs.checks.quotes``, or
 through ``test_quotes.py``.
 """
 

@@ -24,7 +24,7 @@ import logging
 from bearer import TokenError, claims_of, project
 from enforce import ID_PATTERN, check_call, filter_object, filter_rows
 
-log = logging.getLogger("cedar-osdc")
+log = logging.getLogger("cedar-odcs")
 
 # MCP tool name to the verb, where the resource id comes from, and
 # whether the tool carries a write payload or returns a list. Tool

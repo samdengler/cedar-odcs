@@ -1,18 +1,18 @@
-"""cedar-osdc: the mechanism at the command line.
+"""cedar-odcs: the mechanism at the command line.
 
-    cedar-osdc run-tests    usecases/reservations
-    cedar-osdc authorize    usecases/reservations --principal 'User::"sam"' \\
+    cedar-odcs run-tests    usecases/reservations
+    cedar-odcs authorize    usecases/reservations --principal 'User::"sam"' \\
                               --action 'Action::"ReadReservation"' --resource 'Reservation::"ABC123"'
-    cedar-osdc dry-run      usecases/reservations --caller sam.json \\
+    cedar-odcs dry-run      usecases/reservations --caller sam.json \\
                               --tool reservations___get_reservation --arg recordLocator=XYZ789 \\
                               --response record.json
-    cedar-osdc check-access usecases/reservations --caller agent.json \\
+    cedar-odcs check-access usecases/reservations --caller agent.json \\
                               --presented locator=ABC123 --presented lastName=SMITH
-    cedar-osdc share        usecases/reservations --case "co-traveler"
-    cedar-osdc build        usecases/reservations
-    cedar-osdc validate     usecases/reservations
-    cedar-osdc prove        usecases/reservations
-    cedar-osdc check        usecases/reservations
+    cedar-odcs share        usecases/reservations --case "co-traveler"
+    cedar-odcs build        usecases/reservations
+    cedar-odcs validate     usecases/reservations
+    cedar-odcs prove        usecases/reservations
+    cedar-odcs check        usecases/reservations
 
 Verbs match the official cedar command where the meaning is the same
 (authorize, validate, run-tests, new) and add the two ideas Cedar has
@@ -41,10 +41,10 @@ from pathlib import Path
 
 import cedarpy
 
-from cedar_osdc.engine import calls
-from cedar_osdc.engine.corpus import case_files, name_of, policy_names, run_case
-from cedar_osdc.engine.enforce import Engine, explain
-from cedar_osdc.engine.usecase import paths
+from cedar_odcs.engine import calls
+from cedar_odcs.engine.corpus import case_files, name_of, policy_names, run_case
+from cedar_odcs.engine.enforce import Engine, explain
+from cedar_odcs.engine.usecase import paths
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -382,7 +382,7 @@ def cmd_share(args):
 
 def cmd_build(args):
     module = load_use_case(args.directory)
-    from cedar_osdc.engine.contract import build, write
+    from cedar_odcs.engine.contract import build, write
     outputs = build(module.USE_CASE.root, **module.BUILD)
     write(module.USE_CASE.root, outputs)
     for rel in outputs:
@@ -500,7 +500,7 @@ def cmd_new(args):
 # ---------------------------------------------------------------- main
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(prog="cedar-osdc", description=__doc__.split("\n\n")[0])
+    parser = argparse.ArgumentParser(prog="cedar-odcs", description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
 
     def with_dir(p):
@@ -545,7 +545,7 @@ def main(argv=None) -> int:
     try:
         return args.func(args)
     except Usage as e:
-        print(f"cedar-osdc: {e}", file=sys.stderr)
+        print(f"cedar-odcs: {e}", file=sys.stderr)
         return 2
 
 

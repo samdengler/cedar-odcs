@@ -10,14 +10,14 @@ including whichever of the two pretty-printing styles the file
 already uses, is left as it was. A newcomer's use case whose corpus
 still reads by position runs this again the same way.
 
-    uv run python -m cedar_osdc.engine.rename_reasons
+    uv run python -m cedar_odcs.engine.rename_reasons
 """
 
 import re
 import sys
 from pathlib import Path
 
-from cedar_osdc.engine.corpus import case_files, policy_names
+from cedar_odcs.engine.corpus import case_files, policy_names
 
 REPO = Path(__file__).resolve().parents[2]
 

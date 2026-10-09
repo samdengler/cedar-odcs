@@ -146,7 +146,7 @@ h2:hover .anchor { opacity: 1; }
 </nav>
 <div class="page">
 <header class="doc">
-  <div class="kicker">Design &middot; Cedar OSDC &middot; September 2026</div>
+  <div class="kicker">Design &middot; Cedar ODCS &middot; September 2026</div>
   <h1>Cedar authorization for MCP tools, iteration 14: the command line</h1>
   <p>The mechanism at the command line, for a colleague who has cloned the repository and wants to see it work on the existing use cases in minutes, and on their own domain soon after. Nine verbs, matching the official cedar command where the meaning is the same, and two ideas Cedar has no word for.</p>
 </header>
@@ -178,7 +178,7 @@ h2:hover .anchor { opacity: 1; }
 
 <h2 id="scope">2. Scope of this iteration</h2>
 
-<div class="callout"><p><strong>Built:</strong> the <code>cedar-osdc</code> command, installed by <code>uv sync</code> at the repository root, with nine verbs: <code>run-tests</code>, <code>authorize</code>, <code>dry-run</code>, <code>check-access</code>, <code>share</code>, <code>build</code>, <code>validate</code>, <code>prove</code>, and a placeholder <code>new</code>. Every verb runs against the orders and reservations use cases as they are; no new content was needed. The playground link was checked in a browser against the site's own decoder. Nine tests drive the commands.</p>
+<div class="callout"><p><strong>Built:</strong> the <code>cedar-odcs</code> command, installed by <code>uv sync</code> at the repository root, with nine verbs: <code>run-tests</code>, <code>authorize</code>, <code>dry-run</code>, <code>check-access</code>, <code>share</code>, <code>build</code>, <code>validate</code>, <code>prove</code>, and a placeholder <code>new</code>. Every verb runs against the orders and reservations use cases as they are; no new content was needed. The playground link was checked in a browser against the site's own decoder. Nine tests drive the commands.</p>
 <p><strong>Not built:</strong> the learning path and the guide (iteration 15), scaffolding a use case and building from a plain fields file (iteration 16), and any output format other than words.</p></div>
 
 <h2 id="verbs">3. The verbs, beside Cedar's</h2>
@@ -202,7 +202,7 @@ h2:hover .anchor { opacity: 1; }
 
 <p>A dry run is a tool call performed without its effect. The command builds the Gateway event iteration 10 documented, from a caller file of claims and the tool's arguments, and puts it through the request handler; with a response payload it runs the response leg too. The output is the decision in words:</p>
 
-<pre><code>$ cedar-osdc dry-run usecases/reservations --caller agent.json \
+<pre><code>$ cedar-odcs dry-run usecases/reservations --caller agent.json \
     --tool reservations___get_reservation \
     --arg recordLocator=ABC123 --arg lastName=Smith --response record.json
 Caller     Agent::"reservations-assistant", customer-conversation
@@ -219,7 +219,7 @@ Returned   {
 
 <p>The corpus states expected decisions and <code>run-tests</code> holds the policies to them. <code>check-access</code> states nothing in advance: for one token it asks every verb the schema declares, every path in the classification map, and every path in the writers map, and reports the answers. The presented pair and a record to decide on are options:</p>
 
-<pre><code>$ cedar-osdc check-access usecases/reservations --caller agent.json \
+<pre><code>$ cedar-odcs check-access usecases/reservations --caller agent.json \
     --presented locator=ABC123 --presented lastName=Smith
 Access of Agent::"reservations-assistant" (customer-conversation), presenting {"locator": "ABC123", "lastName": "SMITH"}
 On Reservation::"ABC123" with attributes {"recordLocator": "ABC123", "holderLastName": "SMITH"}
@@ -239,7 +239,7 @@ Not writable    recordLocator (system), ...</code></pre>
 
 <p>Cedar's playground encodes its state into the URL fragment when its share button is pressed: the policies, the schema, the entities, the context, and the three parties, as JSON, gzipped, base64. <code>share</code> writes the same fragment for any corpus case or request file, so a learner opens our case in Cedar's own editor, sees the same Deny, and changes a policy there before touching a file. The format is read from the site's source and is undocumented; the command's docstring says so, and if the playground changes it, only this command stops working.</p>
 
-<pre><code>$ cedar-osdc share usecases/reservations --case "co-traveler's last name is not"
+<pre><code>$ cedar-odcs share usecases/reservations --case "co-traveler's last name is not"
 a co-traveler's last name is not the holder's: the pair names one person
 https://www.cedarpolicy.com/en/playground#data:H4sIA...</code></pre>
 
@@ -249,7 +249,7 @@ https://www.cedarpolicy.com/en/playground#data:H4sIA...</code></pre>
 
 <ul>
 <li><code>core/cli.py</code>: the nine verbs, the use case loader, the policy name lookup from <code>@id</code> annotations, the caller file to bearer encoding, and the playground link.</li>
-<li><code>pyproject.toml</code> at the root: the package becomes installable, with <code>cedar-osdc</code> as its console script and core's dependencies as the project's; the numbered iterations keep their own projects.</li>
+<li><code>pyproject.toml</code> at the root: the package becomes installable, with <code>cedar-odcs</code> as its console script and core's dependencies as the project's; the numbered iterations keep their own projects.</li>
 <li><code>core/test_cli.py</code>: every command against the reservations use case, checking the words against the decisions the corpus and the handlers already pin, and the link's round trip.</li>
 </ul>
 
@@ -262,8 +262,8 @@ https://www.cedarpolicy.com/en/playground#data:H4sIA...</code></pre>
 <p>From a fresh clone, with <a href="https://docs.astral.sh/uv/">uv</a> installed:</p>
 
 <pre><code>uv sync
-uv run cedar-osdc run-tests usecases/reservations
-uv run cedar-osdc check-access usecases/reservations --caller usecases/reservations/callers.json</code></pre>
+uv run cedar-odcs run-tests usecases/reservations
+uv run cedar-odcs check-access usecases/reservations --caller usecases/reservations/callers.json</code></pre>
 
 <p>The caller argument takes a caller file, one JSON object of the claims in that caller's credential; each use case ships a few under `callers/`. <code>validate</code> needs the official cedar command (<code>cargo install cedar-policy-cli</code>), and <code>prove</code> needs Rust and cvc5 as <code>analysis/README.md</code> describes. Everything else needs Python only.</p>
 
@@ -305,7 +305,7 @@ uv run cedar-osdc check-access usecases/reservations --caller usecases/reservati
 </ol>
 
 </main>
-<footer class="doc">Cedar authorization for MCP tools &middot; Cedar OSDC &middot; September 2026 &middot; Sam Dengler</footer>
+<footer class="doc">Cedar authorization for MCP tools &middot; Cedar ODCS &middot; September 2026 &middot; Sam Dengler</footer>
 </div>
 
 </div>

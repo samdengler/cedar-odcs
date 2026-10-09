@@ -1,4 +1,4 @@
-# cedar-osdc
+# cedar-odcs
 
 Data governance for an agent's tool calls. The agent reaches an API through an MCP tool in AgentCore Gateway with a service credential, so the API answers whatever is asked; two Gateway interceptors decide every call with [Cedar](https://docs.cedarpolicy.com/) policies instead. What a field means and who may see it come from the data contract, generated from the catalog. A use case is a folder with four things, a data contract, policies, tests, and guardrails; one command checks the folder; the same folder is what the Gateway loads.
 
@@ -17,7 +17,7 @@ Carol is a support specialist acting for the customer alice. The list tool retur
 The same case from the command line, with the three orders as the response:
 
 ```sh
-uv run cedar-osdc dry-run usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json --tool orders___list_orders --response usecases/orders/tests/lists/orders.json
+uv run cedar-odcs dry-run usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json --tool orders___list_orders --response usecases/orders/tests/lists/orders.json
 ```
 
 ## From catalog tags to a policy decision
@@ -37,7 +37,7 @@ uv sync
 **Check a use case.** Build its contract, validate its policies, run its tests, prove its guardrails:
 
 ```sh
-uv run cedar-osdc check usecases/hello
+uv run cedar-odcs check usecases/hello
 ```
 
 The first three gates need Python only. The fourth, the proofs, needs Rust and the cvc5 solver; without them it prints the install steps and the command exits 1. `analysis/README.md` says how to get them. Validation uses the cedarpy binding unless the official `cedar` command is on the path.
@@ -45,19 +45,19 @@ The first three gates need Python only. The fourth, the proofs, needs Rust and t
 **See what a caller may do.** Every verb, every readable field, every writable field, from real authorization questions:
 
 ```sh
-uv run cedar-osdc check-access usecases/orders --caller usecases/orders/tests/identities/carol.json
+uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/carol.json
 ```
 
 **Put one tool call through both legs without calling the tool.** The request leg decides the verb and the payload; the response leg strips what the caller may not see:
 
 ```sh
-uv run cedar-osdc dry-run usecases/hello --caller usecases/hello/tests/identities/rae.json --tool notes___get_note --arg noteId=note-1 --response usecases/hello/tests/responses/note-1.json
+uv run cedar-odcs dry-run usecases/hello --caller usecases/hello/tests/identities/rae.json --tool notes___get_note --arg noteId=note-1 --response usecases/hello/tests/responses/note-1.json
 ```
 
 **Open a case in Cedar's playground.** The policies, the entities, and the request, pre-filled:
 
 ```sh
-uv run cedar-osdc share usecases/hello --case "rae may not read the body"
+uv run cedar-odcs share usecases/hello --case "rae may not read the body"
 ```
 
 **Check everything.** The tests, the four gates on each use case, and the proofs of the history chain:
@@ -77,7 +77,7 @@ uv run cedar-osdc share usecases/hello --case "rae may not read the body"
 | Directory | What it holds |
 |---|---|
 | `usecases/` | one folder per domain: hello, orders, reservations |
-| `cedar_osdc/` | the tool: the engine, the command line, the Gateway handlers |
+| `cedar_odcs/` | the tool: the engine, the command line, the Gateway handlers |
 | `analysis/` | the symbolic analysis runner that proves guardrails, and the history chain |
 | `learn/` | the learning path, the guide, and the page on proofs |
 | `designs/` | the plan the current layout came from, and plans for work not yet done |

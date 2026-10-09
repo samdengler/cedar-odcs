@@ -3,7 +3,7 @@ carry every entry the hand-written iterations had."""
 
 import json
 
-from cedar_osdc.engine.contract import build
+from cedar_odcs.engine.contract import build
 from usecases.orders.usecase import BUILD, ROOT
 
 
