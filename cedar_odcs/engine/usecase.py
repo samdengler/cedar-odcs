@@ -25,6 +25,8 @@ import json
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from cedar_odcs.engine.identities import ClaimsMapping
+
 
 def layout(root) -> str:
     """"new" for a use case folder with a contract/ directory, else "old"."""
@@ -122,6 +124,9 @@ class UseCase:
     # write by possession needs this; a read decides on the response.
     prefetch_actions: set = field(default_factory=set)
     fetch: object = None
+    # Which token claims name the subject, the roles, and the actor
+    # (cedar_odcs.engine.identities). The default reads sub, roles, act.
+    claims: ClaimsMapping = ClaimsMapping()
 
     @property
     def policies(self) -> str:

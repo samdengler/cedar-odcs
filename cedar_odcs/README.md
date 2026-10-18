@@ -10,7 +10,9 @@ move.
   what type, the id field, the verbs of each round, the tool table.
 - `engine/identities.py`: the projection from token claims to the
   Cedar parties (RFC 8693 `sub` and `act`), roles as the union of
-  token and store.
+  token and store.  The descriptor's `ClaimsMapping` names the
+  subject, roles, and actor claims; a Cognito access token uses
+  `username` and `cognito:groups`.
 - `engine/enforce.py`: the request leg (verb round, payload round) and
   the response leg (row round, field round), leaf by leaf, by path,
   with one decision per distinct path per call. Resource entities come
@@ -26,7 +28,9 @@ move.
   check.
 - `gateway/handlers.py`: the AgentCore Gateway handlers for MCP
   targets, with presented facts copied from tool arguments into
-  context; also strict bearer decoding, a Gateway concern.
+  context; also strict bearer decoding, a Gateway concern.  With
+  `CEDAR_ODCS_RECORD` set, each handler logs its inbound event as one
+  JSON line, for saving live calls as fixtures.
 - `gateway/handler.py`: the two AWS Lambda entry points, loading a use
   case by the `CEDAR_ODCS_USE_CASE` environment variable.
 

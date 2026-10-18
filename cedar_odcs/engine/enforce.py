@@ -77,7 +77,7 @@ class Engine:
         self.entities = use_case.entities
 
     def projection(self, claims: dict) -> Projection:
-        return project(claims, self.entities)
+        return project(claims, self.entities, self.use_case.claims)
 
     def _entities(self, projection: Projection, extra: list) -> str:
         parties = [projection.principal_entity]

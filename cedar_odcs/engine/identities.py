@@ -9,6 +9,11 @@ the actor claim and says nothing about roles there, so a delegated
 token may carry none. A role claim of any shape other than a list of
 strings is an error.
 
+Which claim holds the subject, the roles, and the actor is the
+descriptor's ClaimsMapping. The default is the names above, sub, roles,
+and act; a Cognito access token names its user in username and its
+groups in cognito:groups. Inside an actor claim the same names apply.
+
 Decoding the bearer token itself (claims_of, TokenError) is a Gateway
 concern and lives in cedar_odcs.gateway.handlers; this module takes
 already-decoded claims.
@@ -16,7 +21,6 @@ already-decoded claims.
 
 from dataclasses import dataclass
 
-ROLE_CLAIM = "roles"
 PRINCIPAL_TYPE = "User"
 # A workload token names no human: its subject is the client id it was
 # issued to. Assumed claim shape, to confirm against a real token: the
@@ -24,6 +28,15 @@ PRINCIPAL_TYPE = "User"
 # Agent; a human actor is a User.
 WORKLOAD_CLAIM = "client_id"
 AGENT_TYPE = "Agent"
+
+
+@dataclass(frozen=True)
+class ClaimsMapping:
+    """The claim names a token uses for the parties the projection reads."""
+
+    subject: str = "sub"
+    roles: str = "roles"
+    actor: str = "act"
 
 
 @dataclass
@@ -45,10 +58,10 @@ def _actor_type(claims: dict) -> str:
     return PRINCIPAL_TYPE
 
 
-def _roles(claims: dict) -> set:
-    roles = claims.get(ROLE_CLAIM, [])
+def _roles(claims: dict, mapping: ClaimsMapping) -> set:
+    roles = claims.get(mapping.roles, [])
     if not isinstance(roles, list) or not all(isinstance(r, str) for r in roles):
-        raise ValueError(f"{ROLE_CLAIM} claim is not a list of strings")
+        raise ValueError(f"{mapping.roles} claim is not a list of strings")
     return set(roles)
 
 
@@ -67,7 +80,7 @@ def _entity(entity_type: str, sub: str, roles: set) -> dict:
     }
 
 
-def project(claims: dict, entities: list) -> Projection:
+def project(claims: dict, entities: list, mapping: ClaimsMapping = ClaimsMapping()) -> Projection:
     """Claims of a decoded, verified token, plus the store, to the parties.
 
     With an exchanged token the actor is the agent and the human is
@@ -76,23 +89,23 @@ def project(claims: dict, entities: list) -> Projection:
     role claim and the store give them. A human calling without the
     agent is the principal, a User.
     """
-    act = claims.get("act")
+    act = claims.get(mapping.actor)
     acted_for = None
     if act is None:
-        actor_sub = claims["sub"]
+        actor_sub = claims[mapping.subject]
         actor_type = _actor_type(claims)
-        roles = _roles(claims) | stored_roles(entities, actor_type, actor_sub)
+        roles = _roles(claims, mapping) | stored_roles(entities, actor_type, actor_sub)
         context = {}
         if actor_type == AGENT_TYPE:
             mode = "customer-conversation"
         else:
             mode = "employee-direct" if roles else "customer-direct"
     else:
-        actor_sub = act["sub"]
+        actor_sub = act[mapping.subject]
         actor_type = _actor_type(act)
-        roles = _roles(act) | stored_roles(entities, actor_type, actor_sub)
-        human = claims["sub"]
-        human_roles = _roles(claims) | stored_roles(entities, PRINCIPAL_TYPE, human)
+        roles = _roles(act, mapping) | stored_roles(entities, actor_type, actor_sub)
+        human = claims[mapping.subject]
+        human_roles = _roles(claims, mapping) | stored_roles(entities, PRINCIPAL_TYPE, human)
         acted_for = _entity(PRINCIPAL_TYPE, human, human_roles)
         context = {"actingFor": _ref(human)}
         mode = "employee-for-customer"
