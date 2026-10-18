@@ -378,10 +378,24 @@ fn joined(base: &str, extras: &[String]) -> Result<PolicySet> {
 
 // ------------------------------------------- prove DIR: one use case
 
+/// `DIR/policies.cedar`, followed by the field policies the build
+/// rendered from grants.yaml when there are any (cedar_odcs/engine/grants.py),
+/// the same text the engine decides with.
+fn use_case_policies(dir: &Path) -> String {
+    let mut text = read(&dir.join("policies.cedar"));
+    for generated in [dir.join("contract/generated/grants.cedar"), dir.join("generated/grants.cedar")] {
+        if generated.is_file() {
+            text = format!("{}\n\n{}", text.trim_end_matches('\n'), read(&generated));
+            break;
+        }
+    }
+    text
+}
+
 async fn prove_use_case(compiler: &mut Compiler, dir: &Path, tally: &mut Tally) -> Result<()> {
     println!("=== {} ===", dir.display());
     let schema = load_schema(&read(&built_schema(dir)?))?;
-    let policy_text = read(&dir.join("policies.cedar"));
+    let policy_text = use_case_policies(dir);
     let pset = PolicySet::from_str(&policy_text)?;
 
     prove_never_errors(compiler, &schema, &pset, tally).await?;

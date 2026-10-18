@@ -22,6 +22,11 @@ move.
   committed contract to path-keyed tag maps and the resource entity
   declaration. Nested columns from the catalog's `type_json`, nested
   levels from path-scoped tag keys.
+- `engine/grants.py`: the field-level read and write policies keyed on
+  classification, rendered from `contract/grants.yaml` into
+  `contract/generated/grants.cedar` by `build`.  The use case writes
+  the verb policies; `UseCase.policies`, the corpus, `validate`, and
+  `prove` read `policies.cedar` with the rendered grants appended.
 - `engine/corpus.py`: the engine-independent corpus runner.
 - `cli/main.py`: the `cedar-odcs` command (iteration 14): run-tests,
   authorize, dry-run, check-access, share, pull, build, validate, prove,

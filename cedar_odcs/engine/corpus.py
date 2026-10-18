@@ -23,7 +23,7 @@ from pathlib import Path
 import cedarpy
 import pytest
 
-from cedar_odcs.engine.usecase import paths
+from cedar_odcs.engine.usecase import paths, policies_text
 
 
 def _ref(value):
@@ -40,7 +40,7 @@ def case_files(root: Path) -> list:
 def cases(root: Path):
     for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
-        policies = (root / spec["policies"]).read_text()
+        policies = policies_text(root, spec["policies"])
         entities = (root / spec["entities"]).read_text()
         for request in spec["requests"]:
             yield pytest.param(policies, entities, request, id=f'{spec_file.stem}: {request["description"]}')

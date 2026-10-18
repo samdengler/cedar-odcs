@@ -294,13 +294,16 @@ def pull(root: Path, entity_name: str, contract_id: str, table_file: str, tags_f
     return {place.relative(contract_path(root, entity_name)): text}
 
 
-def build(root: Path, entity_name: str) -> dict:
+def build(root: Path, entity_name: str, read_field_action: str = None, write_field_action: str = None) -> dict:
     """Stage two, as {relative path: text}, without writing: the committed
     ODCS document to the tag maps, the entity schema, the full schema,
     and entities.json.
 
     Inputs under root: the document, facts.json, principals.cedarschema,
-    actions.cedarschema. The generated files sit under contract/ in the
+    actions.cedarschema, and grants.yaml beside the document when the
+    use case renders its field policies (engine/grants.py); then the
+    output has generated/grants.cedar too. The field verbs default to
+    Read<Entity>Field and Update<Entity>Field. The generated files sit under contract/ in the
     new shape and at the root in the old; `paths` knows which folder is
     which, and the keys returned here follow it. entities.json is at
     the root in both.
@@ -316,12 +319,23 @@ def build(root: Path, entity_name: str) -> dict:
               + (place.root / "actions.cedarschema").read_text())
     stem = entity_name.lower()
     generated = place.relative(place.generated)
-    return {
+    outputs = {
         f"{generated}/contract.entities.json": json.dumps(entities, indent=2) + "\n",
         f"{generated}/entities.cedarschema": entity_schema(contract),
         f"{generated}/{stem}.cedarschema": schema,
         "entities.json": json.dumps(facts + entities, indent=2) + "\n",
     }
+    grants_file = place.contract_dir / "grants.yaml"
+    if grants_file.is_file():
+        from cedar_odcs.engine.grants import HEADER, GrantsError, check_grants, load_grants, render_grants
+        try:
+            grants = load_grants(grants_file)
+            check_grants(grants, role_names(facts))
+        except GrantsError as e:
+            raise ContractError(str(e)) from e
+        outputs[f"{generated}/grants.cedar"] = (HEADER.format(source=place.relative(grants_file)) + "\n"
+                                                + render_grants(grants, entity_name, read_field_action, write_field_action))
+    return outputs
 
 
 def write(root: Path, outputs: dict) -> None:

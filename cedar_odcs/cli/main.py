@@ -47,7 +47,7 @@ import cedarpy
 from cedar_odcs.engine import calls
 from cedar_odcs.engine.corpus import case_files, name_of, policy_names, run_case
 from cedar_odcs.engine.enforce import Engine, explain
-from cedar_odcs.engine.usecase import paths
+from cedar_odcs.engine.usecase import paths, policies_text
 
 REPO = Path(__file__).resolve().parents[2]
 
@@ -129,7 +129,7 @@ def cmd_run_tests(args):
     exported = []
     for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
-        policies = (root / spec["policies"]).read_text()
+        policies = policies_text(root, spec["policies"])
         entities = (root / spec["entities"]).read_text()
         names = policy_names(policies)
         print(f"\n{spec_file.relative_to(root)}")
@@ -404,7 +404,9 @@ def cmd_build(args):
     module = load_use_case(args.directory)
     from cedar_odcs.engine.contract import ContractError, build, write
     try:
-        outputs = build(module.USE_CASE.root, module.CONTRACT)
+        write_actions = list(module.USE_CASE.field_actions.values())
+        outputs = build(module.USE_CASE.root, module.CONTRACT, module.USE_CASE.read_field_action,
+                        write_actions[0] if write_actions else None)
     except ContractError as e:
         raise Usage(f"the contract does not build: {e}") from e
     write(module.USE_CASE.root, outputs)
@@ -425,16 +427,20 @@ def cmd_validate(args):
     if not schema_files:
         raise Usage("no generated schema; run build first")
     schema_file = schema_files[0]
-    policies_file = use_case.root / "policies.cedar"
+    policies = use_case.policies  # policies.cedar and any rendered grants
     cedar = shutil.which("cedar")
     if cedar is not None:
+        import tempfile
         print(f"validator  cedar ({cedar})")
         sys.stdout.flush()
-        return subprocess.call([cedar, "validate", "--schema", str(schema_file),
-                                "--policies", str(policies_file)])
+        with tempfile.NamedTemporaryFile("w", suffix=".cedar") as policies_file:
+            policies_file.write(policies)
+            policies_file.flush()
+            return subprocess.call([cedar, "validate", "--schema", str(schema_file),
+                                    "--policies", policies_file.name])
     print("validator  cedarpy.validate_policies (the cedar command is not on the path; "
           "optional: `cargo install cedar-policy-cli` switches to the official validator)")
-    result = cedarpy.validate_policies(policies_file.read_text(), schema_file.read_text())
+    result = cedarpy.validate_policies(policies, schema_file.read_text())
     if not result.validation_passed:
         for error in result.errors:
             print(f"error: {error}")

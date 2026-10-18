@@ -79,6 +79,18 @@ def paths(root) -> Paths:
     return Paths(root, layout(root))
 
 
+def policies_text(root, name: str = "policies.cedar") -> str:
+    """A use case's policies as Cedar text: the named file, and, for the
+    use case's own policies.cedar, the field policies the build rendered
+    from grants.yaml (generated/grants.cedar) when there are any."""
+    place = paths(root)
+    text = (place.root / name).read_text()
+    grants = place.generated / "grants.cedar"
+    if name == "policies.cedar" and grants.is_file():
+        text = text.rstrip("\n") + "\n\n" + grants.read_text()
+    return text
+
+
 def responses_fetch(root):
     """A descriptor's fetch, reading the saved responses: row id to the
     payload the API returned for it, or None when nothing is saved.
@@ -130,7 +142,7 @@ class UseCase:
 
     @property
     def policies(self) -> str:
-        return (self.root / "policies.cedar").read_text()
+        return policies_text(self.root)
 
     @property
     def entities(self) -> list:
