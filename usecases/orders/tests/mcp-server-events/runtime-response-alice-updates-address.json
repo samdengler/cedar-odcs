@@ -1,0 +1,77 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "x-amzn-tls-version": "TLSv1.3",
+        "x-amzn-vpce-config": "",
+        "Accept": "application/json, text/event-stream",
+        "User-Agent": "Python-urllib/3.12",
+        "X-Forwarded-Proto": "https",
+        "Host": "applied-odcs-runtime-dqm57bvsfy.gateway.bedrock-agentcore.us-east-1.amazonaws.com",
+        "x-amzn-vpc-id": "",
+        "Accept-Encoding": "identity",
+        "x-amzn-vpce-policy-url": "",
+        "X-Forwarded-Port": "443",
+        "X-Amzn-Trace-Id": "Root=1-6ad546b9-56d16c711518ac4c2d33ca79",
+        "Authorization": "Bearer eyJraWQiOiJmUWJsZnRyQ3BvRkgxcVJPLzN5NVA0RUwycXBmUFR6Z001SkR3YUZ6QTNFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiJjNDM4MjRmOC01MDkxLTcwZjAtNGU3Ny0xMGE1NTU3ZmE0NzgiLCJpc3MiOiJodHRwczovL2NvZ25pdG8taWRwLnVzLWVhc3QtMS5hbWF6b25hd3MuY29tL3VzLWVhc3QtMV9GczF3WERWQlkiLCJjbGllbnRfaWQiOiIybHMxb3V1dHZoNGZpZzJuN2xuMmFvdW9haSIsIm9yaWdpbl9qdGkiOiIwOGYyM2M1Yy0xOWZlLTQ3YWUtYjY5My03NDk2YjEwYzBmYTUiLCJldmVudF9pZCI6ImIyOTcyN2EwLWViMDEtNDJiYy05NGJiLTg2ZDAyMDBkY2QwOSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoiYXdzLmNvZ25pdG8uc2lnbmluLnVzZXIuYWRtaW4iLCJhdXRoX3RpbWUiOjE3OTIzNjIxNjgsImV4cCI6MTc5MjM2NTc2OCwiaWF0IjoxNzkyMzYyMTY5LCJqdGkiOiJlNzk1YmMzNS02MmNlLTRjYjUtOGQ5Ni01MjczYzIzZDhmNzgiLCJ1c2VybmFtZSI6ImFsaWNlIn0.signature-redacted",
+        "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
+        "X-Forwarded-For": "203.0.113.10",
+        "Content-Length": "188",
+        "x-amzn-vpce-id": "",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "id": 589491716,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "name": "orders___update_order",
+          "arguments": {
+            "changes": {
+              "shippingAddress": "2 Elm St"
+            },
+            "orderId": "order-1001"
+          }
+        }
+      },
+      "context": null
+    },
+    "gatewayResponse": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {},
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 589491716,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"order-1001\",\n  \"owner\": \"alice\",\n  \"status\": \"shipped\",\n  \"total\": 120.0,\n  \"shippingAddress\": \"2 Elm St\",\n  \"cardLast4\": \"4242\",\n  \"internalNotes\": \"called back\",\n  \"fraudScore\": 0.02,\n  \"estimatedDelivery\": \"2026-09-20\"\n}"
+            }
+          ],
+          "isError": false,
+          "structuredContent": {
+            "id": "order-1001",
+            "owner": "alice",
+            "status": "shipped",
+            "total": 120.0,
+            "shippingAddress": "2 Elm St",
+            "cardLast4": "4242",
+            "internalNotes": "called back",
+            "fraudScore": 0.02,
+            "estimatedDelivery": "2026-09-20"
+          }
+        }
+      },
+      "statusCode": 200,
+      "isStreamingResponse": false
+    },
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 589491716, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___update_order\", \"arguments\": {\"orderId\": \"order-1001\", \"changes\": {\"shippingAddress\": \"2 Elm St\"}}}}"
+    }
+  }
+}

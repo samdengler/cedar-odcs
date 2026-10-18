@@ -116,7 +116,19 @@ def _pass_response(response: dict) -> dict:
     return {"interceptorOutputVersion": OUTPUT_VERSION, "mcp": {"transformedGatewayResponse": out}}
 
 
-def _result_payload(result: dict):
+def _wrapped_list(result: dict, returns: str | None) -> bool:
+    """An MCP server's list result.  MCP makes structuredContent an
+    object, so a server such as FastMCP sends a list tool's rows as
+    {"result": [...]}.  A Lambda function target sends no
+    structuredContent, so this is never true for its events."""
+    content = result.get("structuredContent")
+    return (returns == "list" and isinstance(content, dict) and set(content) == {"result"}
+            and isinstance(content["result"], list))
+
+
+def _result_payload(result: dict, returns: str | None = None):
+    if _wrapped_list(result, returns):
+        return result["structuredContent"]["result"]
     if "structuredContent" in result:
         return result["structuredContent"]
     for item in result.get("content", []):
@@ -125,9 +137,11 @@ def _result_payload(result: dict):
     return None
 
 
-def _with_payload(result: dict, payload) -> dict:
+def _with_payload(result: dict, payload, returns: str | None = None) -> dict:
     out = dict(result)
-    if "structuredContent" in result:
+    if _wrapped_list(result, returns):
+        out["structuredContent"] = {"result": payload}
+    elif "structuredContent" in result:
         out["structuredContent"] = payload
     others = [item for item in result.get("content", []) if item.get("type") != "text"]
     out["content"] = [{"type": "text", "text": json.dumps(payload)}] + others
@@ -181,7 +195,7 @@ class Handlers:
             claims = claims_of(_header(request.get("headers"), "Authorization"))
             governed = calls.call(self.use_case, name, arguments)
             result = response["body"]["result"]
-            decision = self.engine.decide_response(claims, governed, _result_payload(result))
+            decision = self.engine.decide_response(claims, governed, _result_payload(result, governed.returns))
             if governed.returns == "list":
                 filtered = decision.rows
             else:
@@ -195,7 +209,7 @@ class Handlers:
         if decision.dropped or decision.stripped:
             log.info("filtered %s: dropped %s, stripped %s", name, decision.dropped, decision.stripped)
         body = dict(response["body"])
-        body["result"] = _with_payload(result, filtered)
+        body["result"] = _with_payload(result, filtered, governed.returns)
         return _pass_response({**response, "body": body})
 
 

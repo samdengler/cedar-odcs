@@ -37,7 +37,10 @@ move.
   targets, with presented facts copied from tool arguments into
   context; also strict bearer decoding, a Gateway concern.  With
   `CEDAR_ODCS_RECORD` set, each handler logs its inbound event as one
-  JSON line, for saving live calls as fixtures.
+  JSON line, for saving live calls as fixtures.  A tool result is read
+  from `structuredContent`, else the first text item; a list tool's
+  `structuredContent` of `{"result": [...]}`, as an MCP server such as
+  FastMCP sends it, is unwrapped on the way in and wrapped on the way out.
 - `gateway/handler.py`: the two AWS Lambda entry points, loading a use
   case by the `CEDAR_ODCS_USE_CASE` environment variable.
 

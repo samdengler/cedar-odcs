@@ -1,0 +1,136 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "x-amzn-tls-version": "TLSv1.3",
+        "x-amzn-vpce-config": "",
+        "Accept": "application/json, text/event-stream",
+        "User-Agent": "Python-urllib/3.12",
+        "X-Forwarded-Proto": "https",
+        "Host": "applied-odcs-runtime-dqm57bvsfy.gateway.bedrock-agentcore.us-east-1.amazonaws.com",
+        "x-amzn-vpc-id": "",
+        "Accept-Encoding": "identity",
+        "x-amzn-vpce-policy-url": "",
+        "X-Forwarded-Port": "443",
+        "X-Amzn-Trace-Id": "Root=1-6ad546aa-4d83fc3d00ba410511ae9946",
+        "Authorization": "Bearer eyJraWQiOiJmUWJsZnRyQ3BvRkgxcVJPLzN5NVA0RUwycXBmUFR6Z001SkR3YUZ6QTNFPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIzNDI4MDQwOC1jMDUxLTcwYTQtNTE5OS0xOTNmNTNlNWI1YTkiLCJjb2duaXRvOmdyb3VwcyI6WyJzdXBwb3J0IiwiZW1wbG95ZWUiXSwiaXNzIjoiaHR0cHM6Ly9jb2duaXRvLWlkcC51cy1lYXN0LTEuYW1hem9uYXdzLmNvbS91cy1lYXN0LTFfRnMxd1hEVkJZIiwiY2xpZW50X2lkIjoiMmxzMW91dXR2aDRmaWcybjdsbjJhb3VvYWkiLCJvcmlnaW5fanRpIjoiZTI2ZWRjZDYtOTBiZS00YjY2LTg5NTQtOTQxZGNhYTFlYThiIiwiZXZlbnRfaWQiOiIzZTQ5Y2RmYy1iYjJmLTQ3NWMtOWU5Yy04NTVlMzUyMTJlZTgiLCJ0b2tlbl91c2UiOiJhY2Nlc3MiLCJzY29wZSI6ImF3cy5jb2duaXRvLnNpZ25pbi51c2VyLmFkbWluIiwiYXV0aF90aW1lIjoxNzkyMzYyMTU0LCJleHAiOjE3OTIzNjU3NTQsImlhdCI6MTc5MjM2MjE1NCwianRpIjoiNTIzNDcwMWMtNWMyNC00NWU1LTg3OGYtYTMwYWRlODU1M2ZiIiwidXNlcm5hbWUiOiJjYXJvbCJ9.signature-redacted",
+        "x-amzn-tls-cipher-suite": "TLS_AES_128_GCM_SHA256",
+        "X-Forwarded-For": "203.0.113.10",
+        "Content-Length": "120",
+        "x-amzn-vpce-id": "",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "id": 659286394,
+        "jsonrpc": "2.0",
+        "method": "tools/call",
+        "params": {
+          "name": "orders___list_orders",
+          "arguments": {}
+        }
+      },
+      "context": null
+    },
+    "gatewayResponse": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {},
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 659286394,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"order-1001\",\n  \"owner\": \"alice\",\n  \"status\": \"shipped\",\n  \"total\": 120.0,\n  \"shippingAddress\": \"1 Oak Ln\",\n  \"cardLast4\": \"4242\",\n  \"internalNotes\": \"called back\",\n  \"fraudScore\": 0.02,\n  \"estimatedDelivery\": \"2026-09-20\"\n}"
+            },
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"order-2002\",\n  \"owner\": \"bob\",\n  \"status\": \"processing\",\n  \"total\": 45.5,\n  \"shippingAddress\": \"9 Elm St\",\n  \"cardLast4\": \"1111\",\n  \"internalNotes\": \"\",\n  \"fraudScore\": 0.4,\n  \"estimatedDelivery\": \"2026-09-22\"\n}"
+            },
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"order-3003\",\n  \"owner\": \"alice\",\n  \"status\": \"processing\",\n  \"total\": 8.0,\n  \"shippingAddress\": \"1 Oak Ln\",\n  \"cardLast4\": \"4242\",\n  \"internalNotes\": \"gift\",\n  \"fraudScore\": 0.01,\n  \"estimatedDelivery\": \"2026-09-25\"\n}"
+            },
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"order-4004\",\n  \"owner\": \"bob\",\n  \"status\": \"shipped\",\n  \"total\": 230.0,\n  \"shippingAddress\": \"9 Elm St\",\n  \"cardLast4\": \"1111\",\n  \"internalNotes\": \"signature required\",\n  \"fraudScore\": 0.07,\n  \"estimatedDelivery\": \"2026-09-28\"\n}"
+            },
+            {
+              "type": "text",
+              "text": "{\n  \"id\": \"order-5005\",\n  \"owner\": \"bob\",\n  \"status\": \"processing\",\n  \"total\": 19.99,\n  \"shippingAddress\": \"22 Pine Rd\",\n  \"cardLast4\": \"1111\",\n  \"internalNotes\": \"\",\n  \"fraudScore\": 0.15,\n  \"estimatedDelivery\": \"2026-10-02\"\n}"
+            }
+          ],
+          "isError": false,
+          "structuredContent": {
+            "result": [
+              {
+                "id": "order-1001",
+                "owner": "alice",
+                "status": "shipped",
+                "total": 120.0,
+                "shippingAddress": "1 Oak Ln",
+                "cardLast4": "4242",
+                "internalNotes": "called back",
+                "fraudScore": 0.02,
+                "estimatedDelivery": "2026-09-20"
+              },
+              {
+                "id": "order-2002",
+                "owner": "bob",
+                "status": "processing",
+                "total": 45.5,
+                "shippingAddress": "9 Elm St",
+                "cardLast4": "1111",
+                "internalNotes": "",
+                "fraudScore": 0.4,
+                "estimatedDelivery": "2026-09-22"
+              },
+              {
+                "id": "order-3003",
+                "owner": "alice",
+                "status": "processing",
+                "total": 8.0,
+                "shippingAddress": "1 Oak Ln",
+                "cardLast4": "4242",
+                "internalNotes": "gift",
+                "fraudScore": 0.01,
+                "estimatedDelivery": "2026-09-25"
+              },
+              {
+                "id": "order-4004",
+                "owner": "bob",
+                "status": "shipped",
+                "total": 230.0,
+                "shippingAddress": "9 Elm St",
+                "cardLast4": "1111",
+                "internalNotes": "signature required",
+                "fraudScore": 0.07,
+                "estimatedDelivery": "2026-09-28"
+              },
+              {
+                "id": "order-5005",
+                "owner": "bob",
+                "status": "processing",
+                "total": 19.99,
+                "shippingAddress": "22 Pine Rd",
+                "cardLast4": "1111",
+                "internalNotes": "",
+                "fraudScore": 0.15,
+                "estimatedDelivery": "2026-10-02"
+              }
+            ]
+          }
+        }
+      },
+      "statusCode": 200,
+      "isStreamingResponse": false
+    },
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 659286394, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___list_orders\", \"arguments\": {}}}"
+    }
+  }
+}
