@@ -13,11 +13,16 @@ lives here too: it is a Gateway concern, not the engine's. The
 Gateway's JWT authorizer verified the token; the trust rests on the
 gateway using that authorizer, on passRequestHeaders forwarding the
 validated header, and on the forwarded token being the inbound one.
+
+With CEDAR_ODCS_RECORD set, each handler logs its inbound event as one
+JSON line at DEBUG before deciding, so a live call can be saved as a
+test fixture. It is off by default: the event carries a bearer token.
 """
 
 import base64
 import json
 import logging
+import os
 
 from cedar_odcs.engine import calls
 from cedar_odcs.engine.enforce import Engine, explain
@@ -25,6 +30,11 @@ from cedar_odcs.engine.usecase import UseCase
 
 log = logging.getLogger("cedar-odcs")
 OUTPUT_VERSION = "1.0"
+
+
+def _record(point: str, event: dict):
+    if os.environ.get("CEDAR_ODCS_RECORD"):
+        log.debug("record %s %s", point, json.dumps(event))
 
 
 class TokenError(Exception):
@@ -126,6 +136,7 @@ class Handlers:
     # ---- the two interception points
 
     def request_handler(self, event: dict, context=None) -> dict:
+        _record("request", event)
         try:
             request = event["mcp"]["gatewayRequest"]
             body = _body(request.get("body"))
@@ -149,6 +160,7 @@ class Handlers:
         return _reject(body.get("id"), message)
 
     def response_handler(self, event: dict, context=None) -> dict:
+        _record("response", event)
         try:
             request = event["mcp"]["gatewayRequest"]
             response = event["mcp"]["gatewayResponse"]
