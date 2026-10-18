@@ -105,8 +105,15 @@ def _pass_request(body: dict) -> dict:
     return {"interceptorOutputVersion": OUTPUT_VERSION, "mcp": {"transformedGatewayRequest": {"body": body}}}
 
 
+# The fields a transformed response may carry.  The live Gateway's
+# response event also has path, httpMethod, and isStreamingResponse;
+# echoing those back is rejected as an invalid interceptor response.
+RESPONSE_FIELDS = ("statusCode", "headers", "body")
+
+
 def _pass_response(response: dict) -> dict:
-    return {"interceptorOutputVersion": OUTPUT_VERSION, "mcp": {"transformedGatewayResponse": response}}
+    out = {k: response[k] for k in RESPONSE_FIELDS if response.get(k) not in (None, {})}
+    return {"interceptorOutputVersion": OUTPUT_VERSION, "mcp": {"transformedGatewayResponse": out}}
 
 
 def _result_payload(result: dict):
