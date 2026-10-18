@@ -107,6 +107,21 @@ def test_check_runs_the_four_steps(capsys):
         assert f"{step}: ok" in out
 
 
+def test_check_skips_the_steps_it_is_told_to(capsys):
+    code, out = run(capsys, "check", R, "--skip", "pull", "--skip", "prove")
+    assert code == 0
+    assert "== pull ==" not in out and "== prove ==" not in out
+    assert "pull: skipped" in out and "prove: skipped" in out
+    assert "run-tests: ok" in out
+
+
+def test_prove_without_the_analysis_crate_says_where_to_point(capsys, monkeypatch, tmp_path):
+    monkeypatch.setenv("CEDAR_ODCS_ANALYSIS", str(tmp_path))
+    code, out = run(capsys, "prove", HELLO)
+    assert code == 2
+    assert "CEDAR_ODCS_ANALYSIS" in out
+
+
 def test_validate_says_which_validator_ran(capsys):
     code, out = run(capsys, "validate", HELLO)
     assert code == 0

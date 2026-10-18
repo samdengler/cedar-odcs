@@ -443,12 +443,19 @@ def cmd_validate(args):
     return 0
 
 
+def _analysis() -> Path:
+    """The analysis crate: $CEDAR_ODCS_ANALYSIS, else analysis/ in this
+    checkout. An installed cedar-odcs has no crate beside it; a use case
+    outside this repository points the variable at a checkout's."""
+    return Path(os.environ.get("CEDAR_ODCS_ANALYSIS") or REPO / "analysis").resolve()
+
+
 def _missing_cvc5() -> bool:
     """Whether cvc5 is unreachable, checked the same way analysis/src/main.rs's
     solver() finds it: $CVC5, the bundled copy, then PATH."""
     if os.environ.get("CVC5"):
         return False
-    bundled = REPO / "analysis/.tools/cvc5-macOS-arm64-static/bin/cvc5"
+    bundled = _analysis() / ".tools/cvc5-macOS-arm64-static/bin/cvc5"
     if bundled.exists():
         return False
     return shutil.which("cvc5") is None
@@ -458,8 +465,13 @@ def cmd_prove(args):
     """`prove DIR` proves one use case (`cargo run -- prove DIR`); `prove`
     with no directory, or with the repository root, proves the history
     chain instead (`cargo run -- prove-history`). Needs cargo and cvc5;
-    when either is missing, say so and exit 2."""
-    analysis = REPO / "analysis"
+    when either is missing, say so and exit 2. The crate is found by
+    _analysis()."""
+    analysis = _analysis()
+    if not (analysis / "Cargo.toml").is_file():
+        print(f"the analysis crate is not at {analysis}. prove needs a cedar-odcs checkout;"
+              " set CEDAR_ODCS_ANALYSIS to its analysis/ directory.")
+        return 2
     if shutil.which("cargo") is None:
         print("cargo is not installed. The proofs need Rust and the cvc5 solver; see analysis/README.md (Running).")
         return 2
@@ -480,13 +492,16 @@ def cmd_check(args):
     """pull where the use case has a catalog, then build, validate,
     run-tests, prove, in order, stopping at the first failure; a
     one-line heading per step, then the step's own output, then one
-    ok/failed line per step that ran."""
+    ok/failed line per step that ran. --skip pull keeps a hand-edited
+    contract from being rewritten by the catalog; --skip prove is for a
+    pipeline with no cargo or cvc5, which runs prove on its own."""
     directory = args.directory
     root = Path(directory).resolve()
+    skip = set(getattr(args, "skip", None) or [])
     results = []
     rc = 0
 
-    if getattr(load_use_case(directory), "PULL", None) is not None:
+    if getattr(load_use_case(directory), "PULL", None) is not None and "pull" not in skip:
         print("== pull ==")
         rc = cmd_pull(args)
         results.append(("pull", rc == 0))
@@ -497,8 +512,11 @@ def cmd_check(args):
         rc = cmd_build(args)
     if rc == 0:
         generated = [str(root / "contract"), str(root / "entities.json")]
-        changed = subprocess.call(["git", "diff", "--quiet", "--", *generated], cwd=REPO) != 0
-        if changed:
+        tracked = subprocess.run(["git", "ls-files", "--", *generated], cwd=root,
+                                 capture_output=True, text=True)
+        if tracked.returncode != 0 or not tracked.stdout.strip():
+            print(f"generated files under {directory} are not committed; nothing to compare")
+        elif subprocess.call(["git", "diff", "--quiet", "--", *generated], cwd=root) != 0:
             print(f"generated files under {directory} changed: the committed artifacts were behind their sources")
         else:
             print(f"generated files under {directory} unchanged")
@@ -514,7 +532,7 @@ def cmd_check(args):
         rc = cmd_run_tests(argparse.Namespace(directory=directory, cedar_tests=None))
         results.append(("run-tests", rc == 0))
 
-    if rc == 0:
+    if rc == 0 and "prove" not in skip:
         print("\n== prove ==")
         rc = cmd_prove(args)
         results.append(("prove", rc == 0))
@@ -522,6 +540,8 @@ def cmd_check(args):
     print()
     for name, ok in results:
         print(f"{name}: {'ok' if ok else 'failed'}")
+    for name in sorted(skip):
+        print(f"{name}: skipped")
     return 0 if all(ok for _, ok in results) else 1
 
 
@@ -571,7 +591,9 @@ def main(argv=None) -> int:
     with_dir(sub.add_parser("build", help="the ODCS contract to Cedar: the tag maps, the schema, entities.json")).set_defaults(func=cmd_build)
     with_dir(sub.add_parser("validate", help="policies against the built schema, with cedar or cedarpy")).set_defaults(func=cmd_validate)
     with_dir(sub.add_parser("prove", help="the symbolic proofs, with cargo and cvc5 (no directory, or the repository root: the history chain)")).set_defaults(func=cmd_prove)
-    with_dir(sub.add_parser("check", help="pull (with a catalog), build, validate, run-tests, prove, in order, stopping at the first failure")).set_defaults(func=cmd_check)
+    p = with_dir(sub.add_parser("check", help="pull (with a catalog), build, validate, run-tests, prove, in order, stopping at the first failure"))
+    p.add_argument("--skip", action="append", choices=["pull", "prove"], help="leave out a step (repeatable)")
+    p.set_defaults(func=cmd_check)
     with_dir(sub.add_parser("new", help="scaffold a use case (planned)")).set_defaults(func=cmd_new)
 
     args = parser.parse_args(argv)
