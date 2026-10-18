@@ -222,6 +222,31 @@ def _leaves(props, prefix: str):
             yield path, prop
 
 
+def leaf_paths(root: Path, entity_name: str) -> set:
+    """The contract's leaf paths for one entity, as the field round names them."""
+    contract = load_contract(contract_path(root, entity_name).read_text())
+    for obj in contract.schema_:
+        if obj.name == entity_name:
+            return {path for path, _ in _leaves(obj.properties, "")}
+    raise ContractError(f"the contract has no schema object named {entity_name}")
+
+
+def output_schema_paths(schema: dict, prefix: str = "") -> set:
+    """The leaf paths of a JSON Schema the way _leaves spells them: a.b
+    for nested objects, a[].b inside an array of objects. A top-level
+    array (a list tool's output) is the paths of its items."""
+    items = schema.get("items")
+    if schema.get("type") == "array" and isinstance(items, dict):
+        if not prefix:
+            return output_schema_paths(items)
+        return output_schema_paths(items, prefix + "[]") if items.get("properties") else {prefix}
+    properties = schema.get("properties")
+    if properties:
+        return set().union(*(output_schema_paths(prop, f"{prefix}.{name}" if prefix else name)
+                             for name, prop in properties.items()))
+    return {prefix} if prefix else set()
+
+
 def contract_entities(contract: OpenDataContractStandard, role_names: set) -> list:
     entities = []
     for obj in contract.schema_:

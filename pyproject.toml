@@ -3,7 +3,7 @@
 # its own pyproject.toml and remains runnable on its own.
 [project]
 name = "cedar-odcs"
-version = "0.2.3"
+version = "0.2.4"
 description = "Data governance for agent tool calls with Cedar policies"
 requires-python = ">=3.10"
 # cedar_odcs/ and the cedar-odcs command need these; the numbered

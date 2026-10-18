@@ -29,8 +29,10 @@ move.
   `prove` read `policies.cedar` with the rendered grants appended.
 - `engine/corpus.py`: the engine-independent corpus runner.
 - `cli/main.py`: the `cedar-odcs` command (iteration 14): run-tests,
-  authorize, dry-run, check-access, share, pull, build, validate, prove,
-  check.
+  authorize, dry-run, check-access, share, pull, build, tools, validate,
+  prove, check.  `tools` is the tool schema gate: with `tools.json`
+  beside `usecase.py`, each object or list tool's `outputSchema` must
+  name exactly the contract's leaves, and `check` runs it after build.
 - `gateway/handlers.py`: the AgentCore Gateway handlers for MCP
   targets, with presented facts copied from tool arguments into
   context; also strict bearer decoding, a Gateway concern.  With

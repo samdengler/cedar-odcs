@@ -11,6 +11,7 @@
     cedar-odcs share        usecases/reservations --case "co-traveler"
     cedar-odcs pull         usecases/reservations
     cedar-odcs build        usecases/reservations
+    cedar-odcs tools        usecases/reservations
     cedar-odcs validate     usecases/reservations
     cedar-odcs prove        usecases/reservations
     cedar-odcs check        usecases/reservations
@@ -20,8 +21,10 @@ Verbs match the official cedar command where the meaning is the same
 no word for: a dry run of one tool call through both legs, and a
 report of what an identity may do. pull writes the ODCS contract from
 the catalog, for a use case that has one; build reads the contract and
-writes the Cedar files. check runs pull where there is a catalog, then
-build, validate, run-tests, and prove in order and stops at the first
+writes the Cedar files; tools compares each tool's outputSchema in
+tools.json with the contract's leaves. check runs pull where there is
+a catalog, then build, tools where there is a tools.json, validate,
+run-tests, and prove in order and stops at the first
 failure; each stays callable on its own. Files are Cedar's own formats:
 policies.cedar, entities.json, .cedarschema, the corpus in the
 cedar-integration-tests form.
@@ -495,8 +498,8 @@ def cmd_prove(args):
 
 
 def cmd_check(args):
-    """pull where the use case has a catalog, then build, validate,
-    run-tests, prove, in order, stopping at the first failure; a
+    """pull where the use case has a catalog, then build, the tool schema
+    gate where there is a tools.json, validate, run-tests, prove, in order, stopping at the first failure; a
     one-line heading per step, then the step's own output, then one
     ok/failed line per step that ran. --skip pull keeps a hand-edited
     contract from being rewritten by the catalog; --skip prove is for a
@@ -528,6 +531,11 @@ def cmd_check(args):
             print(f"generated files under {directory} unchanged")
     results.append(("build", rc == 0))
 
+    if rc == 0 and (root / "tools.json").is_file():
+        print("\n== tools ==")
+        rc = cmd_tools(args)
+        results.append(("tools", rc == 0))
+
     if rc == 0:
         print("\n== validate ==")
         rc = cmd_validate(args)
@@ -549,6 +557,43 @@ def cmd_check(args):
     for name in sorted(skip):
         print(f"{name}: skipped")
     return 0 if all(ok for _, ok in results) else 1
+
+
+def tool_schema_differences(module) -> list:
+    """For a use case with tools.json beside usecase.py: every governed
+    tool that returns an object or a list must name in its outputSchema
+    exactly the contract's leaves. [(tool, only in outputSchema, only in
+    the contract)] for each tool that differs."""
+    from cedar_odcs.engine.contract import leaf_paths, output_schema_paths
+    root = module.USE_CASE.root
+    leaves = leaf_paths(root, module.CONTRACT)
+    schemas = {t["name"]: t for t in json.loads((root / "tools.json").read_text())}
+    out = []
+    for name, tool in module.USE_CASE.tools.items():
+        if tool.get("returns") not in ("object", "list"):
+            continue
+        schema = schemas.get(name.split("___", 1)[-1], schemas.get(name))
+        if schema is None or "outputSchema" not in schema:
+            out.append((name, [], sorted(leaves)))
+            continue
+        paths_ = output_schema_paths(schema["outputSchema"])
+        if paths_ != leaves:
+            out.append((name, sorted(paths_ - leaves), sorted(leaves - paths_)))
+    return out
+
+
+def cmd_tools(args):
+    """The tool schema gate: each tool's outputSchema in tools.json against
+    the contract's leaves."""
+    module = load_use_case(args.directory)
+    differences = tool_schema_differences(module)
+    for name, schema_only, contract_only in differences:
+        print(f"{name}: outputSchema and the contract differ")
+        print(f"  in outputSchema, not in the contract: {', '.join(schema_only) or '(none)'}")
+        print(f"  in the contract, not in outputSchema: {', '.join(contract_only) or '(none)'}")
+    if not differences:
+        print("every outputSchema in tools.json names the contract's leaves")
+    return 1 if differences else 0
 
 
 def cmd_new(args):
@@ -595,6 +640,7 @@ def main(argv=None) -> int:
 
     with_dir(sub.add_parser("pull", help="the catalog to the ODCS contract, for a use case with a catalog source")).set_defaults(func=cmd_pull)
     with_dir(sub.add_parser("build", help="the ODCS contract to Cedar: the tag maps, the schema, entities.json")).set_defaults(func=cmd_build)
+    with_dir(sub.add_parser("tools", help="each outputSchema in tools.json against the contract's leaves")).set_defaults(func=cmd_tools)
     with_dir(sub.add_parser("validate", help="policies against the built schema, with cedar or cedarpy")).set_defaults(func=cmd_validate)
     with_dir(sub.add_parser("prove", help="the symbolic proofs, with cargo and cvc5 (no directory, or the repository root: the history chain)")).set_defaults(func=cmd_prove)
     p = with_dir(sub.add_parser("check", help="pull (with a catalog), build, validate, run-tests, prove, in order, stopping at the first failure"))
