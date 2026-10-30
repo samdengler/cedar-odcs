@@ -29,6 +29,7 @@ USE_CASES = {
     "hello": REPO / "usecases/hello",
     "orders": REPO / "usecases/orders",
     "reservations": REPO / "usecases/reservations",
+    "hr": REPO / "usecases/hr",
 }
 
 

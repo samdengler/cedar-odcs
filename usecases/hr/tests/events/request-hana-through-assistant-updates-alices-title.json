@@ -1,0 +1,32 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 19, \"method\": \"tools/call\", \"params\": {\"name\": \"hr___update_employee\", \"arguments\": {\"employeeId\": \"alice\", \"changes\": {\"jobTitle\": \"Senior Data Engineer\"}}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiaGFuYSIsImF1ZCI6ImhyLWdhdGV3YXkiLCJyb2xlcyI6WyJociJdLCJhY3QiOnsic3ViIjoiaHItYXNzaXN0YW50IiwiY2xpZW50X2lkIjoiaHItYXNzaXN0YW50In19.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 19,
+        "method": "tools/call",
+        "params": {
+          "name": "hr___update_employee",
+          "arguments": {
+            "employeeId": "alice",
+            "changes": {
+              "jobTitle": "Senior Data Engineer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

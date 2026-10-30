@@ -1,0 +1,137 @@
+{
+  "policies": "policies.cedar",
+  "entities": ["entities.json", "tests/rows/entities.json"],
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "hana of HR reads alice's record",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["employee-reads-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana reads alice's city",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.city" },
+      "decision": "Allow",
+      "reason": ["hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana reads alice's salary",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "salary" },
+      "decision": "Allow",
+      "reason": ["hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana reads HR's notes on alice",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "hrNotes" },
+      "decision": "Allow",
+      "reason": ["hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana reads alice's job title: public, by the directory and by HR",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields", "hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana may not read alice's bank account: restricted is nobody's level",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "bankAccount" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana updates alice's record at object level",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["hr-updates-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana sets alice's job title",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["hr-updates-hr-fields"],
+      "errors": []
+    },
+    {
+      "description": "hana sets HR's notes on alice",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "hrNotes", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["hr-updates-hr-fields"],
+      "errors": []
+    },
+    {
+      "description": "hana may not set alice's home address in direct mode: the address is alice's, and HR sets it by acting for alice",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana may not set alice's salary: a system field",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "salary", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana updates their own record: self-service, like any employee",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "hana" },
+      "context": { "input": { "employeeId": { "__entity": { "type": "User", "id": "hana" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-record", "hr-updates-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana sets their own home address: self-service",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "hana" },
+      "context": { "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "hana" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    }
+  ]
+}

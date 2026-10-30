@@ -1,0 +1,20 @@
+{
+  "employeeId": "alice",
+  "name": "Alice Moreau",
+  "workEmail": "alice@example.com",
+  "jobTitle": "Data Engineer",
+  "department": "Platform",
+  "manager": "maya",
+  "homeAddress": {
+    "line1": "12 Harbor St",
+    "line2": "Apt 4",
+    "city": "Portland",
+    "region": "ME",
+    "postalCode": "04101",
+    "country": "US"
+  },
+  "personalPhone": "+1 207 555 0142",
+  "salary": 128000,
+  "hrNotes": "Relocation stipend approved for the move in November",
+  "bankAccount": "021000021 000123456789"
+}

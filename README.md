@@ -105,7 +105,7 @@ uv run cedar-odcs share usecases/hello --case "rae may not read the body"
 
 | Directory | What it holds |
 |---|---|
-| `usecases/` | one folder per domain: hello, orders, reservations |
+| `usecases/` | one folder per domain: hello, orders, reservations, hr |
 | `cedar_odcs/` | the tool: the engine, the command line, the Gateway handlers |
 | `analysis/` | the symbolic analysis runner that proves guardrails, and the history chain |
 | `learn/` | the learning path, the guide, and the page on proofs |

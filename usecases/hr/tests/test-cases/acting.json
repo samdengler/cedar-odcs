@@ -1,0 +1,147 @@
+{
+  "policies": "policies.cedar",
+  "entities": ["entities.json", "tests/rows/entities.json"],
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "hana acting for alice reads alice's record",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["employee-reads-any-record"],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice reads alice's city: alice's grant",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.city" },
+      "decision": "Allow",
+      "reason": ["employee-reads-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice may not read HR's notes: the grants are alice's while acting",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "hrNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice reads bob's job title: alice's directory grant",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields"],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice may not read bob's city",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.city" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice updates alice's record",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-record"],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice sets alice's home address: the change is alice's, made for them",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice may not set alice's job title: HR's writes are direct only",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "jobTitle", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice lists the directory: alice's grant",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ListEmployees" },
+      "resource": { "type": "Collection", "id": "employees" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["employee-lists-the-directory"],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice may not update bob's record",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "employeeId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana acting for alice may not set bob's home address",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not act for bob: only HR and the HR assistant act for an employee",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "bob" } } },
+      "decision": "Deny",
+      "reason": ["only-hr-and-the-assistant-act-for-employees"],
+      "errors": []
+    },
+    {
+      "description": "alice acting for bob may not set bob's home address, though the call names bob",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "bob" } }, "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": ["only-hr-and-the-assistant-act-for-employees"],
+      "errors": []
+    },
+    {
+      "description": "alice acting for bob may not even look up a record",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "LookupEmployee" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "bob" } } },
+      "decision": "Deny",
+      "reason": ["only-hr-and-the-assistant-act-for-employees"],
+      "errors": []
+    }
+  ]
+}

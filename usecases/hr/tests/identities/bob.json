@@ -1,0 +1,8 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "bob",
+  "aud": "hr-gateway",
+  "roles": [
+    "employee"
+  ]
+}

@@ -1,0 +1,127 @@
+[
+  {
+    "uid": {
+      "type": "User",
+      "id": "alice"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "bob"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "maya"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "hana"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "hr"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "hr"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "employee"
+    },
+    "attrs": {},
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Contract",
+      "id": "Employee"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "employeeId": "public",
+      "name": "public",
+      "workEmail": "public",
+      "jobTitle": "public",
+      "department": "public",
+      "manager": "public",
+      "homeAddress.line1": "confidential",
+      "homeAddress.line2": "confidential",
+      "homeAddress.city": "confidential",
+      "homeAddress.region": "confidential",
+      "homeAddress.postalCode": "confidential",
+      "homeAddress.country": "confidential",
+      "personalPhone": "confidential",
+      "salary": "confidential",
+      "hrNotes": "internal",
+      "bankAccount": "restricted"
+    }
+  },
+  {
+    "uid": {
+      "type": "Contract",
+      "id": "Employee/writers"
+    },
+    "attrs": {},
+    "parents": [],
+    "tags": {
+      "employeeId": "system",
+      "name": "hr",
+      "workEmail": "system",
+      "jobTitle": "hr",
+      "department": "hr",
+      "manager": "hr",
+      "homeAddress.line1": "owner",
+      "homeAddress.line2": "owner",
+      "homeAddress.city": "owner",
+      "homeAddress.region": "owner",
+      "homeAddress.postalCode": "owner",
+      "homeAddress.country": "owner",
+      "personalPhone": "owner",
+      "salary": "system",
+      "hrNotes": "hr",
+      "bankAccount": "system"
+    }
+  }
+]

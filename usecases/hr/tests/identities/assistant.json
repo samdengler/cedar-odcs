@@ -1,0 +1,7 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "hr-assistant",
+  "client_id": "hr-assistant",
+  "aud": "hr-gateway",
+  "roles": []
+}

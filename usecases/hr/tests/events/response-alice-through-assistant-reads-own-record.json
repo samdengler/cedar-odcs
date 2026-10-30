@@ -1,0 +1,67 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 17, \"method\": \"tools/call\", \"params\": {\"name\": \"hr___get_employee\", \"arguments\": {\"employeeId\": \"alice\"}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2UiLCJhdWQiOiJoci1nYXRld2F5Iiwicm9sZXMiOlsiZW1wbG95ZWUiXSwiYWN0Ijp7InN1YiI6ImhyLWFzc2lzdGFudCIsImNsaWVudF9pZCI6ImhyLWFzc2lzdGFudCJ9fQ.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "method": "tools/call",
+        "params": {
+          "name": "hr___get_employee",
+          "arguments": {
+            "employeeId": "alice"
+          }
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Mcp-Session-Id": "session-1"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 17,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"employeeId\": \"alice\", \"name\": \"Alice Moreau\", \"workEmail\": \"alice@example.com\", \"jobTitle\": \"Data Engineer\", \"department\": \"Platform\", \"manager\": \"maya\", \"homeAddress\": {\"line1\": \"12 Harbor St\", \"line2\": \"Apt 4\", \"city\": \"Portland\", \"region\": \"ME\", \"postalCode\": \"04101\", \"country\": \"US\"}, \"personalPhone\": \"+1 207 555 0142\", \"salary\": 128000, \"hrNotes\": \"Relocation stipend approved for the move in November\", \"bankAccount\": \"021000021 000123456789\"}"
+            }
+          ],
+          "structuredContent": {
+            "employeeId": "alice",
+            "name": "Alice Moreau",
+            "workEmail": "alice@example.com",
+            "jobTitle": "Data Engineer",
+            "department": "Platform",
+            "manager": "maya",
+            "homeAddress": {
+              "line1": "12 Harbor St",
+              "line2": "Apt 4",
+              "city": "Portland",
+              "region": "ME",
+              "postalCode": "04101",
+              "country": "US"
+            },
+            "personalPhone": "+1 207 555 0142",
+            "salary": 128000,
+            "hrNotes": "Relocation stipend approved for the move in November",
+            "bankAccount": "021000021 000123456789"
+          }
+        }
+      }
+    }
+  }
+}

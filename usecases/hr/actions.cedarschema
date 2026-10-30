@@ -1,0 +1,65 @@
+// Every verb takes a User, an employee or an HR partner calling the
+// tools, or an Agent, the HR assistant holding the token for whoever
+// it talks with.
+entity Collection;
+
+// The request leg's verb for reading one record. The response leg
+// decides the read with ReadEmployee, on the record the API returns.
+action LookupEmployee appliesTo {
+  principal: [User, Agent],
+  resource: [Employee],
+  context: {
+    actingFor?: User
+  }
+};
+
+action ReadEmployee appliesTo {
+  principal: [User, Agent],
+  resource: [Employee],
+  context: {
+    actingFor?: User
+  }
+};
+
+action ReadEmployeeField appliesTo {
+  principal: [User, Agent],
+  resource: [Employee],
+  context: {
+    actingFor?: User,
+    field?: String
+  }
+};
+
+action UpdateEmployee appliesTo {
+  principal: [User, Agent],
+  resource: [Employee],
+  context: {
+    actingFor?: User,
+    input?: {
+      employeeId?: User
+    }
+  }
+};
+
+action UpdateEmployeeField appliesTo {
+  principal: [User, Agent],
+  resource: [Employee],
+  context: {
+    actingFor?: User,
+    field?: String,
+    input?: {
+      employeeId?: User
+    }
+  }
+};
+
+// The request leg's verb for the directory list. The response leg
+// decides each row with ReadEmployee and its fields with
+// ReadEmployeeField, as for one record.
+action ListEmployees appliesTo {
+  principal: [User, Agent],
+  resource: [Collection],
+  context: {
+    actingFor?: User
+  }
+};

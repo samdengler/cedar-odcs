@@ -1,0 +1,167 @@
+{
+  "policies": "policies.cedar",
+  "entities": ["entities.json", "tests/rows/entities.json"],
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "maya reads alice's record",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["employee-reads-any-record"],
+      "errors": []
+    },
+    {
+      "description": "maya reads alice's salary: alice reports to maya, and the salary is not a field alice sets",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "salary" },
+      "decision": "Allow",
+      "reason": ["manager-reads-direct-report-fields"],
+      "errors": []
+    },
+    {
+      "description": "maya reads bob's salary: bob reports to maya",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "field": "salary" },
+      "decision": "Allow",
+      "reason": ["manager-reads-direct-report-fields"],
+      "errors": []
+    },
+    {
+      "description": "maya reads alice's job title: public, the directory",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields"],
+      "errors": []
+    },
+    {
+      "description": "maya may not read alice's city: the home address is a field alice sets about themself",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.city" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "maya may not read alice's personal phone: a field alice sets about themself",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "personalPhone" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "maya may not read HR's notes on alice: internal is HR's level",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "hrNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "maya may not read alice's bank account: restricted is nobody's level",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "bankAccount" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "maya may not read hana's salary: hana does not report to maya",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "hana" },
+      "context": { "field": "salary" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not read maya's salary: maya's record names no manager, and alice manages no one",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "maya" },
+      "context": { "field": "salary" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "maya reads their own salary",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "maya" },
+      "context": { "field": "salary" },
+      "decision": "Allow",
+      "reason": ["employee-reads-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "maya may not update alice's record: a manager changes nothing on a report's record through these tools",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "maya may not set alice's job title: HR's field",
+      "principal": { "type": "User", "id": "maya" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "hana acting for maya reads alice's salary: maya's grant",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "maya" } }, "field": "salary" },
+      "decision": "Allow",
+      "reason": ["manager-reads-direct-report-fields"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for maya reads bob's salary: maya's grant",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "maya" } }, "field": "salary" },
+      "decision": "Allow",
+      "reason": ["manager-reads-direct-report-fields"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for maya may not read bob's city",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "maya" } }, "field": "homeAddress.city" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

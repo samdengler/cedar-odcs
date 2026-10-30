@@ -1,0 +1,120 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 14, \"method\": \"tools/call\", \"params\": {\"name\": \"hr___list_employees\", \"arguments\": {}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2UiLCJhdWQiOiJoci1nYXRld2F5Iiwicm9sZXMiOlsiZW1wbG95ZWUiXX0.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "method": "tools/call",
+        "params": {
+          "name": "hr___list_employees",
+          "arguments": {}
+        }
+      }
+    },
+    "gatewayResponse": {
+      "statusCode": 200,
+      "headers": {
+        "Mcp-Session-Id": "session-1"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 14,
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "[{\"employeeId\": \"alice\", \"name\": \"Alice Moreau\", \"workEmail\": \"alice@example.com\", \"jobTitle\": \"Data Engineer\", \"department\": \"Platform\", \"manager\": \"maya\", \"homeAddress\": {\"line1\": \"12 Harbor St\", \"line2\": \"Apt 4\", \"city\": \"Portland\", \"region\": \"ME\", \"postalCode\": \"04101\", \"country\": \"US\"}, \"personalPhone\": \"+1 207 555 0142\", \"salary\": 128000, \"hrNotes\": \"Relocation stipend approved for the move in November\", \"bankAccount\": \"021000021 000123456789\"}, {\"employeeId\": \"bob\", \"name\": \"Bob Okafor\", \"workEmail\": \"bob@example.com\", \"jobTitle\": \"Site Reliability Engineer\", \"department\": \"Platform\", \"manager\": \"maya\", \"homeAddress\": {\"line1\": \"7 Elm St\", \"city\": \"Portland\", \"region\": \"ME\", \"postalCode\": \"04103\", \"country\": \"US\"}, \"personalPhone\": \"+1 207 555 0187\", \"salary\": 121000, \"bankAccount\": \"011000015 000987654321\"}, {\"employeeId\": \"maya\", \"name\": \"Maya Lindqvist\", \"workEmail\": \"maya@example.com\", \"jobTitle\": \"Engineering Manager\", \"department\": \"Platform\", \"homeAddress\": {\"line1\": \"3 Ocean Ave\", \"city\": \"South Portland\", \"region\": \"ME\", \"postalCode\": \"04106\", \"country\": \"US\"}, \"personalPhone\": \"+1 207 555 0110\", \"salary\": 162000, \"hrNotes\": \"Leads the platform team since March\", \"bankAccount\": \"021000089 000555000111\"}, {\"employeeId\": \"hana\", \"name\": \"Hana Sato\", \"workEmail\": \"hana@example.com\", \"jobTitle\": \"HR Business Partner\", \"department\": \"People\", \"homeAddress\": {\"line1\": \"90 Forest Ave\", \"city\": \"Portland\", \"region\": \"ME\", \"postalCode\": \"04101\", \"country\": \"US\"}, \"personalPhone\": \"+1 207 555 0163\", \"salary\": 98000, \"bankAccount\": \"026009593 000222333444\"}]"
+            }
+          ],
+          "structuredContent": [
+            {
+              "employeeId": "alice",
+              "name": "Alice Moreau",
+              "workEmail": "alice@example.com",
+              "jobTitle": "Data Engineer",
+              "department": "Platform",
+              "manager": "maya",
+              "homeAddress": {
+                "line1": "12 Harbor St",
+                "line2": "Apt 4",
+                "city": "Portland",
+                "region": "ME",
+                "postalCode": "04101",
+                "country": "US"
+              },
+              "personalPhone": "+1 207 555 0142",
+              "salary": 128000,
+              "hrNotes": "Relocation stipend approved for the move in November",
+              "bankAccount": "021000021 000123456789"
+            },
+            {
+              "employeeId": "bob",
+              "name": "Bob Okafor",
+              "workEmail": "bob@example.com",
+              "jobTitle": "Site Reliability Engineer",
+              "department": "Platform",
+              "manager": "maya",
+              "homeAddress": {
+                "line1": "7 Elm St",
+                "city": "Portland",
+                "region": "ME",
+                "postalCode": "04103",
+                "country": "US"
+              },
+              "personalPhone": "+1 207 555 0187",
+              "salary": 121000,
+              "bankAccount": "011000015 000987654321"
+            },
+            {
+              "employeeId": "maya",
+              "name": "Maya Lindqvist",
+              "workEmail": "maya@example.com",
+              "jobTitle": "Engineering Manager",
+              "department": "Platform",
+              "homeAddress": {
+                "line1": "3 Ocean Ave",
+                "city": "South Portland",
+                "region": "ME",
+                "postalCode": "04106",
+                "country": "US"
+              },
+              "personalPhone": "+1 207 555 0110",
+              "salary": 162000,
+              "hrNotes": "Leads the platform team since March",
+              "bankAccount": "021000089 000555000111"
+            },
+            {
+              "employeeId": "hana",
+              "name": "Hana Sato",
+              "workEmail": "hana@example.com",
+              "jobTitle": "HR Business Partner",
+              "department": "People",
+              "homeAddress": {
+                "line1": "90 Forest Ave",
+                "city": "Portland",
+                "region": "ME",
+                "postalCode": "04101",
+                "country": "US"
+              },
+              "personalPhone": "+1 207 555 0163",
+              "salary": 98000,
+              "bankAccount": "026009593 000222333444"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

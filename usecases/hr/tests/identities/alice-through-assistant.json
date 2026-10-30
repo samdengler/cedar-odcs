@@ -1,0 +1,12 @@
+{
+  "iss": "https://issuer.example",
+  "sub": "alice",
+  "aud": "hr-gateway",
+  "roles": [
+    "employee"
+  ],
+  "act": {
+    "sub": "hr-assistant",
+    "client_id": "hr-assistant"
+  }
+}

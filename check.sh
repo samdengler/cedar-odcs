@@ -9,4 +9,5 @@ uv run pytest -q
 uv run cedar-odcs check usecases/hello
 uv run cedar-odcs check usecases/orders
 uv run cedar-odcs check usecases/reservations
+uv run cedar-odcs check usecases/hr
 uv run cedar-odcs prove

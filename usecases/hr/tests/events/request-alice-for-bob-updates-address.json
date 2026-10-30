@@ -1,0 +1,34 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 7, \"method\": \"tools/call\", \"params\": {\"name\": \"hr___update_employee\", \"arguments\": {\"employeeId\": \"bob\", \"changes\": {\"homeAddress\": {\"line1\": \"1 Elm St\"}}}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYm9iIiwiYXVkIjoiaHItZ2F0ZXdheSIsInJvbGVzIjpbImVtcGxveWVlIl0sImFjdCI6eyJzdWIiOiJhbGljZSIsInJvbGVzIjpbImVtcGxveWVlIl19fQ.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 7,
+        "method": "tools/call",
+        "params": {
+          "name": "hr___update_employee",
+          "arguments": {
+            "employeeId": "bob",
+            "changes": {
+              "homeAddress": {
+                "line1": "1 Elm St"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

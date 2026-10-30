@@ -1,0 +1,147 @@
+{
+  "policies": "policies.cedar",
+  "entities": ["entities.json", "tests/rows/entities.json"],
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "bob reads alice's record: the directory",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["employee-reads-any-record"],
+      "errors": []
+    },
+    {
+      "description": "bob reads alice's job title",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields"],
+      "errors": []
+    },
+    {
+      "description": "bob reads alice's work email",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "workEmail" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields"],
+      "errors": []
+    },
+    {
+      "description": "bob may not read alice's city: a home address is alice's and HR's",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.city" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "bob may not read alice's personal phone",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "personalPhone" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "bob may not read alice's salary",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "salary" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "bob may not read HR's notes on alice",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "hrNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "an unknown user reads no record: not an employee",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "an unknown user reads no directory field",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "name" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "anyone may look up a record; the response decides",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "LookupEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["anyone-looks-up-a-record"],
+      "errors": []
+    },
+    {
+      "description": "alice lists the directory",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ListEmployees" },
+      "resource": { "type": "Collection", "id": "employees" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["employee-lists-the-directory"],
+      "errors": []
+    },
+    {
+      "description": "hana lists the directory",
+      "principal": { "type": "User", "id": "hana" },
+      "action": { "type": "Action", "id": "ListEmployees" },
+      "resource": { "type": "Collection", "id": "employees" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["employee-lists-the-directory"],
+      "errors": []
+    },
+    {
+      "description": "an unknown user lists nothing: not an employee",
+      "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "ListEmployees" },
+      "resource": { "type": "Collection", "id": "employees" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "bob reads alice's manager: public, the directory",
+      "principal": { "type": "User", "id": "bob" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "manager" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields"],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+[
+  {
+    "uid": {
+      "type": "Employee",
+      "id": "alice"
+    },
+    "attrs": {
+      "employeeId": {
+        "__entity": {
+          "type": "User",
+          "id": "alice"
+        }
+      },
+      "manager": {
+        "__entity": {
+          "type": "User",
+          "id": "maya"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Employee",
+      "id": "bob"
+    },
+    "attrs": {
+      "employeeId": {
+        "__entity": {
+          "type": "User",
+          "id": "bob"
+        }
+      },
+      "manager": {
+        "__entity": {
+          "type": "User",
+          "id": "maya"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Employee",
+      "id": "maya"
+    },
+    "attrs": {
+      "employeeId": {
+        "__entity": {
+          "type": "User",
+          "id": "maya"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Employee",
+      "id": "hana"
+    },
+    "attrs": {
+      "employeeId": {
+        "__entity": {
+          "type": "User",
+          "id": "hana"
+        }
+      }
+    },
+    "parents": []
+  }
+]

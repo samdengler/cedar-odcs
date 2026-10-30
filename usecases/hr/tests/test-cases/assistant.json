@@ -1,0 +1,267 @@
+{
+  "policies": "policies.cedar",
+  "entities": ["entities.json", "tests/rows/entities.json"],
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "the assistant acting for alice reads alice's record",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["employee-reads-any-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice reads alice's city: alice's grant",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.city" },
+      "decision": "Allow",
+      "reason": ["employee-reads-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice reads bob's job title: alice's directory grant",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice may not read bob's city",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.city" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice may not read HR's notes on alice",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "hrNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice updates alice's record",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice sets alice's home address",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice may not set alice's salary",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "salary", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice may not update bob's record: the call names bob",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "employeeId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for alice lists the directory",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ListEmployees" },
+      "resource": { "type": "Collection", "id": "employees" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Allow",
+      "reason": ["employee-lists-the-directory"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana reads HR's notes on alice: HR's reads hold through the assistant",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "field": "hrNotes" },
+      "decision": "Allow",
+      "reason": ["hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana reads alice's city",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "field": "homeAddress.city" },
+      "decision": "Allow",
+      "reason": ["hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana reads alice's job title: public, by the directory and by HR",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields", "hr-reads-fields-on-any-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana may not read alice's bank account",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "field": "bankAccount" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana may not update alice's record: HR's writes are direct only",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana may not set alice's job title: HR sets a title without the assistant",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "field": "jobTitle", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana updates hana's own record: self-service",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "hana" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "input": { "employeeId": { "__entity": { "type": "User", "id": "hana" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for hana sets hana's own home address",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "hana" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "hana" } }, "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "hana" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "the assistant alone reads no record: it acts for no one",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant alone reads no directory field",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "name" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant alone may look up a record; the response decides",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "LookupEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["anyone-looks-up-a-record"],
+      "errors": []
+    },
+    {
+      "description": "the assistant alone lists nothing",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ListEmployees" },
+      "resource": { "type": "Collection", "id": "employees" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "the assistant alone updates no record",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "another agent acting for alice is granted nothing: only the HR assistant acts",
+      "principal": { "type": "Agent", "id": "payroll-bot" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": ["only-hr-and-the-assistant-act-for-employees"],
+      "errors": []
+    },
+    {
+      "description": "another agent acting for alice may not even look up a record",
+      "principal": { "type": "Agent", "id": "payroll-bot" },
+      "action": { "type": "Action", "id": "LookupEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "decision": "Deny",
+      "reason": ["only-hr-and-the-assistant-act-for-employees"],
+      "errors": []
+    },
+    {
+      "description": "the assistant acting for someone outside the employee role reads nothing",
+      "principal": { "type": "Agent", "id": "hr-assistant" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "mallory" } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

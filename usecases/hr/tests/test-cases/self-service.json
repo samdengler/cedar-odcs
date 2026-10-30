@@ -1,0 +1,207 @@
+{
+  "policies": "policies.cedar",
+  "entities": ["entities.json", "tests/rows/entities.json"],
+  "shouldValidate": false,
+  "requests": [
+    {
+      "description": "alice reads their own record",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Allow",
+      "reason": ["employee-reads-any-record"],
+      "errors": []
+    },
+    {
+      "description": "alice reads the first line of their own home address: confidential is the employee's level on their own record",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.line1" },
+      "decision": "Allow",
+      "reason": ["employee-reads-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice reads their own salary",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "salary" },
+      "decision": "Allow",
+      "reason": ["employee-reads-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice reads their own job title: public, by their own record and by the directory",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle" },
+      "decision": "Allow",
+      "reason": ["employee-reads-directory-fields", "employee-reads-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice may not read HR's notes on their own record: internal is HR's level",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "hrNotes" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not read their own bank account: restricted is nobody's level",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "bankAccount" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a field the contract does not declare is never read: fail closed",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "ReadEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "nationalId" },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice updates their own record: the call names alice",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-record"],
+      "errors": []
+    },
+    {
+      "description": "alice sets the first line of their own home address",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice sets the postal code of their own home address",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.postalCode", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice sets the country of their own home address",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress.country", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice sets their own personal phone",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "personalPhone", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["employee-updates-own-fields"],
+      "errors": []
+    },
+    {
+      "description": "alice may not set the whole address as one value: homeAddress is no leaf of the contract, so it fails closed",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "homeAddress", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not set their own salary: a system field, so an address change carrying a raise is refused whole",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "salary", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not set the bank account pay goes to: a system field, never changed through the assistant",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "bankAccount", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not set their own job title: HR's field",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "jobTitle", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not set a field the contract does not declare: mass assignment fails closed",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": { "field": "payGrade", "input": { "employeeId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not update bob's record: the call names bob",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "input": { "employeeId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "alice may not set bob's home address",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployeeField" },
+      "resource": { "type": "Employee", "id": "bob" },
+      "context": { "field": "homeAddress.line1", "input": { "employeeId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "a write that names no employee is refused",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateEmployee" },
+      "resource": { "type": "Employee", "id": "alice" },
+      "context": {},
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    }
+  ]
+}

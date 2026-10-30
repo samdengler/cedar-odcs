@@ -1,0 +1,75 @@
+[
+  {
+    "uid": {
+      "type": "User",
+      "id": "alice"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "bob"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "maya"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "User",
+      "id": "hana"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "hr"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "hr"
+    },
+    "attrs": {},
+    "parents": [
+      {
+        "type": "Role",
+        "id": "employee"
+      }
+    ]
+  },
+  {
+    "uid": {
+      "type": "Role",
+      "id": "employee"
+    },
+    "attrs": {},
+    "parents": []
+  }
+]

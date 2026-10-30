@@ -1,0 +1,39 @@
+{
+  "interceptorInputVersion": "1.0",
+  "mcp": {
+    "rawGatewayRequest": {
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 1, \"method\": \"tools/call\", \"params\": {\"name\": \"hr___update_employee\", \"arguments\": {\"employeeId\": \"alice\", \"changes\": {\"homeAddress\": {\"line1\": \"48 Pine St\", \"line2\": \"\", \"city\": \"Portland\", \"region\": \"ME\", \"postalCode\": \"04102\", \"country\": \"US\"}}}}}"
+    },
+    "gatewayRequest": {
+      "path": "/mcp",
+      "httpMethod": "POST",
+      "headers": {
+        "Accept": "application/json",
+        "Authorization": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6ImV4YW1wbGUifQ.eyJpc3MiOiJodHRwczovL2lzc3Vlci5leGFtcGxlIiwic3ViIjoiYWxpY2UiLCJhdWQiOiJoci1nYXRld2F5Iiwicm9sZXMiOlsiZW1wbG95ZWUiXX0.signature-checked-by-the-gateway",
+        "Mcp-Session-Id": "session-1",
+        "User-Agent": "agent/1.0"
+      },
+      "body": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+          "name": "hr___update_employee",
+          "arguments": {
+            "employeeId": "alice",
+            "changes": {
+              "homeAddress": {
+                "line1": "48 Pine St",
+                "line2": "",
+                "city": "Portland",
+                "region": "ME",
+                "postalCode": "04102",
+                "country": "US"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

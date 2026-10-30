@@ -1,0 +1,5 @@
+entity Employee {
+  employeeId: User,
+  manager: User
+};
+entity Contract tags String;
