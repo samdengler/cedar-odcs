@@ -10,13 +10,19 @@ tool name:
   payload    the argument holding a write payload, if any
   presented  arguments copied into context as the presented facts,
              e.g. a record locator and a last name, if any
+  input      arguments copied into context.input, argument to Cedar
+             type, e.g. {"customerId": "User"}: the facts a write is
+             decided on, since the request leg never sees the record.
+             An entity type makes a reference, "String" a value; an
+             argument the call leaves out is left out of input
   returns    "object" or "list": what the response leg filters;
              every tool must say
 
 A call the table does not name, an id the engine cannot use, an
-argument the table does not name, and half a pair of presented facts
-all raise ValueError. An interface turns that into a rejection:
-anything that cannot be evaluated is not forwarded.
+argument the table does not name, an input argument that is not an
+id, and half a pair of presented facts all raise ValueError. An
+interface turns that into a rejection: anything that cannot be
+evaluated is not forwarded.
 """
 
 from dataclasses import dataclass
@@ -32,7 +38,7 @@ class Call:
     action: str      # 'Action::"UpdateReservation"'
     resource: str    # 'Reservation::"ABC123"' or 'Collection::"orders"'
     payload: dict | None
-    context: dict    # the presented facts, upper-cased, or empty
+    context: dict    # the presented facts, upper-cased, and the input, or empty
     row_id: str | None
     returns: str | None = None  # "object" or "list"
 
@@ -45,7 +51,7 @@ def call(use_case: UseCase, tool_name: str, arguments: dict) -> Call:
         action=tool["action"],
         resource=_resource(use_case, tool, arguments),
         payload=_payload(tool, arguments),
-        context=_context(tool, arguments),
+        context={**_context(tool, arguments), **_input(tool, arguments)},
         row_id=arguments.get(tool["id"]) if "id" in tool else None,
         returns=tool.get("returns"),
     )
@@ -84,6 +90,23 @@ def _context(tool: dict, arguments: dict) -> dict:
     return {"presented": {name: v.upper() for name, v in given.items()}}
 
 
+def _input(tool: dict, arguments: dict) -> dict:
+    """The declared input arguments the call gives, typed for Cedar.
+    A write names its owner here: a customer id the policies compare
+    with the caller, and the API binds the write to."""
+    if "input" not in tool:
+        return {}
+    out = {}
+    for argument, cedar_type in tool["input"].items():
+        if argument not in arguments:
+            continue
+        value = arguments[argument]
+        if not isinstance(value, str) or not ID_PATTERN.match(value):
+            raise ValueError(f"argument {argument} is not an id")
+        out[argument] = value if cedar_type == "String" else {"__entity": {"type": cedar_type, "id": value}}
+    return {"input": out} if out else {}
+
+
 def _payload(tool: dict, arguments: dict):
     expected = set()
     if "id" in tool:
@@ -91,6 +114,7 @@ def _payload(tool: dict, arguments: dict):
     if "payload" in tool:
         expected.add(tool["payload"])
     expected |= set(tool.get("presented", {}))
+    expected |= set(tool.get("input", {}))
     unexpected = set(arguments) - expected
     if unexpected:
         raise ValueError(f"unexpected arguments: {', '.join(sorted(unexpected))}")

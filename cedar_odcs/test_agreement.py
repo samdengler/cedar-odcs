@@ -101,7 +101,7 @@ def test_the_handlers_take_their_refusal_words_from_the_engine():
     use_case = load_use_case(str(USE_CASES["reservations"])).USE_CASE
     engine = Engine(use_case)
     request_handler, _ = handlers.handlers(use_case)
-    for fixture in ("request-wrong-name-changes-contact", "request-holder-changes-fare"):
+    for fixture in ("request-agent-alone-looks-up-without-pair", "request-holder-changes-fare"):
         event = json.loads((paths(USE_CASES["reservations"]).events / f"{fixture}.json").read_text())
         request = event["mcp"]["gatewayRequest"]
         name, arguments = handlers._tool_call(handlers._body(request["body"]))
@@ -124,9 +124,8 @@ def test_the_command_line_takes_its_refusal_words_from_the_engine(capsys):
     engine = Engine(use_case)
     claims = json.loads(Path(caller).read_text())
     refusals = [
-        (["--tool", "reservations___cancel_reservation",
-          "--arg", "recordLocator=ABC123", "--arg", "lastName=Jones"],
-         {"recordLocator": "ABC123", "lastName": "Jones"}, "reservations___cancel_reservation"),
+        (["--tool", "reservations___cancel_reservation", "--arg", "recordLocator=ABC123"],
+         {"recordLocator": "ABC123"}, "reservations___cancel_reservation"),
         (["--tool", "reservations___update_reservation",
           "--arg", "recordLocator=ABC123", "--arg", "lastName=Smith",
           "--arg", 'changes={"fare": 1.0}'],

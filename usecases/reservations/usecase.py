@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from cedar_odcs.engine.usecase import UseCase, responses_fetch
+from cedar_odcs.engine.usecase import UseCase
 
 ROOT = Path(__file__).parent
 
@@ -37,8 +37,6 @@ USE_CASE = UseCase(
     read_field_action='Action::"ReadReservationField"',
     field_actions={'Action::"UpdateReservation"': 'Action::"UpdateReservationField"'},
     tools=TOOLS,
-    prefetch_actions={'Action::"UpdateReservation"', 'Action::"CancelReservation"'},
-    fetch=responses_fetch(ROOT),
 )
 
 CONTRACT = "Reservation"  # the entity the contract describes: contract/reservation.odcs.yaml

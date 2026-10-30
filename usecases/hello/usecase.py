@@ -7,7 +7,7 @@ from cedar_odcs.engine.usecase import UseCase
 ROOT = Path(__file__).parent
 
 TOOLS = {
-    "notes___get_note": {"action": 'Action::"ReadNote"', "id": "noteId", "returns": "object"},
+    "notes___get_note": {"action": 'Action::"LookupNote"', "id": "noteId", "returns": "object"},
 }
 
 USE_CASE = UseCase(

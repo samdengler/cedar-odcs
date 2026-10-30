@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 from cedar_odcs.engine.contract import ContractError, build, write
-from cedar_odcs.engine.corpus import case_files, run_case
+from cedar_odcs.engine.corpus import case_entities, case_files, run_case
 from cedar_odcs.engine.grants import GrantsError, check_grants, render_grants
 from cedar_odcs.engine.usecase import policies_text
 
@@ -19,6 +19,7 @@ ORDERS = Path(__file__).resolve().parents[2] / "usecases/orders"
 GRANTS = {
     "reads": {"owner": ["public", "confidential"], "support": ["public", "internal"]},
     "writes": {"owner": "owner", "support": "support"},
+    "ownerInput": "customerId",
 }
 GRANTS_YAML = """\
 reads:
@@ -27,6 +28,7 @@ reads:
 writes:
   owner:   owner
   support: support
+ownerInput: customerId
 """
 FIELD_POLICIES = ["customer-fields-on-own-order", "support-fields-on-any-order",
                   "customer-updates-own-order-fields", "support-updates-support-fields"]
@@ -73,7 +75,7 @@ def test_build_writes_the_grants_and_the_corpus_passes_unchanged(orders_with_gra
     for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
         policies = policies_text(root, spec["policies"])
-        entities = (root / spec["entities"]).read_text()
+        entities = case_entities(root, spec)
         for case in spec["requests"]:
             if not run_case(policies, entities, case).ok:
                 failures.append(case["description"])
@@ -91,3 +93,12 @@ def test_levels_and_writer_tags_are_checked():
         check_grants({"reads": {"owner": ["secret"]}, "writes": {}}, set())
     with pytest.raises(GrantsError, match="writer tag"):
         check_grants({"reads": {}, "writes": {"support": "finance"}}, {"support"})
+
+
+def test_an_owner_write_grant_names_the_argument_the_owner_comes_from():
+    # A write never has the record, so the owner is the one the call names.
+    with pytest.raises(GrantsError, match="ownerInput"):
+        check_grants({"reads": {}, "writes": {"owner": "owner"}}, set())
+    rendered = render_grants({"reads": {}, "writes": {"owner": "owner"}, "ownerInput": "customerId"}, "Order")
+    assert "resource.owner" not in rendered
+    assert "context.input.customerId == (if context has actingFor then context.actingFor else principal)" in rendered

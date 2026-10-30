@@ -22,9 +22,13 @@ def event(name: str) -> dict:
     return json.loads((HERE / "events" / f"{name}.json").read_text())
 
 
-def test_policies_and_entities_are_the_proven_ones():
-    assert (HERE / "../policies.cedar").read_text() == (HERE / "../../../history/row-filtering/policies.cedar").read_text()
-    assert json.loads((HERE / "../entities.json").read_text()) == json.loads((HERE / "../../../history/contract/entities.json").read_text())
+def test_entities_are_the_proven_ones_without_the_orders():
+    # The policies' revision from iteration 9 is pinned in test_build.py.
+    # The deployed entities are the parties and the tag maps; an order
+    # comes from the API, never from this file.
+    proven = json.loads((HERE / "../../../history/contract/entities.json").read_text())
+    deployed = json.loads((HERE / "../entities.json").read_text())
+    assert deployed == [e for e in proven if e["uid"]["type"] != "Order"]
 
 
 def test_allowed_read_passes_the_request_through():

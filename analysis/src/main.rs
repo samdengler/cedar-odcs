@@ -666,9 +666,17 @@ const PAIRS: &[Pair] = &[
         revisions: &["row-filtering/anyone-lists-orders.cedar"],
         restrictions: &[],
     },
-    // The move to the use case shape changes no policy: the use case
-    // decides as iteration 9 did, under the schema its build wrote.
-    Pair { older: "row-filtering", newer: "orders", revisions: &[], restrictions: &[] },
+    // The move to the use case shape changes no policy, and the use
+    // case decides as iteration 9 did, under the schema its build
+    // wrote, on every verb but the customer's three writes. Those now
+    // compare the customer the call names, since the request leg never
+    // has the order; the comparison is confined to the other verbs.
+    Pair {
+        older: "row-filtering",
+        newer: "orders",
+        revisions: &[],
+        restrictions: &["reads-and-refunds.cedar"],
+    },
 ];
 
 /// The live use case that closes each chain. Its `guardrails/` is the
@@ -690,6 +698,11 @@ const RETIRED: &[(&str, &str, &str)] = &[
         "read-requires-pair.cedar",
         "reservations",
         "iteration 13 lets a specialist read without a pair; revised to read-requires-pair-or-specialist",
+    ),
+    (
+        "possession-writes-named-record-only.cedar",
+        "reservations",
+        "the request leg never has the reservation, so a write by possession is decided on the presented pair and the Reservations API refuses a pair that names no reservation",
     ),
     (
         "writes-require-pair.cedar",

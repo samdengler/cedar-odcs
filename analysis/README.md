@@ -31,7 +31,7 @@ two proofs for every iteration, spec equivalence for the first two,
 the reveal, and the composition passes below. Everything it reads that
 is not a use case's live policies lives in `history/chain/`:
 `schemas/` for iterations 1 through 6, `specs/`, `revisions/`,
-`restrictions/`, and `retired/`, the five retired guardrails. Each
+`restrictions/`, and `retired/`, the six retired guardrails. Each
 snapshot's own guardrails sit in its own directory
 (`history/field-reads/guardrails/` and so on), the form that iteration was
 proven against. A bare directory argument that is the repository root
@@ -97,16 +97,24 @@ Current results, all proved:
   ownership revised to name the six order verbs, because the list
   call has no order to own and is allowed while acting.
 - `orders` (the use case, iteration 11): iteration 9's policies under
-  the schema its own build wrote; preserved from `row-filtering` with
-  no revision; the twelve guardrails in `usecases/orders/guardrails/`
-  reproven.
+  the schema its own build wrote, with the customer's three writes
+  (`UpdateOrder`, `CancelOrder`, `UpdateOrderField`) comparing the
+  customer the call names, `context.input.customerId`, where they
+  compared the order's owner, and a lookup verb for single-order
+  reads; preserved from `row-filtering` within the restriction
+  `reads-and-refunds`, which sets those three writes aside; the
+  thirteen guardrails in `usecases/orders/guardrails/` reproven.
 - `reservations` (iteration 11): three possession policies never
   error; a lookup and a read require a presented pair; a pair reaches
   only the record it names; undeclared paths fail closed, nested ones
   included; restricted leaves are unreadable; possession reads public
   and confidential leaves only. Iteration 12 adds the writes: no write
-  without a pair; possession writes only the record it names and only
-  owner paths; mass assignment fails closed, nested paths included.
+  without a pair; possession writes only owner paths; mass assignment
+  fails closed, nested paths included. That possession writes only the
+  record it names held only on a record the request leg fetched first;
+  writes are now decided on the presented pair, the Reservations API
+  refuses a pair that names no reservation, and the guardrail is
+  retired and shown to fail.
   Iteration 13 adds the specialist's view: lookup, read, and writes
   require a pair or a specialist (three guardrails revised, the bare
   ones retired and shown to fail); internal leaves and specialist paths
@@ -116,10 +124,10 @@ Current results, all proved:
 - Composition (iteration 8): each consecutive pair of iterations is
   preserved, given the declared revisions and within the declared
   restrictions; every guardrail each final set still carries is proven
-  against it, and every retired one is shown to fail. 35 proofs, 7
+  against it, and every retired one is shown to fail. 35 proofs, 8
   expected differences shown.
 
-A whole `prove-history` run is 211 proofs and 7 expected differences.
+A whole `prove-history` run is 212 proofs and 8 expected differences.
 `prove usecases/orders` alone is 25 and `prove usecases/reservations`
 29, each a subset of the run above.
 
@@ -187,7 +195,11 @@ Three kinds of check, all in `src/main.rs`:
   both sides confines the comparison to a region of the request space.
   Iteration 6 promised no change in direct mode; `direct-mode.cedar`
   forbids every request that carries `actingFor`, and the pair is
-  proven equivalent over what remains.
+  proven equivalent over what remains. The orders use case decides
+  the customer's writes on the customer the call names, since the
+  request leg never has the order; `reads-and-refunds.cedar` forbids
+  those three writes on both sides, and the corpus and the guardrails
+  pin their new decisions.
 
 The pairs and their results:
 
@@ -200,7 +212,7 @@ The pairs and their results:
 | function-level | on-behalf-of | none | direct-mode | all six |
 | on-behalf-of | contract | none | none | all six |
 | contract | row-filtering | anyone-lists-orders | none | all seven |
-| row-filtering | orders | none | none | all seven |
+| row-filtering | orders | none | reads-and-refunds | ReadOrder, ReadOrderField, RefundOrder, ListOrders |
 
 All eight pairs are proven. The pairs run along the orders chain,
 which the orders use case closes; the final-set pass runs once per
@@ -225,8 +237,9 @@ final policy set, the live use case, and prints a status for each:
   set, so the retirement is a checked fact rather than a note. The
   files are in `history/chain/retired/`: support-never-updates and
   writes-require-ownership, both retired by iteration 5's role-granted
-  update, and the three bare-pair reservations guardrails iteration 13
-  replaced.
+  update, the three bare-pair reservations guardrails iteration 13
+  replaced, and possession-writes-named-record-only, retired when
+  writes moved onto the request.
 
 The runner's output for the composition section:
 
@@ -248,7 +261,7 @@ The runner's output for the composition section:
   PASS  contract preserved in row-filtering given the declared revision anyone-lists-orders
         actions compared: Action::"CancelOrder", Action::"ListOrders", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
   SHOWN without the declared revision, contract and row-filtering differ: differs under Action::"ListOrders", as expected
-  PASS  row-filtering preserved in orders
+  PASS  row-filtering preserved in orders within reads-and-refunds
         actions compared: Action::"CancelOrder", Action::"ListOrders", Action::"ReadOrder", Action::"ReadOrderField", Action::"RefundOrder", Action::"UpdateOrder", Action::"UpdateOrderField"
 
 === composition: every orders guardrail against the final set ===

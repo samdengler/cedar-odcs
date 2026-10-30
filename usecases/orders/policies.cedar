@@ -1,3 +1,12 @@
+// Writes on the request, reads on the response: the request leg never
+// has the order, so the three customer writes (P3, P6, P7) compare the
+// customer the call names, context.input.customerId, where they once
+// compared resource.owner; the Orders API refuses a write whose order
+// that customer does not own. A single-order read gets its own request
+// verb, LookupOrder, appended at the end, and is decided on the
+// response like a list. Every policy on a read verb still compares
+// resource.owner, on the order the API returned.
+//
 // Row filtering (iteration 9): iteration 6's twelve policies, carried
 // unchanged through iteration 7, plus one list verb appended at the
 // end of this file.
@@ -47,14 +56,18 @@ permit(
 };
 
 // P3 (policy2): A customer may update an order they own; an employee
-// acting for the customer holds the same.
+// acting for the customer holds the same. A write is decided before
+// the API is called, so on the customer the call names: the Orders
+// API refuses a write whose order that customer does not own.
 @id("customer-updates-own-order")
 permit(
   principal,
   action == Action::"UpdateOrder",
   resource
 ) when {
-  resource.owner == (if context has actingFor then context.actingFor else principal)
+  context has input &&
+  context.input has customerId &&
+  context.input.customerId == (if context has actingFor then context.actingFor else principal)
 };
 
 // P4 (policy3): A customer may read public and confidential fields of
@@ -89,29 +102,33 @@ permit(
 
 // P6 (policy5): A customer may update owner-writable fields of an
 // order they own; an employee acting for the customer holds the same.
+// The owner is the customer the call names, as in P3.
 @id("customer-updates-own-order-fields")
 permit(
   principal,
   action == Action::"UpdateOrderField",
   resource
 ) when {
-  resource has owner &&
-  resource.owner == (if context has actingFor then context.actingFor else principal) &&
+  context has input &&
+  context.input has customerId &&
+  context.input.customerId == (if context has actingFor then context.actingFor else principal) &&
   context has field &&
   Contract::"Order/writers".hasTag(context.field) &&
   Contract::"Order/writers".getTag(context.field) == "owner"
 };
 
 // P7 (policy6): A customer may cancel an order they own; an employee
-// acting for the customer holds the same.
+// acting for the customer holds the same. The owner is the customer
+// the call names, as in P3.
 @id("customer-cancels-own-order")
 permit(
   principal,
   action == Action::"CancelOrder",
   resource
 ) when {
-  resource has owner &&
-  resource.owner == (if context has actingFor then context.actingFor else principal)
+  context has input &&
+  context.input has customerId &&
+  context.input.customerId == (if context has actingFor then context.actingFor else principal)
 };
 
 // P8 (policy7): A support agent may cancel any order, in direct mode.
@@ -186,4 +203,19 @@ permit(
   principal,
   action == Action::"ListOrders",
   resource == Collection::"orders"
+);
+
+// Writes on the request, reads on the response: one verb for the
+// request leg of a single-order read. Like the list, it decides
+// nothing about the order, which the request leg does not have. The
+// response leg asks ReadOrder of the order the API returns and
+// withholds it from a caller who may not read it. The
+// only-employees-act-for-others forbid still applies.
+
+// P14 (policy13): Anyone may look up an order; the response decides.
+@id("anyone-looks-up-an-order")
+permit(
+  principal,
+  action == Action::"LookupOrder",
+  resource
 );

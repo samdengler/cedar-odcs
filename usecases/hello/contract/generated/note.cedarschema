@@ -5,6 +5,16 @@ entity Note {
 };
 entity Contract tags String;
 
+// The request leg's verb for reading a note. The response leg decides
+// the read with ReadNote, on the note the API returns.
+action LookupNote appliesTo {
+  principal: [User],
+  resource: [Note],
+  context: {
+    actingFor?: User
+  }
+};
+
 action ReadNote appliesTo {
   principal: [User],
   resource: [Note],

@@ -1,0 +1,32 @@
+[
+  {
+    "uid": {
+      "type": "Note",
+      "id": "note-1"
+    },
+    "attrs": {
+      "owner": {
+        "__entity": {
+          "type": "User",
+          "id": "ada"
+        }
+      }
+    },
+    "parents": []
+  },
+  {
+    "uid": {
+      "type": "Note",
+      "id": "note-2"
+    },
+    "attrs": {
+      "owner": {
+        "__entity": {
+          "type": "User",
+          "id": "bo"
+        }
+      }
+    },
+    "parents": []
+  }
+]

@@ -2,7 +2,7 @@
 
 The reservations use case, committed in the new shape, is copied into
 a temporary directory in the old shape, file by file, reversing the
-move. The build, the test case runner, and the descriptor's fetch are
+move. The build, the test case runner, and the saved responses are
 then asked for the same things twice, once against the committed
 folder and once against the old-shaped copy. The engine keeps reading
 the old shape for as long as anything still uses it; this test is
@@ -17,7 +17,7 @@ import pytest
 
 from cedar_odcs.engine.contract import build, pull
 from cedar_odcs.engine.corpus import cases
-from cedar_odcs.engine.usecase import layout, paths, responses_fetch
+from cedar_odcs.engine.usecase import layout, paths
 from usecases.reservations.usecase import CONTRACT, PULL
 
 NEW = Path(__file__).resolve().parents[2] / "usecases/reservations"
@@ -34,6 +34,7 @@ def old(tmp_path_factory) -> Path:
     shutil.copytree(NEW / "contract/generated", root / "generated")
     shutil.copy(NEW / "contract/reservation.odcs.yaml", root / "reservation.odcs.yaml")
     shutil.copytree(NEW / "tests/test-cases", root / "tests")
+    shutil.copytree(NEW / "tests/rows", root / "tests/rows")
     shutil.copytree(NEW / "tests/identities", root / "callers")
     shutil.copytree(NEW / "tests/responses", root / "records")
     shutil.copytree(NEW / "tests/events", root / "events")
@@ -82,9 +83,7 @@ def test_the_test_cases_are_found_in_both_shapes(old):
     assert ids_new and ids_new == ids_old
 
 
-def test_the_fetch_reads_one_saved_response_per_record(old):
+def test_the_saved_responses_are_found_in_both_shapes(old):
     for root in (NEW, old):
-        fetch = responses_fetch(root)
-        assert fetch("ABC123")["holderLastName"] == "SMITH"
-        assert fetch("QQQ000") is None
-        assert fetch("../entities") is None
+        saved = json.loads((paths(root).responses / "ABC123.json").read_text())
+        assert saved["holderLastName"] == "SMITH"

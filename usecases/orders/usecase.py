@@ -6,10 +6,16 @@ from cedar_odcs.engine.usecase import UseCase
 
 ROOT = Path(__file__).parent
 
+# A write names the customer it is for; the policies compare that with
+# the caller, and the Orders API refuses a write whose order the
+# customer does not own. A read names no one: the response leg decides
+# it on the order the API returns.
+CUSTOMER = {"customerId": "User"}
+
 TOOLS = {
-    "orders___get_order":    {"action": 'Action::"ReadOrder"',   "id": "orderId", "returns": "object"},
-    "orders___update_order": {"action": 'Action::"UpdateOrder"', "id": "orderId", "payload": "changes", "returns": "object"},
-    "orders___cancel_order": {"action": 'Action::"CancelOrder"', "id": "orderId", "returns": "object"},
+    "orders___get_order":    {"action": 'Action::"LookupOrder"', "id": "orderId", "returns": "object"},
+    "orders___update_order": {"action": 'Action::"UpdateOrder"', "id": "orderId", "input": CUSTOMER, "payload": "changes", "returns": "object"},
+    "orders___cancel_order": {"action": 'Action::"CancelOrder"', "id": "orderId", "input": CUSTOMER, "returns": "object"},
     "orders___refund_order": {"action": 'Action::"RefundOrder"', "id": "orderId", "returns": "object"},
     "orders___list_orders":  {"action": 'Action::"ListOrders"',  "collection": "orders", "returns": "list"},
 }

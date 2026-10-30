@@ -1,6 +1,6 @@
 {
   "policies": "policies.cedar",
-  "entities": "entities.json",
+  "entities": ["entities.json", "tests/rows/entities.json"],
   "shouldValidate": false,
   "requests": [
     {
@@ -68,7 +68,7 @@
       "principal": { "type": "User", "id": "carol" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "shippingAddress" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "shippingAddress", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Allow",
       "reason": ["customer-updates-own-order-fields"],
       "errors": []
@@ -78,7 +78,7 @@
       "principal": { "type": "User", "id": "carol" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "internalNotes" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "field": "internalNotes", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -88,7 +88,7 @@
       "principal": { "type": "User", "id": "carol" },
       "action": { "type": "Action", "id": "CancelOrder" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } } },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Allow",
       "reason": ["customer-cancels-own-order"],
       "errors": []
@@ -152,6 +152,26 @@
       "decision": "Deny",
       "reason": [],
       "errors": ["customer-reads-own-order"]
+    },
+    {
+      "description": "employee for customer: support acting for alice may not cancel naming bob; the write is bounded by the acted-for party",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "CancelOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "customerId": { "__entity": { "type": "User", "id": "bob" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "employee for customer: support acting for alice may not update naming herself; her own grants are off while acting",
+      "principal": { "type": "User", "id": "carol" },
+      "action": { "type": "Action", "id": "UpdateOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "actingFor": { "__entity": { "type": "User", "id": "alice" } }, "input": { "customerId": { "__entity": { "type": "User", "id": "carol" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
     }
   ]
 }

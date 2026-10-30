@@ -48,7 +48,7 @@ from pathlib import Path
 import cedarpy
 
 from cedar_odcs.engine import calls
-from cedar_odcs.engine.corpus import case_files, name_of, policy_names, run_case
+from cedar_odcs.engine.corpus import case_entities, case_files, name_of, policy_names, run_case
 from cedar_odcs.engine.enforce import Engine, explain
 from cedar_odcs.engine.usecase import paths, policies_text
 
@@ -133,7 +133,7 @@ def cmd_run_tests(args):
     for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
         policies = policies_text(root, spec["policies"])
-        entities = (root / spec["entities"]).read_text()
+        entities = case_entities(root, spec)
         names = policy_names(policies)
         print(f"\n{spec_file.relative_to(root)}")
         for case in spec["requests"]:
@@ -264,16 +264,24 @@ def cmd_check_access(args):
         record = json.loads(Path(args.record).read_text())
         entity = engine.entity_from_row(record)
     else:
-        stored = [e for e in use_case.entities if e["uid"]["type"] == use_case.resource_type]
+        rows = use_case.root / "tests/rows/entities.json"
+        stored = [e for e in json.loads(rows.read_text()) if e["uid"]["type"] == use_case.resource_type] if rows.is_file() else []
         entity = stored[0] if stored else {"uid": {"type": use_case.resource_type, "id": "unknown"}, "attrs": {}, "parents": []}
     resource = f'{entity["uid"]["type"]}::"{entity["uid"]["id"]}"'
+    named = _named_input(use_case, projection, _pairs(args.input))
+    if named:
+        context["input"] = named
     line = f"Access of {projection.principal} ({projection.mode})"
     if projection.context:
         line += f", acting for {projection.context['actingFor']['__entity']['id']}"
     if presented:
         line += f", presenting {json.dumps(context['presented'])}"
     print(line)
-    print(f"On {resource} with attributes {json.dumps(entity['attrs'])}\n")
+    print(f"On {resource} with attributes {json.dumps(entity['attrs'])}")
+    if named:
+        shown = ", ".join(f"{k}={v['__entity']['id'] if isinstance(v, dict) else v}" for k, v in named.items())
+        print(f"Writes name {shown}, which the API must check against the record")
+    print()
 
     schema = _schema_text(use_case)
     collections = [t["collection"] for t in use_case.tools.values() if "collection" in t]
@@ -311,6 +319,28 @@ def cmd_check_access(args):
         print(f"Writable        {', '.join(writable) or 'nothing'}")
         print(f"Not writable    {', '.join(unwritable) or 'nothing'}")
     return 0
+
+
+def _named_input(use_case, projection, given: dict) -> dict:
+    """The input a write names, for every argument the tool table
+    declares: the value given with --input, or, for an argument of
+    the principal's type, the caller's own party (the acted-for one
+    when acting), which is what a call for the caller names."""
+    declared = {}
+    for tool in use_case.tools.values():
+        declared.update(tool.get("input", {}))
+    unknown = set(given) - set(declared)
+    if unknown:
+        raise Usage(f"--input names no declared input: {', '.join(sorted(unknown))}")
+    principal_type, principal_id = projection.principal.split("::", 1)
+    party = projection.context["actingFor"]["__entity"]["id"] if projection.context else principal_id.strip('"')
+    named = {}
+    for argument, cedar_type in declared.items():
+        value = given.get(argument, party if cedar_type == principal_type else None)
+        if value is None:
+            continue
+        named[argument] = str(value) if cedar_type == "String" else {"__entity": {"type": cedar_type, "id": str(value)}}
+    return named
 
 
 # ---------------------------------------------------------------- share
@@ -360,25 +390,28 @@ def cmd_share(args):
         spec = json.loads(Path(args.request_json).read_text())
         request = {k: _ref(spec[k]) for k in ("principal", "action", "resource")}
         request["context"] = spec.get("context", {})
+        entities = use_case.entities
         label = args.request_json
     elif args.case:
         found = []
         for spec_file in case_files(root):
-            for case in json.loads(spec_file.read_text())["requests"]:
+            spec = json.loads(spec_file.read_text())
+            for case in spec["requests"]:
                 if args.case.lower() in case["description"].lower():
-                    found.append(case)
+                    found.append((spec, case))
         if not found:
             raise Usage(f"no corpus case mentions {args.case!r}")
         if len(found) > 1:
             print(f"{len(found)} cases match; using the first:", file=sys.stderr)
-        case = found[0]
+        spec, case = found[0]
+        entities = json.loads(case_entities(root, spec))
         request = {k: _ref(case[k]) for k in ("principal", "action", "resource")}
         request["context"] = case.get("context", {})
         label = case["description"]
     else:
         raise Usage("--case TEXT or --request-json FILE")
     link = playground_link(use_case.policies, _schema_text(use_case),
-                           json.dumps(use_case.entities, indent=2), request)
+                           json.dumps(entities, indent=2), request)
     print(label)
     print(link)
     return 0
@@ -630,7 +663,9 @@ def main(argv=None) -> int:
     p = with_dir(sub.add_parser("check-access", help="what an identity may do: verbs, readable paths, writable paths"))
     p.add_argument("--caller", required=True, metavar="FILE", help="an identity file: the claims of one caller's credential")
     p.add_argument("--presented", action="append", metavar="KEY=VALUE", help="a presented fact, e.g. lastName=SMITH")
-    p.add_argument("--record", metavar="FILE", help="a payload row to decide on (default: the first stored one)")
+    p.add_argument("--record", metavar="FILE", help="a payload row to decide on (default: the first in tests/rows/entities.json)")
+    p.add_argument("--input", action="append", metavar="KEY=VALUE",
+                   help="an input a write names, e.g. customerId=bob (default: the caller's own party)")
     p.set_defaults(func=cmd_check_access)
 
     p = with_dir(sub.add_parser("share", help="a pre-filled link to Cedar's playground"))

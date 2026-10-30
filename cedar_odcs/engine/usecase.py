@@ -91,23 +91,6 @@ def policies_text(root, name: str = "policies.cedar") -> str:
     return text
 
 
-def responses_fetch(root):
-    """A descriptor's fetch, reading the saved responses: row id to the
-    payload the API returned for it, or None when nothing is saved.
-
-    The one mock in a use case. A real read replaces it at deployment.
-    """
-    directory = paths(root).responses
-
-    def fetch(row_id):
-        if not isinstance(row_id, str) or "/" in row_id or "\\" in row_id or row_id.strip(".") == "":
-            return None
-        path = directory / f"{row_id}.json"
-        return json.loads(path.read_text()) if path.is_file() else None
-
-    return fetch
-
-
 @dataclass
 class UseCase:
     name: str
@@ -129,13 +112,9 @@ class UseCase:
     # field verb, e.g. {'Action::"UpdateOrder"': 'Action::"UpdateOrderField"'}.
     field_actions: dict
     # MCP tool name to how the handlers treat it (see cedar_odcs.gateway.handlers).
+    # No verb needs the record on the request leg: a read decides on
+    # the response, a write on what the call names.
     tools: dict = field(default_factory=dict)
-    # Request-leg verbs that cannot be decided without the record: the
-    # engine fetches it through `fetch` (row id to payload, or None)
-    # before the verb round, and the payload round sees it too. A
-    # write by possession needs this; a read decides on the response.
-    prefetch_actions: set = field(default_factory=set)
-    fetch: object = None
     # Which token claims name the subject, the roles, and the actor
     # (cedar_odcs.engine.identities). The default reads sub, roles, act.
     claims: ClaimsMapping = ClaimsMapping()

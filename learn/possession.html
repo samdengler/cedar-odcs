@@ -150,7 +150,7 @@ h2:hover .anchor { opacity: 1; }
 
 <pre><code class="lang-sh">uv run cedar-odcs check usecases/reservations</code></pre>
 
-<p>Forty-three cases, fifteen guardrails. Then the customer's view, which is nobody's identity and only the pair:</p>
+<p>Forty-two cases, fourteen guardrails. Then the customer's view, which is nobody's identity and only the pair:</p>
 
 <pre><code class="lang-sh">uv run cedar-odcs check-access usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --presented locator=ABC123 --presented lastName=Smith</code></pre>
@@ -180,12 +180,17 @@ permit(
 
 <p>The lookup is forwarded, the record comes back, the name does not match, and the customer receives an empty object.</p>
 
-<p>A write cannot wait. Cancel with the wrong name:</p>
+<p>A write cannot wait for the response, and the request leg never has the record. Cancel with the wrong name:</p>
 
 <pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
     --tool reservations___cancel_reservation --arg recordLocator=ABC123 --arg lastName=Jones</code></pre>
 
-<p>Rejected before anything is forwarded: the request leg fetched the record first, through the read path, and decided on it. The descriptor names the verbs that need this, and the fetch that supplies the record, which in this repository reads the saved response under <code>tests/responses/</code>.</p>
+<p>Forwarded: the pair is presented, and that is all the request leg can see. Whether the pair names a reservation is the Reservations API's to decide, and it refuses this one, as it refuses the same pair on its own website. The Gateway's part is that a write presents a pair and sets only the holder's paths. Cancel with the locator alone:</p>
+
+<pre><code class="lang-sh">uv run cedar-odcs dry-run usecases/reservations --caller usecases/reservations/tests/identities/agent.json \
+    --tool reservations___cancel_reservation --arg recordLocator=ABC123</code></pre>
+
+<p>Rejected before anything is forwarded: a locator alone is no pair, and the agent holds no specialist role.</p>
 
 <figure class="figure">
 <div data-sequence>
@@ -199,16 +204,16 @@ permit(
   ],
   "messages": [
     {"from": "agent", "to": "pep", "label": "cancel_reservation(ABC123, Jones)"},
-    {"from": "pep", "to": "api", "label": "read ABC123 first"},
-    {"from": "api", "to": "pep", "label": "the record: holder SMITH", "style": "return"},
-    {"from": "pep", "to": "pdp", "label": "CancelReservation? entity from the record"},
-    {"from": "pdp", "to": "pep", "label": "Deny: JONES is not the holder", "style": "return"},
-    {"from": "pep", "to": "agent", "label": "rejected; nothing forwarded", "style": "return"}
+    {"from": "pep", "to": "pdp", "label": "CancelReservation? a pair is presented"},
+    {"from": "pdp", "to": "pep", "label": "Allow, by cancel-by-possession", "style": "return"},
+    {"from": "pep", "to": "api", "label": "forward the cancel"},
+    {"from": "api", "to": "pep", "label": "refused: JONES is not the holder", "style": "return"},
+    {"from": "pep", "to": "agent", "label": "the API's refusal", "style": "return"}
   ]
 }
 </script>
 </div>
-<figcaption>A write by possession is preceded by a read. The cancel never reaches the API; the cost is one read per write.</figcaption>
+<figcaption>A write by possession is decided on the call. The Gateway checks that the pair is there and the paths are the holder's; the Reservations API checks that the pair names the reservation.</figcaption>
 </figure>
 
 <h2 id="parties">3. Three parties</h2>

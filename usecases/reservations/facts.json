@@ -48,27 +48,5 @@
     },
     "attrs": {},
     "parents": []
-  },
-  {
-    "uid": {
-      "type": "Reservation",
-      "id": "ABC123"
-    },
-    "attrs": {
-      "recordLocator": "ABC123",
-      "holderLastName": "SMITH"
-    },
-    "parents": []
-  },
-  {
-    "uid": {
-      "type": "Reservation",
-      "id": "XYZ789"
-    },
-    "attrs": {
-      "recordLocator": "XYZ789",
-      "holderLastName": "JONES"
-    },
-    "parents": []
   }
 ]

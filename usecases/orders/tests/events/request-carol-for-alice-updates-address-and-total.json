@@ -2,7 +2,7 @@
   "interceptorInputVersion": "1.0",
   "mcp": {
     "rawGatewayRequest": {
-      "body": "{\"jsonrpc\": \"2.0\", \"id\": 5, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___update_order\", \"arguments\": {\"orderId\": \"order-1001\", \"changes\": {\"shippingAddress\": \"2 Oak Ln\", \"total\": 0.99}}}}"
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 5, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___update_order\", \"arguments\": {\"orderId\": \"order-1001\", \"customerId\": \"alice\", \"changes\": {\"shippingAddress\": \"2 Oak Ln\", \"total\": 0.99}}}}"
     },
     "gatewayRequest": {
       "path": "/mcp",
@@ -21,6 +21,7 @@
           "name": "orders___update_order",
           "arguments": {
             "orderId": "order-1001",
+            "customerId": "alice",
             "changes": {
               "shippingAddress": "2 Oak Ln",
               "total": 0.99

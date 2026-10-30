@@ -1,6 +1,6 @@
 {
   "policies": "policies.cedar",
-  "entities": "entities.json",
+  "entities": ["entities.json", "tests/rows/entities.json"],
   "shouldValidate": false,
   "requests": [
     {

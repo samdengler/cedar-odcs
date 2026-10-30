@@ -33,7 +33,7 @@ def run(capsys, *argv):
 def test_run_tests_reports_every_case(capsys):
     code, out = run(capsys, "run-tests", R)
     assert code == 0
-    assert "43 passed, 0 failed" in out
+    assert "42 passed, 0 failed" in out
     assert "PASS  the record is readable when locator and holder last name are the presented ones" in out
 
 
@@ -63,8 +63,9 @@ def test_dry_run_reports_both_legs(capsys, caller, tmp_path):
 
 
 def test_dry_run_rejects_in_words(capsys, caller):
+    # A locator alone is no pair, and the agent holds no specialist role.
     code, out = run(capsys, "dry-run", R, "--caller", caller("agent"), "--tool", "reservations___cancel_reservation",
-                    "--arg", "recordLocator=ABC123", "--arg", "lastName=Jones")
+                    "--arg", "recordLocator=ABC123")
     assert code == 1
     assert "rejected: CancelReservation is not permitted" in out
 

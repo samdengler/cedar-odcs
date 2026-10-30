@@ -1,3 +1,13 @@
+// The request leg's verb for reading one order. The response leg
+// decides the read with ReadOrder, on the order the API returns.
+action LookupOrder appliesTo {
+  principal: [User],
+  resource: [Order],
+  context: {
+    actingFor?: User
+  }
+};
+
 action ReadOrder appliesTo {
   principal: [User],
   resource: [Order],
@@ -10,7 +20,10 @@ action UpdateOrder appliesTo {
   principal: [User],
   resource: [Order],
   context: {
-    actingFor?: User
+    actingFor?: User,
+    input?: {
+      customerId?: User
+    }
   }
 };
 
@@ -18,7 +31,10 @@ action CancelOrder appliesTo {
   principal: [User],
   resource: [Order],
   context: {
-    actingFor?: User
+    actingFor?: User,
+    input?: {
+      customerId?: User
+    }
   }
 };
 
@@ -44,7 +60,10 @@ action UpdateOrderField appliesTo {
   resource: [Order],
   context: {
     actingFor?: User,
-    field?: String
+    field?: String,
+    input?: {
+      customerId?: User
+    }
   }
 };
 

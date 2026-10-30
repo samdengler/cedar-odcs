@@ -61,22 +61,22 @@ permit(
 // Iteration 12: writes by possession. Anyone who knows the locator
 // and the holder's last name may change the contact details, a seat,
 // or cancel the reservation, as the airline allows on the web. A
-// write cannot wait for the response, so the request leg fetches the
-// record through the read path first and decides on it; the policies
-// below read the same attributes the read policies do.
+// write is decided before the API is called, and the request leg
+// never has the record, so the policies below require the pair and
+// bound the paths; whether the pair names a reservation is the
+// Reservations API's to decide, and it refuses a write whose pair
+// does not. The locator is the tool's id argument, so the pair
+// always names the record the call writes (engine/calls.py).
 
-// P4 (policy3): The record may be updated by possession.
+// P4 (policy3): The record may be updated by possession: the call
+// presents the pair.
 @id("update-by-possession")
 permit(
   principal,
   action == Action::"UpdateReservation",
   resource
 ) when {
-  context has presented &&
-  resource has recordLocator &&
-  resource has holderLastName &&
-  resource.recordLocator == context.presented.locator &&
-  resource.holderLastName == context.presented.lastName
+  context has presented
 };
 
 // P5 (policy4): Possession writes the paths whose writer is "owner":
@@ -89,10 +89,6 @@ permit(
   resource
 ) when {
   context has presented &&
-  resource has recordLocator &&
-  resource has holderLastName &&
-  resource.recordLocator == context.presented.locator &&
-  resource.holderLastName == context.presented.lastName &&
   context has field &&
   Contract::"Reservation/writers".hasTag(context.field) &&
   Contract::"Reservation/writers".getTag(context.field) == "owner"
@@ -105,11 +101,7 @@ permit(
   action == Action::"CancelReservation",
   resource
 ) when {
-  context has presented &&
-  resource has recordLocator &&
-  resource has holderLastName &&
-  resource.recordLocator == context.presented.locator &&
-  resource.holderLastName == context.presented.lastName
+  context has presented
 };
 
 // Iteration 13: the specialist's view, and the agent as a party.

@@ -324,7 +324,8 @@ def build(root: Path, entity_name: str, read_field_action: str = None, write_fie
     ODCS document to the tag maps, the entity schema, the full schema,
     and entities.json.
 
-    Inputs under root: the document, facts.json, principals.cedarschema,
+    Inputs under root: the document, facts.json (the parties: users and
+    roles, never a record of the entity), principals.cedarschema,
     actions.cedarschema, and grants.yaml beside the document when the
     use case renders its field policies (engine/grants.py); then the
     output has generated/grants.cedar too. The field verbs default to
@@ -339,6 +340,14 @@ def build(root: Path, entity_name: str, read_field_action: str = None, write_fie
         raise ContractError(f"{place.relative(document)} is missing; write it, or pull it from the catalog")
     contract = load_contract(document.read_text())
     facts = json.loads((place.root / "facts.json").read_text())
+    records = sorted(e["uid"]["id"] for e in facts if e["uid"]["type"] == entity_name)
+    if records:
+        # entities.json is deployed with the interceptors, and a record
+        # in it would decide a request in place of the API's own. A read
+        # decides on the record the API returns; a test case's records
+        # live in tests/rows/.
+        raise ContractError(f"facts.json holds {entity_name} records ({', '.join(records)}); "
+                            "the facts are the parties, and records come from the API")
     entities = contract_entities(contract, role_names(facts))
     schema = ((place.root / "principals.cedarschema").read_text() + entity_schema(contract) + "\n"
               + (place.root / "actions.cedarschema").read_text())

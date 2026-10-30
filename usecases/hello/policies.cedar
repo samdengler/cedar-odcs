@@ -6,6 +6,11 @@
 // confidential, the reviewer sees public and internal. No policy
 // names a field.
 //
+// The request leg never has the note, so the read is decided on the
+// response, on the note the API returns: the request leg asks
+// LookupNote, which anyone holds (policy4), and the response leg asks
+// ReadNote and ReadNoteField.
+//
 // Policy ids are positional (policy0, policy1, ...); the corpus refers
 // to them.
 
@@ -54,3 +59,11 @@ permit(
   Contract::"Note".hasTag(context.field) &&
   ["public", "internal"].contains(Contract::"Note".getTag(context.field))
 };
+
+// policy4: anyone may look up a note; the response decides.
+@id("anyone-looks-up-a-note")
+permit(
+  principal,
+  action == Action::"LookupNote",
+  resource
+);

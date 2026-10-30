@@ -21,6 +21,19 @@ def test_a_pair_is_carried_as_context():
     assert c.returns == "object"
 
 
+def test_a_write_presents_the_pair_of_the_record_it_writes():
+    # The request leg never has the reservation, so a write by
+    # possession is decided on the pair alone; the pair's locator is
+    # the id argument, so the pair always names the record written.
+    for name in ("reservations___update_reservation", "reservations___cancel_reservation"):
+        arguments = {"recordLocator": "XYZ789", "lastName": "Smith"}
+        if name.endswith("update_reservation"):
+            arguments["changes"] = {"contact": {"email": "a@b.c"}}
+        c = call(USE_CASE, name, arguments)
+        assert c.resource == 'Reservation::"XYZ789"'
+        assert c.context["presented"]["locator"] == "XYZ789"
+
+
 def test_a_locator_alone_presents_no_pair():
     # The locator is one half of the pair; alone it is the resource
     # and nothing more.

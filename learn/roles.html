@@ -151,19 +151,35 @@ h2:hover .anchor { opacity: 1; }
 
 <pre><code class="lang-sh">uv run cedar-odcs check usecases/orders</code></pre>
 
-<p>Seventy-five cases carried from nine iterations, twelve guardrails proven. Then compare what three identities may do on bob's order:</p>
+<p>Seventy-eight cases, most carried from nine iterations, thirteen guardrails proven. Then compare what three identities may do on alice's order, <code>order-1001</code>:</p>
 
 <pre><code class="lang-sh">uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/alice.json
 uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/carol.json
 uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/dave.json</code></pre>
 
-<p>Alice, a customer, holds no verb on an order she does not own. Carol, on the support desk, reads any order, cancels any order, updates any order, and may set exactly one field, <code>internalNotes</code>. Dave in finance holds <code>RefundOrder</code> and the list verb, and no read of a single order, because a verb held implies no other.</p>
+<p>Alice, a customer, reads, updates, and cancels her own order. Carol, on the support desk, reads any order, cancels any order, updates any order, and may set exactly one field, <code>internalNotes</code>. Dave in finance holds <code>RefundOrder</code> and the list and lookup verbs, and no read of an order: a lookup comes back empty, because a verb held implies no other.</p>
+
+<p>Reads and writes are decided in different places. A read is decided on the response, on the order the API returned, so its owner is that order's <code>owner</code>. A write is decided before the API is called, when the interceptor has only the call. So a write names the customer it is for, <code>customerId</code>, and the policies compare that with the caller:</p>
+
+<pre><code class="lang-cedar">@id("customer-cancels-own-order")
+permit(
+  principal,
+  action == Action::"CancelOrder",
+  resource
+) when {
+  context has input &&
+  context.input has customerId &&
+  context.input.customerId == (if context has actingFor then context.actingFor else principal)
+};</code></pre>
+
+<p>The Orders API refuses a write whose order that customer does not own. No policy can check that, because the request leg never has the order; the interceptor checks that the caller writes only as the customer they are, and the API checks that the customer owns the order. <code>check-access</code> says which customer its writes named; give <code>--input customerId=bob</code> to name another.</p>
 
 <table>
 <tr><th>Verb</th><th>Owner</th><th>Support</th><th>Finance</th></tr>
+<tr><td><code>LookupOrder</code></td><td>yes; the response decides</td><td>yes</td><td>yes; nothing comes back</td></tr>
 <tr><td><code>ReadOrder</code></td><td>own orders</td><td>any order</td><td>no</td></tr>
-<tr><td><code>UpdateOrder</code></td><td>own orders, owner fields</td><td>any order, <code>internalNotes</code> only</td><td>no</td></tr>
-<tr><td><code>CancelOrder</code></td><td>own orders</td><td>any order</td><td>no</td></tr>
+<tr><td><code>UpdateOrder</code></td><td>naming herself, owner fields</td><td>any order, <code>internalNotes</code> only</td><td>no</td></tr>
+<tr><td><code>CancelOrder</code></td><td>naming herself</td><td>any order</td><td>no</td></tr>
 <tr><td><code>RefundOrder</code></td><td>no</td><td>no</td><td>any order</td></tr>
 <tr><td><code>ListOrders</code></td><td>yes; rows decide</td><td>yes</td><td>yes; no rows come back</td></tr>
 </table>
@@ -226,7 +242,7 @@ permit(
 
 <pre><code class="lang-sh">uv run cedar-odcs check-access usecases/orders --caller usecases/orders/tests/identities/carol-for-alice.json</code></pre>
 
-<p>The confidential fields of alice's order are readable, the internal ones are not, and bob's order is out of reach. The token is an exchanged one: alice is its subject, carol its actor, and the projection in <code>cedar_odcs/engine/identities.py</code> turns that into a principal and an <code>actingFor</code> in context.</p>
+<p>The confidential fields of alice's order are readable, the internal ones are not, and bob's order is out of reach: a read of it comes back empty, and a write that names bob is refused before it is forwarded (add <code>--input customerId=bob</code> to see it). The token is an exchanged one: alice is its subject, carol its actor, and the projection in <code>cedar_odcs/engine/identities.py</code> turns that into a principal and an <code>actingFor</code> in context.</p>
 
 <h2 id="break">5. Break it</h2>
 

@@ -4,7 +4,9 @@ A use case's test_corpus.py is three lines: collect cases from its
 test case directory and hand each to check(). The directory is
 tests/test-cases/ in the new shape and tests/ in the old; each file's
 header names its policies and entities relative to the use case root
-in both.
+in both. `entities` is one file or a list of them, read as one entity
+set: a case on a read verb names tests/rows/entities.json beside the
+deployed entities.json, standing in for the rows the API returns.
 
 A case's `reason` and `errors` name policies by their `@id`
 annotation, not by position; `policy_names` is the policyN -> @id map,
@@ -37,11 +39,17 @@ def case_files(root: Path) -> list:
     return sorted(paths(root).test_cases.glob("*.json"))
 
 
+def case_entities(root: Path, spec: dict) -> str:
+    """The entity set a test case file names, as Cedar's JSON text."""
+    names = spec["entities"] if isinstance(spec["entities"], list) else [spec["entities"]]
+    return json.dumps([e for name in names for e in json.loads((root / name).read_text())])
+
+
 def cases(root: Path):
     for spec_file in case_files(root):
         spec = json.loads(spec_file.read_text())
         policies = policies_text(root, spec["policies"])
-        entities = (root / spec["entities"]).read_text()
+        entities = case_entities(root, spec)
         for request in spec["requests"]:
             yield pytest.param(policies, entities, request, id=f'{spec_file.stem}: {request["description"]}')
 

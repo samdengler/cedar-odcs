@@ -1,5 +1,6 @@
-// Guardrail, revised for mode: outside ownership (own or acted-for),
-// a support agent writes only fields whose writer is "support", and
+// Guardrail, revised for mode and for writes on the request: outside
+// ownership (the call names the caller, or the acted-for party), a
+// support agent writes only fields whose writer is "support", and
 // only in direct mode.
 @id("guardrail-role-writes-only-role-fields")
 forbid(
@@ -7,8 +8,8 @@ forbid(
   action == Action::"UpdateOrderField",
   resource
 ) when {
-  !(resource has owner &&
-    resource.owner == (if context has actingFor then context.actingFor else principal)) &&
+  !(context has input && context.input has customerId &&
+    context.input.customerId == (if context has actingFor then context.actingFor else principal)) &&
   !(!(context has actingFor) &&
     context has field &&
     Contract::"Order/writers".hasTag(context.field) &&

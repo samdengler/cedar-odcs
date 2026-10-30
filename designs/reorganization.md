@@ -66,11 +66,13 @@ The same shape for hello, orders, reservations, and a new domain;
 hello moves from `learn/` to `usecases/hello` so there is one shape
 and one loop (finding 17), and step 1 of the learning path points at
 it. Identities, responses, and events are fixtures: data the engine
-or a handler reads as it would read the real thing. The one mock in a
-use case is the descriptor's fetch, which for a write that needs the
-record first reads `tests/responses/<id>.json` instead of calling the
-API, and is replaced by a real read at deployment. Today's
-`records.json` and `records/` fold into `tests/responses/`.
+or a handler reads as it would read the real thing. The plan kept one
+mock, the descriptor's fetch, which for a write that needed the record
+read `tests/responses/<id>.json` instead of calling the API. Nothing
+replaced it at deployment, so it was removed: a write is decided on
+the call alone, and a record only ever comes from the API, on the
+response leg. Today's `records.json` and `records/` fold into
+`tests/responses/`.
 
 ## One command
 
@@ -97,7 +99,7 @@ cedar_odcs/
     contract.py      the build: Unity Catalog to ODCS to maps and schema
     identities.py    the projection from claims to the Cedar parties (today claims.py)
     calls.py         a tool call to a decision, defined below
-    enforce.py       the two legs by path, the pre-fetch, entities from payloads
+    enforce.py       the two legs by path, entities from payloads
     usecase.py       the descriptor
     corpus.py        the test case runner
   cli/

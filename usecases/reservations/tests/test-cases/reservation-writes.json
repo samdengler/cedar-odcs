@@ -14,13 +14,13 @@
       "errors": []
     },
     {
-      "description": "a wrong last name updates nothing",
+      "description": "a wrong last name is forwarded: the request leg never has the reservation, and the Reservations API refuses the pair",
       "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "UpdateReservation" },
       "resource": { "type": "Reservation", "id": "ABC123" },
       "context": { "presented": { "locator": "ABC123", "lastName": "JONES" } },
-      "decision": "Deny",
-      "reason": [],
+      "decision": "Allow",
+      "reason": ["update-by-possession"],
       "errors": []
     },
     {
@@ -104,23 +104,13 @@
       "errors": []
     },
     {
-      "description": "a pair valid for one reservation cancels nothing of another",
-      "principal": { "type": "Agent", "id": "reservations-assistant" },
-      "action": { "type": "Action", "id": "CancelReservation" },
-      "resource": { "type": "Reservation", "id": "XYZ789" },
-      "context": { "presented": { "locator": "ABC123", "lastName": "SMITH" } },
-      "decision": "Deny",
-      "reason": [],
-      "errors": []
-    },
-    {
-      "description": "a record the store does not know: no write, no evaluation error",
+      "description": "a locator that names no reservation is forwarded with no evaluation error, and the Reservations API refuses it",
       "principal": { "type": "Agent", "id": "reservations-assistant" },
       "action": { "type": "Action", "id": "CancelReservation" },
       "resource": { "type": "Reservation", "id": "QQQ000" },
       "context": { "presented": { "locator": "QQQ000", "lastName": "SMITH" } },
-      "decision": "Deny",
-      "reason": [],
+      "decision": "Allow",
+      "reason": ["cancel-by-possession"],
       "errors": []
     }
   ]

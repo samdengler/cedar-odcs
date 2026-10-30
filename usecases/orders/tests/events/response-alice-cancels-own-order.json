@@ -2,7 +2,7 @@
   "interceptorInputVersion": "1.0",
   "mcp": {
     "rawGatewayRequest": {
-      "body": "{\"jsonrpc\": \"2.0\", \"id\": 11, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___cancel_order\", \"arguments\": {\"orderId\": \"order-1001\"}}}"
+      "body": "{\"jsonrpc\": \"2.0\", \"id\": 11, \"method\": \"tools/call\", \"params\": {\"name\": \"orders___cancel_order\", \"arguments\": {\"orderId\": \"order-1001\", \"customerId\": \"alice\"}}}"
     },
     "gatewayRequest": {
       "path": "/mcp",
@@ -20,7 +20,8 @@
         "params": {
           "name": "orders___cancel_order",
           "arguments": {
-            "orderId": "order-1001"
+            "orderId": "order-1001",
+            "customerId": "alice"
           }
         }
       }

@@ -8,7 +8,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrder" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": {},
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Allow",
       "reason": ["customer-updates-own-order"],
       "errors": []
@@ -18,17 +18,17 @@
       "principal": { "type": "User", "id": "bob" },
       "action": { "type": "Action", "id": "UpdateOrder" },
       "resource": { "type": "Order", "id": "order-2002" },
-      "context": {},
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "bob" } } } },
       "decision": "Allow",
       "reason": ["customer-updates-own-order"],
       "errors": []
     },
     {
-      "description": "BOLA write: customer swaps id to someone else's order, default deny",
+      "description": "BOLA write: customer names another customer, default deny",
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrder" },
       "resource": { "type": "Order", "id": "order-2002" },
-      "context": {},
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "bob" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -44,24 +44,34 @@
       "errors": []
     },
     {
-      "description": "unknown principal gets default deny",
+      "description": "unknown principal naming a customer gets default deny",
       "principal": { "type": "User", "id": "mallory" },
+      "action": { "type": "Action", "id": "UpdateOrder" },
+      "resource": { "type": "Order", "id": "order-1001" },
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Deny",
+      "reason": [],
+      "errors": []
+    },
+    {
+      "description": "customer names herself on an order she does not own: allowed here, since the request leg has no order; the Orders API refuses it",
+      "principal": { "type": "User", "id": "alice" },
+      "action": { "type": "Action", "id": "UpdateOrder" },
+      "resource": { "type": "Order", "id": "order-2002" },
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
+      "decision": "Allow",
+      "reason": ["customer-updates-own-order"],
+      "errors": []
+    },
+    {
+      "description": "a write that names no customer is denied: the has guard fails closed with no evaluation error",
+      "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrder" },
       "resource": { "type": "Order", "id": "order-1001" },
       "context": {},
       "decision": "Deny",
       "reason": [],
       "errors": []
-    },
-    {
-      "description": "guessed order id gets default deny, ownership policy errors on missing owner attribute",
-      "principal": { "type": "User", "id": "alice" },
-      "action": { "type": "Action", "id": "UpdateOrder" },
-      "resource": { "type": "Order", "id": "order-9999" },
-      "context": {},
-      "decision": "Deny",
-      "reason": [],
-      "errors": ["customer-updates-own-order"]
     }
   ]
 }

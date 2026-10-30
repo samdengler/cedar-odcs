@@ -177,18 +177,18 @@ uv run cedar-odcs check-access usecases/hello --caller usecases/hello/tests/iden
   ],
   "messages": [
     {"from": "agent", "to": "pep", "label": "get_note(note-1) as rae"},
-    {"from": "pep", "to": "pdp", "label": "may rae ReadNote note-1?"},
-    {"from": "pdp", "to": "pep", "label": "Allow, by reviewer-reads-any-note", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "may rae LookupNote note-1?"},
+    {"from": "pdp", "to": "pep", "label": "Allow, by anyone-looks-up-a-note", "style": "return"},
     {"from": "pep", "to": "api", "label": "forward the call"},
     {"from": "api", "to": "pep", "label": "the note, every field", "style": "return"},
-    {"from": "pep", "to": "pdp", "label": "ReadNoteField? one per field"},
-    {"from": "pdp", "to": "pep", "label": "body Deny, the rest Allow", "style": "return"},
+    {"from": "pep", "to": "pdp", "label": "ReadNote? then ReadNoteField, one per field"},
+    {"from": "pdp", "to": "pep", "label": "note Allow; body Deny, the rest Allow", "style": "return"},
     {"from": "pep", "to": "agent", "label": "the note without its body", "style": "return"}
   ]
 }
 </script>
 </div>
-<figcaption>The request leg asks whether the verb is held; the response leg asks about each field of what came back. A dry run does both without the API.</figcaption>
+<figcaption>The request leg has no note, so it only asks whether the call may be made; the response leg asks whether rae may read the note that came back, then about each of its fields. A dry run does both without the API.</figcaption>
 </figure>
 
 <h2 id="folder">3. What is in the folder</h2>
@@ -202,7 +202,7 @@ uv run cedar-odcs check-access usecases/hello --caller usecases/hello/tests/iden
 <tr><td><code>principals.cedarschema</code>, <code>actions.cedarschema</code></td><td>hand-written: who can be a principal, and the verbs with their context; the build joins them with the generated schema</td></tr>
 <tr><td><code>facts.json</code></td><td>the sample users, the role, and two notes</td></tr>
 <tr><td><code>entities.json</code></td><td>facts plus the generated maps, what the policies read</td></tr>
-<tr><td><code>policies.cedar</code></td><td>four policies; no policy names a field</td></tr>
+<tr><td><code>policies.cedar</code></td><td>five policies; no policy names a field</td></tr>
 <tr><td><code>guardrails/</code></td><td>empty so far; step 2 has them</td></tr>
 <tr><td><code>tests/test-cases/hello.json</code></td><td>nine cases in the Cedar integration-tests format</td></tr>
 <tr><td><code>tests/identities/ada.json</code>, <code>rae.json</code></td><td>one identity each: the claims of that caller's credential, standing in for a decoded, verified JWT</td></tr>

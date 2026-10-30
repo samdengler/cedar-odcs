@@ -8,7 +8,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "shippingAddress" },
+      "context": { "field": "shippingAddress", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Allow",
       "reason": ["customer-updates-own-order-fields"],
       "errors": []
@@ -18,7 +18,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "status" },
+      "context": { "field": "status", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -28,7 +28,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "total" },
+      "context": { "field": "total", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -38,7 +38,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "cardLast4" },
+      "context": { "field": "cardLast4", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -48,7 +48,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "internalNotes" },
+      "context": { "field": "internalNotes", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -58,7 +58,7 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "fraudScore" },
+      "context": { "field": "fraudScore", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -68,17 +68,17 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "isAdmin" },
+      "context": { "field": "isAdmin", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
     },
     {
-      "description": "API1 still holds at write-field level: customer updates a field of someone else's order",
+      "description": "API1 still holds at write-field level: customer names another customer",
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-2002" },
-      "context": { "field": "shippingAddress" },
+      "context": { "field": "shippingAddress", "input": { "customerId": { "__entity": { "type": "User", "id": "bob" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -94,20 +94,20 @@
       "errors": []
     },
     {
-      "description": "unknown principal gets default deny",
+      "description": "unknown principal naming a customer gets default deny",
       "principal": { "type": "User", "id": "mallory" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": { "field": "shippingAddress" },
+      "context": { "field": "shippingAddress", "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
     },
     {
-      "description": "guessed order id: the has guard fails closed with no evaluation error",
+      "description": "a field write that names no customer: the has guard fails closed with no evaluation error",
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "UpdateOrderField" },
-      "resource": { "type": "Order", "id": "order-9999" },
+      "resource": { "type": "Order", "id": "order-1001" },
       "context": { "field": "shippingAddress" },
       "decision": "Deny",
       "reason": [],

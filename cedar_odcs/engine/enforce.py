@@ -25,7 +25,10 @@ number of rows.
 
 Resource entities are built from the payload. The descriptor says
 which fields become attributes and of what type; every other field is
-looked up in the tag maps by the field policies.
+looked up in the tag maps by the field policies. The request leg has
+no payload of the API's and no resource entity: a write is decided on
+the call, the caller, and what the call names (engine/calls.py), and
+the API refuses a write the record does not allow.
 """
 
 import json
@@ -121,23 +124,14 @@ class Engine:
     # ---- the request leg
 
     def decide_request(self, claims: dict, call: "Call") -> CallDecision:
-        """One tool call on the request leg: the verb round, the
-        pre-fetch the verb may need, then the payload round."""
-        return self.check_call(claims, call.action, call.resource, call.payload,
-                               call.context, row_id=call.row_id)
+        """One tool call on the request leg: the verb round, then the
+        payload round."""
+        return self.check_call(claims, call.action, call.resource, call.payload, call.context)
 
     def check_call(self, claims: dict, action: str, resource: str,
-                   body: dict = None, context: dict = None, row_id: str = None) -> CallDecision:
+                   body: dict = None, context: dict = None) -> CallDecision:
         projection = self.projection(claims)
-        extra = []
-        if action in self.use_case.prefetch_actions:
-            # The verb needs the record: fetch it through the read path
-            # and decide on its attributes. No record, no call.
-            record = self.use_case.fetch(row_id) if row_id is not None else None
-            if not isinstance(record, dict):
-                return CallDecision(allowed=False, denied_verb=True)
-            extra = [self.entity_from_row(record)]
-        if not self.is_allowed(projection, action, resource, context, extra):
+        if not self.is_allowed(projection, action, resource, context):
             return CallDecision(allowed=False, denied_verb=True)
         field_action = self.use_case.field_actions.get(action)
         if field_action is None:
@@ -149,7 +143,7 @@ class Engine:
         def allow(path):
             if path not in decided:
                 decided[path] = self.is_allowed(
-                    projection, field_action, resource, {**(context or {}), "field": path}, extra
+                    projection, field_action, resource, {**(context or {}), "field": path}
                 )
             return decided[path]
 

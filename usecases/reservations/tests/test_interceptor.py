@@ -1,5 +1,6 @@
-"""The reservation tool through the core handlers: possession decided on
-the response leg, nested leaves filtered by path."""
+"""The reservation tool through the core handlers: a read by possession
+decided on the response leg, a write on the presented pair before it
+is forwarded, nested leaves filtered by path."""
 
 import json
 from pathlib import Path
@@ -52,7 +53,7 @@ def test_last_name_is_compared_case_insensitively():
     assert out["mcp"]["transformedGatewayResponse"]["body"]["result"]["structuredContent"]["holderLastName"] == "SMITH"
 
 
-# ---- iteration 12: writes by possession, verified by the pre-fetch
+# ---- iteration 12: writes by possession, decided on the presented pair
 
 def _error(out):
     return out["mcp"]["transformedGatewayResponse"]["body"]["error"]["message"]
@@ -63,10 +64,19 @@ def test_holder_changes_contact_and_seats_by_path():
     assert "transformedGatewayRequest" in out["mcp"]
 
 
-def test_wrong_name_is_refused_before_the_write_is_forwarded():
-    out = request_handler(event("request-wrong-name-changes-contact"))
+def test_wrong_name_write_is_forwarded_for_the_api_to_refuse():
+    # The request leg never has the reservation; the pair is presented,
+    # and the Reservations API refuses a pair that names no reservation.
+    for fixture in ("request-wrong-name-changes-contact", "request-wrong-name-cancels"):
+        assert "transformedGatewayRequest" in request_handler(event(fixture))["mcp"], fixture
+
+
+def test_a_write_without_the_pair_is_refused_before_it_is_forwarded():
+    ev = event("request-holder-cancels")
+    del ev["mcp"]["gatewayRequest"]["body"]["params"]["arguments"]["lastName"]
+    out = request_handler(ev)
     assert out["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
-    assert "UpdateReservation is not permitted" in _error(out)
+    assert "CancelReservation is not permitted" in _error(out)
 
 
 def test_fare_change_is_refused_and_named():
@@ -83,13 +93,8 @@ def test_holder_cancels_by_possession():
     assert "transformedGatewayRequest" in request_handler(event("request-holder-cancels"))["mcp"]
 
 
-def test_wrong_name_cannot_cancel():
-    assert request_handler(event("request-wrong-name-cancels"))["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
-
-
-def test_no_record_no_write():
-    out = request_handler(event("request-cancel-unknown-record"))
-    assert out["mcp"]["transformedGatewayResponse"]["statusCode"] == 403
+def test_unknown_locator_is_forwarded_for_the_api_to_refuse():
+    assert "transformedGatewayRequest" in request_handler(event("request-cancel-unknown-record"))["mcp"]
 
 
 BOTH_LEGS = {

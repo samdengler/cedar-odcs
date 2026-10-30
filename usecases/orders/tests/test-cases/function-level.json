@@ -1,6 +1,6 @@
 {
   "policies": "policies.cedar",
-  "entities": "entities.json",
+  "entities": ["entities.json", "tests/rows/entities.json"],
   "shouldValidate": false,
   "requests": [
     {
@@ -8,17 +8,17 @@
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "CancelOrder" },
       "resource": { "type": "Order", "id": "order-1001" },
-      "context": {},
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "alice" } } } },
       "decision": "Allow",
       "reason": ["customer-cancels-own-order"],
       "errors": []
     },
     {
-      "description": "customer may not cancel someone else's order: API1 holds for the new verb",
+      "description": "customer may not cancel for another customer: API1 holds for the new verb",
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "CancelOrder" },
       "resource": { "type": "Order", "id": "order-2002" },
-      "context": {},
+      "context": { "input": { "customerId": { "__entity": { "type": "User", "id": "bob" } } } },
       "decision": "Deny",
       "reason": [],
       "errors": []
@@ -134,10 +134,10 @@
       "errors": []
     },
     {
-      "description": "guessed order id on cancel: the new object-level policy is guarded, so no evaluation error",
+      "description": "cancel naming no customer: the object-level policy is guarded, so no evaluation error",
       "principal": { "type": "User", "id": "alice" },
       "action": { "type": "Action", "id": "CancelOrder" },
-      "resource": { "type": "Order", "id": "order-9999" },
+      "resource": { "type": "Order", "id": "order-1001" },
       "context": {},
       "decision": "Deny",
       "reason": [],
