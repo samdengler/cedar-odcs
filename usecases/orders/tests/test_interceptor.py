@@ -151,12 +151,13 @@ def test_unfilterable_response_is_withheld():
     assert "withheld" in out["mcp"]["transformedGatewayResponse"]["body"]["error"]["message"]
 
 
-def test_non_text_content_items_are_kept():
+def test_non_text_content_items_are_left_out():
+    """No decision covers them: the field round decides the payload only."""
     def mutate(e):
         e["mcp"]["gatewayResponse"]["body"]["result"]["content"].append({"type": "image", "data": "...", "mimeType": "image/png"})
     out = response_handler(_mutated("response-alice-reads-own-order", mutate))
     content = out["mcp"]["transformedGatewayResponse"]["body"]["result"]["content"]
-    assert [c["type"] for c in content] == ["text", "image"]
+    assert [c["type"] for c in content] == ["text"]
 
 
 # Both legs of one call, for every tool in the table. The request leg
