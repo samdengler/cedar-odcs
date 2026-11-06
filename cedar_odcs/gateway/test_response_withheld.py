@@ -13,7 +13,7 @@ from cedar_odcs.gateway.handlers import TOOL_ERROR, handlers
 from usecases.orders.usecase import USE_CASE
 
 EVENTS = Path(__file__).resolve().parents[2] / "usecases/orders/tests/events"
-_, response_handler = handlers(USE_CASE)
+request_handler, response_handler = handlers(USE_CASE)
 SECRET = "4111 1111 1111 1111"
 
 
@@ -67,6 +67,39 @@ def test_a_result_beside_an_error_leaves_with_it():
     out = transformed(with_body({"jsonrpc": "2.0", "id": 7, "error": {"code": 1, "message": "x"},
                                  "result": {"content": [{"type": "text", "text": SECRET}]}}))
     assert "result" not in out["body"]
+
+
+# ---- the request leg's refusal
+
+def refused_events() -> list:
+    """Every recorded request the request leg refuses."""
+    events = [json.loads(path.read_text()) for path in sorted(EVENTS.glob("request-*.json"))]
+    return [e for e in events if "transformedGatewayResponse" in request_handler(copy.deepcopy(e))["mcp"]]
+
+
+def test_a_refused_call_keeps_the_request_legs_words():
+    """The live Gateway runs the response interceptor on the request
+    leg's 403 (applied-odcs, November 2026)."""
+    refused = refused_events()
+    assert refused
+    for e in refused:
+        sent = request_handler(copy.deepcopy(e))["mcp"]["transformedGatewayResponse"]
+        e["mcp"]["gatewayResponse"] = sent
+        assert response_handler(copy.deepcopy(e))["mcp"]["transformedGatewayResponse"] == sent
+
+
+def test_a_refusal_is_said_again_from_the_request_and_not_taken_from_the_response():
+    e = refused_events()[0]
+    sent = request_handler(copy.deepcopy(e))["mcp"]["transformedGatewayResponse"]
+    e["mcp"]["gatewayResponse"] = {"statusCode": 403, "body": {"jsonrpc": "2.0", "id": 1, "error": {
+        "code": -32000, "message": f"not permitted; card {SECRET}", "data": SECRET}}}
+    assert transformed(e)["body"]["error"]["message"] == sent["body"]["error"]["message"]
+
+
+def test_a_tool_cannot_get_its_words_past_by_phrasing_them_as_a_refusal():
+    out = transformed(with_body({"jsonrpc": "2.0", "id": 7, "error": {
+        "code": -32000, "message": f"GetOrder is not permitted for this caller: {SECRET}"}}))
+    assert out["body"]["error"]["message"] == TOOL_ERROR
 
 
 def failed(**beside) -> dict:

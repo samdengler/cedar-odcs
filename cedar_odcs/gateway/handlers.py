@@ -9,7 +9,8 @@ decision back as a Gateway result.
 Anything a handler cannot evaluate is rejected or withheld. On a
 tools/call response that covers more than the record: only the payload
 the field round decided leaves, so a tool's error text, other content
-items, and other keys of the result or the body do not.
+items, and other keys of the result or the body do not.  A refusal keeps
+its words because they are worked out again from the request.
 
 Decoding the bearer token the Gateway forwards (claims_of, TokenError)
 lives here too: it is a Gateway concern, not the engine's. The
@@ -166,11 +167,11 @@ def _envelope(body: dict) -> dict:
     return {key: body[key] for key in ("jsonrpc", "id") if key in body}
 
 
-def _tool_error(response: dict) -> dict:
-    """A tools/call that failed, without what the tool said about it."""
+def _error_response(response: dict, message: str) -> dict:
+    """A tools/call that failed, in the given words and not the response's."""
     body = response["body"]
     code = body["error"].get("code") if isinstance(body["error"], dict) else None
-    error = {"code": code if isinstance(code, int) else -32000, "message": TOOL_ERROR}
+    error = {"code": code if isinstance(code, int) else -32000, "message": message}
     return _pass_response({**response, "body": {**_envelope(body), "error": error}})
 
 
@@ -199,20 +200,38 @@ class Handlers:
             if tool_call is None:
                 return _pass_request(body)
             name, arguments = tool_call
-            tool = self.tools.get(name)
-            if tool is None:
-                return _reject(body.get("id"), f"tool {name} is not governed; no policy covers it")
-            claims = claims_of(_header(request.get("headers"), "Authorization"))
-            governed = calls.call(self.use_case, name, arguments)
-            decision = self.engine.decide_request(claims, governed)
+            message = self._refusal(request, name, arguments)
         except (TokenError, ValueError, KeyError, TypeError) as e:
             log.info("rejected: request could not be evaluated: %s", e)
             return _reject(_request_id(event), f"request could not be evaluated: {e}")
-        if decision.allowed:
+        if message is None:
             return _pass_request(body)
-        message = explain(governed, decision)
         log.info("rejected %s: %s", name, message)
         return _reject(body.get("id"), message)
+
+    def _refusal(self, request: dict, name: str, arguments: dict) -> str | None:
+        """Why the request leg refuses this call, or None when it passes."""
+        if self.tools.get(name) is None:
+            return f"tool {name} is not governed; no policy covers it"
+        claims = claims_of(_header(request.get("headers"), "Authorization"))
+        governed = calls.call(self.use_case, name, arguments)
+        decision = self.engine.decide_request(claims, governed)
+        return None if decision.allowed else explain(governed, decision)
+
+    def _failed_call(self, request: dict, response: dict, name: str, arguments: dict) -> dict:
+        """A tools/call whose response holds an error.  The Gateway runs the
+        response leg on the request leg's refusal too, so the two look
+        alike here.  The refusal's words come from asking the request leg's
+        question again, from the request the tool never saw, so a tool
+        cannot pass its own text off as a refusal.  Any other error is the
+        tool's or the Gateway's, and is replaced."""
+        try:
+            message = self._refusal(request, name, arguments)
+        except (TokenError, ValueError, KeyError, TypeError) as e:
+            message = f"request could not be evaluated: {e}"
+        if message is None:
+            log.info("tool error withheld: %s", name)
+        return _error_response(response, message or TOOL_ERROR)
 
     def response_handler(self, event: dict, context=None) -> dict:
         _record("response", event)
@@ -226,8 +245,7 @@ class Handlers:
             if not isinstance(response["body"], dict):
                 raise ValueError("response body is not a JSON object")
             if "error" in response["body"]:
-                log.info("tool error withheld: %s", name)
-                return _tool_error(response)
+                return self._failed_call(request, response, name, arguments)
             if "result" not in response["body"]:
                 raise ValueError("response body has neither a result nor an error")
             if response["body"]["result"].get("isError") is True:

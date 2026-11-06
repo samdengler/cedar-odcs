@@ -44,7 +44,9 @@ move.
   Only that payload leaves a `tools/call`: other content items and other
   keys of the result or the body are left out, a tool's error text, in a
   JSON-RPC error or a result with `isError`, is replaced with a fixed
-  message, and a response the handler cannot read is withheld.
+  message, and a response the handler cannot read is withheld.  The
+  Gateway runs the response leg on a request leg refusal too; the refusal
+  keeps its words because they are worked out again from the request.
 - `gateway/handler.py`: the two AWS Lambda entry points, loading a use
   case by the `CEDAR_ODCS_USE_CASE` environment variable.
 
