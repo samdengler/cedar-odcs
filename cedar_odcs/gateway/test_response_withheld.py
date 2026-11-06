@@ -69,6 +69,38 @@ def test_a_result_beside_an_error_leaves_with_it():
     assert "result" not in out["body"]
 
 
+def failed(**beside) -> dict:
+    """A tool failure as a Lambda function target reports it (observed on
+    applied-odcs, November 2026): a result with isError true and a text
+    item holding the runtime's error, which has no record id."""
+    text = json.dumps({"errorMessage": f"lookup failed for {SECRET}", "errorType": "ValueError",
+                       "requestId": "r-1", "stackTrace": [f"line 1, card {SECRET}"]})
+    return with_body({"jsonrpc": "2.0", "id": 7, "result": {
+        "isError": True, "content": [{"type": "text", "text": text}], **beside}})
+
+
+FAILED = {"isError": True, "content": [{"type": "text", "text": TOOL_ERROR}]}
+
+
+def test_a_failure_reported_in_the_result_says_so_and_loses_its_text():
+    out = transformed(failed())
+    assert out["statusCode"] == 200
+    assert out["body"] == {"jsonrpc": "2.0", "id": 7, "result": FAILED}
+
+
+def test_a_failure_with_text_that_is_not_json_gets_the_same_message():
+    e = failed()
+    result_of(e)["content"][0]["text"] = f"lookup failed for {SECRET}"
+    assert transformed(e)["body"]["result"] == FAILED
+
+
+def test_a_failure_holding_a_whole_record_gets_the_same_message():
+    e = event()
+    result_of(e)["isError"] = True
+    result_of(e)["structuredContent"] = {"id": "order-1001", "owner": "alice", "total": SECRET}
+    assert transformed(e)["body"]["result"] == FAILED
+
+
 # ---- what a result holds beside the payload
 
 def test_content_items_that_are_not_the_payload_leave():

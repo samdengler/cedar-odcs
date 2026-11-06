@@ -174,6 +174,14 @@ def _tool_error(response: dict) -> dict:
     return _pass_response({**response, "body": {**_envelope(body), "error": error}})
 
 
+def _failed_result(response: dict) -> dict:
+    """A tool that reports its failure in the result, as a Lambda function
+    target does with the runtime's error and stack trace: it stays a
+    failure, so a caller can tell it from an empty record."""
+    result = {"isError": True, "content": [{"type": "text", "text": TOOL_ERROR}]}
+    return _pass_response({**response, "body": {**_envelope(response["body"]), "result": result}})
+
+
 class Handlers:
     def __init__(self, use_case: UseCase):
         self.use_case = use_case
@@ -222,6 +230,9 @@ class Handlers:
                 return _tool_error(response)
             if "result" not in response["body"]:
                 raise ValueError("response body has neither a result nor an error")
+            if response["body"]["result"].get("isError") is True:
+                log.info("tool error withheld: %s", name)
+                return _failed_result(response)
             tool = self.tools.get(name)
             if tool is None or "returns" not in tool:
                 raise ValueError(f"tool {name} declares no result kind")
