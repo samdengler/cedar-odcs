@@ -41,6 +41,10 @@ move.
   from `structuredContent`, else the first text item; a list tool's
   `structuredContent` of `{"result": [...]}`, as an MCP server such as
   FastMCP sends it, is unwrapped on the way in and wrapped on the way out.
+  Only that payload leaves a `tools/call`: other content items and other
+  keys of the result or the body are left out, a tool's error text is
+  replaced with a fixed message, and a response the handler cannot read
+  is withheld.
 - `gateway/handler.py`: the two AWS Lambda entry points, loading a use
   case by the `CEDAR_ODCS_USE_CASE` environment variable.
 

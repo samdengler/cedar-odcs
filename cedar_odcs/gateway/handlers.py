@@ -6,7 +6,10 @@ handler reads the event, hands the engine a Call (engine/calls.py
 maps the tool table onto the engine's terms) and writes the engine's
 decision back as a Gateway result.
 
-Anything a handler cannot evaluate is rejected or withheld.
+Anything a handler cannot evaluate is rejected or withheld. On a
+tools/call response that covers more than the record: only the payload
+the field round decided leaves, so a tool's error text, other content
+items, and other keys of the result or the body do not.
 
 Decoding the bearer token the Gateway forwards (claims_of, TokenError)
 lives here too: it is a Gateway concern, not the engine's. The
@@ -109,6 +112,9 @@ def _pass_request(body: dict) -> dict:
 # response event also has path, httpMethod, and isStreamingResponse;
 # echoing those back is rejected as an invalid interceptor response.
 RESPONSE_FIELDS = ("statusCode", "headers", "body")
+# A tool's error text is the tool's own words, which the field round
+# never sees, so this says it failed in place of what it said.
+TOOL_ERROR = "the tool call failed; its error message is withheld"
 
 
 def _pass_response(response: dict) -> dict:
@@ -138,14 +144,34 @@ def _result_payload(result: dict, returns: str | None = None):
 
 
 def _with_payload(result: dict, payload, returns: str | None = None) -> dict:
-    out = dict(result)
+    """The filtered payload and nothing else the tool sent: the field
+    round decides the payload, and no decision covers another content
+    item or another key of the result."""
+    out = {"isError": result["isError"]} if isinstance(result.get("isError"), bool) else {}
     if _wrapped_list(result, returns):
         out["structuredContent"] = {"result": payload}
     elif "structuredContent" in result:
         out["structuredContent"] = payload
-    others = [item for item in result.get("content", []) if item.get("type") != "text"]
-    out["content"] = [{"type": "text", "text": json.dumps(payload)}] + others
+    out["content"] = [{"type": "text", "text": json.dumps(payload)}]
     return out
+
+
+def _left_out(result: dict) -> list:
+    """What _with_payload leaves out, by name, for the log."""
+    keys = [key for key in result if key not in ("content", "structuredContent", "isError")]
+    return keys + [str(item.get("type")) for item in result.get("content", []) if item.get("type") != "text"]
+
+
+def _envelope(body: dict) -> dict:
+    return {key: body[key] for key in ("jsonrpc", "id") if key in body}
+
+
+def _tool_error(response: dict) -> dict:
+    """A tools/call that failed, without what the tool said about it."""
+    body = response["body"]
+    code = body["error"].get("code") if isinstance(body["error"], dict) else None
+    error = {"code": code if isinstance(code, int) else -32000, "message": TOOL_ERROR}
+    return _pass_response({**response, "body": {**_envelope(body), "error": error}})
 
 
 class Handlers:
@@ -186,9 +212,16 @@ class Handlers:
             request = event["mcp"]["gatewayRequest"]
             response = event["mcp"]["gatewayResponse"]
             tool_call = _tool_call(_body(request.get("body")))
-            if tool_call is None or "result" not in (response.get("body") or {}):
+            if tool_call is None or not response.get("body"):
                 return _pass_response(response)
             name, arguments = tool_call
+            if not isinstance(response["body"], dict):
+                raise ValueError("response body is not a JSON object")
+            if "error" in response["body"]:
+                log.info("tool error withheld: %s", name)
+                return _tool_error(response)
+            if "result" not in response["body"]:
+                raise ValueError("response body has neither a result nor an error")
             tool = self.tools.get(name)
             if tool is None or "returns" not in tool:
                 raise ValueError(f"tool {name} declares no result kind")
@@ -196,6 +229,7 @@ class Handlers:
             governed = calls.call(self.use_case, name, arguments)
             result = response["body"]["result"]
             decision = self.engine.decide_response(claims, governed, _result_payload(result, governed.returns))
+            left_out = _left_out(result)
             if governed.returns == "list":
                 filtered = decision.rows
             else:
@@ -203,13 +237,13 @@ class Handlers:
                 # object: the call succeeded upstream (a write may have
                 # happened) and nothing of the record is shown.
                 filtered = decision.rows[0] if decision.rows else {}
-        except (TokenError, ValueError, KeyError, TypeError) as e:
+        except (TokenError, ValueError, KeyError, TypeError, AttributeError) as e:
             log.info("response withheld: could not be filtered: %s", e)
             return _reject(_request_id(event), f"response withheld; it could not be filtered: {e}")
-        if decision.dropped or decision.stripped:
-            log.info("filtered %s: dropped %s, stripped %s", name, decision.dropped, decision.stripped)
-        body = dict(response["body"])
-        body["result"] = _with_payload(result, filtered, governed.returns)
+        if decision.dropped or decision.stripped or left_out:
+            log.info("filtered %s: dropped %s, stripped %s, left out %s",
+                     name, decision.dropped, decision.stripped, left_out)
+        body = {**_envelope(response["body"]), "result": _with_payload(result, filtered, governed.returns)}
         return _pass_response({**response, "body": body})
 
 
